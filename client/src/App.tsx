@@ -471,6 +471,7 @@ export const App: React.FC = () => {
       {view === 'landing' && (
         <LandingPage
           onEnterGrid={() => setView('lobby')}
+          onStartSolo={() => handleStartSolo('medium')}
           onlineCount={onlineCount}
         />
       )}
