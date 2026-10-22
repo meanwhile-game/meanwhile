@@ -81,10 +81,10 @@ export const MainLobby: React.FC<MainLobbyProps> = ({
               className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs"
               style={{ backgroundColor: 'var(--accent)', color: '#050608' }}
             >
-              V
+              M
             </div>
             <span className="font-semibold text-base tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              Veloce
+              Meanwhile
             </span>
           </div>
 
@@ -465,7 +465,7 @@ export const MainLobby: React.FC<MainLobbyProps> = ({
         className="w-full px-6 py-4 border-t flex items-center justify-between text-xs font-num"
         style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
       >
-        <span>VELOCE RACING SOFTWARE</span>
+        <span>MEANWHILE RACING SOFTWARE</span>
         <span>LATENCY OPTIMIZED • AUTHORITATIVE MULTIPLAYER</span>
       </footer>
     </div>

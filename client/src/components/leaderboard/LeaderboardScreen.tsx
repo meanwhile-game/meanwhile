@@ -181,7 +181,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ currentUse
 
       {/* Footer */}
       <footer className="w-full max-w-5xl mx-auto flex items-center justify-between text-xs font-num" style={{ color: 'var(--text-muted)' }}>
-        <span>VELOCE ESPORTS FEDERATION</span>
+        <span>MEANWHILE ESPORTS FEDERATION</span>
         <span>VERIFIED SERVER TELEMETRY</span>
       </footer>
     </div>

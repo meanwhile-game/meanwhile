@@ -1,4 +1,4 @@
-// Synthesized Web Audio API Engine for Veloce
+// Synthesized Web Audio API Engine for Meanwhile
 
 class SoundEngine {
   private ctx: AudioContext | null = null;
@@ -16,10 +16,10 @@ class SoundEngine {
   constructor() {
     // Load preferences from localStorage if available
     try {
-      const savedMute = localStorage.getItem('veloce_muted');
+      const savedMute = localStorage.getItem('meanwhile_muted') || localStorage.getItem('veloce_muted');
       if (savedMute !== null) this.isMuted = savedMute === 'true';
 
-      const savedVol = localStorage.getItem('veloce_master_vol');
+      const savedVol = localStorage.getItem('meanwhile_master_vol') || localStorage.getItem('veloce_master_vol');
       if (savedVol !== null) this.masterVolume = parseFloat(savedVol);
     } catch (e) {
       // ignore
@@ -205,7 +205,7 @@ class SoundEngine {
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
     try {
-      localStorage.setItem('veloce_muted', String(this.isMuted));
+      localStorage.setItem('meanwhile_muted', String(this.isMuted));
     } catch (e) {}
 
     if (this.isMuted && this.isEngineRunning) {
@@ -217,7 +217,7 @@ class SoundEngine {
   public setMasterVolume(vol: number): void {
     this.masterVolume = Math.max(0, Math.min(1, vol));
     try {
-      localStorage.setItem('veloce_master_vol', String(this.masterVolume));
+      localStorage.setItem('meanwhile_master_vol', String(this.masterVolume));
     } catch (e) {}
   }
 

@@ -118,7 +118,7 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
 
       {/* Footer */}
       <footer className="w-full max-w-6xl mx-auto flex items-center justify-between text-xs font-num" style={{ color: 'var(--text-muted)' }}>
-        <span>VELOCE CIRCUITS</span>
+        <span>MEANWHILE CIRCUITS</span>
         <span>STANDARDIZED 4-LANE GEOMETRY</span>
       </footer>
     </div>

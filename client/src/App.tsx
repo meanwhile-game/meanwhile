@@ -28,10 +28,10 @@ export const App: React.FC = () => {
 
   // User Profile
   const [userId] = useState<string>(() => {
-    let id = localStorage.getItem('veloce_user_id');
+    let id = localStorage.getItem('meanwhile_user_id') || localStorage.getItem('veloce_user_id');
     if (!id) {
       id = `pilot_${Math.random().toString(36).substring(2, 9)}`;
-      localStorage.setItem('veloce_user_id', id);
+      localStorage.setItem('meanwhile_user_id', id);
     }
     return id;
   });
@@ -57,16 +57,16 @@ export const App: React.FC = () => {
 
   // Selected Machine & Track
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(() => {
-    return localStorage.getItem('veloce_vehicle_id') || 'cyber-gt';
+    return localStorage.getItem('meanwhile_vehicle_id') || localStorage.getItem('veloce_vehicle_id') || 'cyber-gt';
   });
   const [selectedVehicleColor, setSelectedVehicleColor] = useState<string>(() => {
-    return localStorage.getItem('veloce_vehicle_color') || '#00ff87';
+    return localStorage.getItem('meanwhile_vehicle_color') || localStorage.getItem('veloce_vehicle_color') || '#00ff87';
   });
   const [selectedTrackId, setSelectedTrackId] = useState<string>(() => {
-    return localStorage.getItem('veloce_track_id') || 'tokyo';
+    return localStorage.getItem('meanwhile_track_id') || localStorage.getItem('veloce_track_id') || 'tokyo';
   });
   const [graphicsQuality, setGraphicsQuality] = useState<'low' | 'medium' | 'high'>(() => {
-    return (localStorage.getItem('veloce_quality') as any) || 'high';
+    return (localStorage.getItem('meanwhile_quality') || localStorage.getItem('veloce_quality') as any) || 'high';
   });
 
   // Server & Multiplayer States
@@ -422,20 +422,20 @@ export const App: React.FC = () => {
   const handleSelectVehicle = (vehicleId: string, color: string) => {
     setSelectedVehicleId(vehicleId);
     setSelectedVehicleColor(color);
-    localStorage.setItem('veloce_vehicle_id', vehicleId);
-    localStorage.setItem('veloce_vehicle_color', color);
+    localStorage.setItem('meanwhile_vehicle_id', vehicleId);
+    localStorage.setItem('meanwhile_vehicle_color', color);
     socketService.updateVehicle(vehicleId, color);
   };
 
   const handleSelectTrack = (trackId: string) => {
     setSelectedTrackId(trackId);
-    localStorage.setItem('veloce_track_id', trackId);
+    localStorage.setItem('meanwhile_track_id', trackId);
     setView('lobby');
   };
 
   const handleUpdateQuality = (quality: 'low' | 'medium' | 'high') => {
     setGraphicsQuality(quality);
-    localStorage.setItem('veloce_quality', quality);
+    localStorage.setItem('meanwhile_quality', quality);
     raceSceneRef.current?.setQuality(quality);
   };
 

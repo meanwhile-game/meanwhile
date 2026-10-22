@@ -1,8 +1,8 @@
 {
-  "name": "veloce-server",
+  "name": "meanwhile-server",
   "version": "1.0.0",
   "type": "module",
-  "description": "Veloce Real-time Multiplayer Typing Racing Game Server",
+  "description": "Meanwhile Real-time Multiplayer Typing Racing Game Server",
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",

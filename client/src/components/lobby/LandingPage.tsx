@@ -22,10 +22,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterGrid, onlineCou
             className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm tracking-tighter"
             style={{ backgroundColor: 'var(--accent)', color: '#050608' }}
           >
-            V
+            M
           </div>
           <span className="font-semibold text-lg tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Veloce
+            Meanwhile
           </span>
           <span 
             className="text-[11px] font-num px-2 py-0.5 rounded"
@@ -123,7 +123,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterGrid, onlineCou
 
       {/* Footer */}
       <footer className="w-full max-w-6xl mx-auto flex items-center justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
-        <span>VELOCE SOFTWARE</span>
+        <span>MEANWHILE SOFTWARE</span>
         <span className="font-num">60 FPS AUTHORITATIVE ENGINE</span>
       </footer>
     </div>

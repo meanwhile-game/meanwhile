@@ -89,7 +89,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   };
 
   const handleShare = () => {
-    const text = `🏁 Veloce — Finished P${placement} on ${trackName} with ${localResult.wpm} WPM and ${localResult.accuracy}% Accuracy! Typed: "${passage?.title || 'Race Passage'}" by ${passage?.author || 'Unknown'}`;
+    const text = `🏁 Meanwhile — Finished P${placement} on ${trackName} with ${localResult.wpm} WPM and ${localResult.accuracy}% Accuracy! Typed: "${passage?.title || 'Race Passage'}" by ${passage?.author || 'Unknown'}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopied(true);

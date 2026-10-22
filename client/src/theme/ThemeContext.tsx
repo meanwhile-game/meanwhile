@@ -17,13 +17,13 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themeId, setThemeIdState] = useState<ThemeId>(() => {
-    const saved = localStorage.getItem('veloce_theme') as ThemeId;
+    const saved = (localStorage.getItem('meanwhile_theme') || localStorage.getItem('veloce_theme')) as ThemeId;
     if (saved && THEMES.some(t => t.id === saved)) return saved;
     return 'obsidian';
   });
 
   const [accentId, setAccentIdState] = useState<AccentId>(() => {
-    const saved = localStorage.getItem('veloce_accent') as AccentId;
+    const saved = (localStorage.getItem('meanwhile_accent') || localStorage.getItem('veloce_accent')) as AccentId;
     if (saved && ACCENTS.some(a => a.id === saved)) return saved;
     return 'emerald';
   });
@@ -39,12 +39,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setTheme = (newTheme: ThemeId) => {
     setThemeIdState(newTheme);
     setActivePreviewTheme(null);
-    localStorage.setItem('veloce_theme', newTheme);
+    localStorage.setItem('meanwhile_theme', newTheme);
   };
 
   const setAccent = (newAccent: AccentId) => {
     setAccentIdState(newAccent);
-    localStorage.setItem('veloce_accent', newAccent);
+    localStorage.setItem('meanwhile_accent', newAccent);
   };
 
   const previewTheme = (preview: ThemeId) => {

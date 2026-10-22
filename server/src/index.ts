@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 4000;
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
-    title: 'Veloce Authoritative Game Server',
+    title: 'Meanwhile Authoritative Game Server',
     online: gameEngine.getOnlineCount(),
     timestamp: Date.now()
   });
@@ -54,7 +54,7 @@ app.post('/api/profile/:id', (req, res) => {
 
 // Real-Time Socket.IO Handlers
 io.on('connection', (socket) => {
-  console.log(`[Veloce] Racer connected: ${socket.id}`);
+  console.log(`[Meanwhile] Racer connected: ${socket.id}`);
 
   socket.emit('connected', {
     socketId: socket.id,
@@ -130,7 +130,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`[Veloce] Racer disconnected: ${socket.id}`);
+    console.log(`[Meanwhile] Racer disconnected: ${socket.id}`);
     gameEngine.removeFromMatchmaking(socket.id);
     gameEngine.leaveRoom(socket);
     io.emit('online_count', gameEngine.getOnlineCount());
@@ -138,5 +138,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`[Veloce Server] Running on http://localhost:${PORT}`);
+  console.log(`[Meanwhile Server] Running on http://localhost:${PORT}`);
 });

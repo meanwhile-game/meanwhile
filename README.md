@@ -1,6 +1,6 @@
-# VELOCE — 3D Multiplayer Typing Racing Game
+# MEANWHILE — 3D Multiplayer Typing Racing Game
 
-**Veloce** is a competitive, real-time multiplayer 3D typing racing platform built with React, Three.js, and an authoritative Node.js/Socket.IO game server.
+**Meanwhile** is a competitive, real-time multiplayer 3D typing racing platform built with React, Three.js, and an authoritative Node.js/Socket.IO game server.
 
 Players pilot high-performance supercars and motorcycles through immersive 3D circuits where validated keystroke velocity directly dictates engine acceleration, chassis tilt, and race progress.
 
@@ -13,16 +13,21 @@ Players pilot high-performance supercars and motorcycles through immersive 3D ci
   - Public matchmaking queue (2-6 racers) with automatic bot fill fallback so you're never stuck waiting.
   - Private lobby creation with 6-character room codes and shareable invitation links.
   - Solo practice mode with configurable AI bot difficulties (Rookie 45-55 WPM, Veteran 65-75 WPM, Cyber Legend 85-105 WPM).
-- **Real-Time 3D Racing**:
-  - Three.js procedural tracks with 4 high-speed lanes, rumble strips, Armco barriers, overhead starting gantry with 5 F1 countdown lights, and finish arches.
+- **Curated Literature, Music, & Essays with Provenance**:
+  - Real authentic excerpts from Books (*The Great Gatsby*, *Dune*, *The Art of Racing in the Rain*, *Neuromancer*, *1984*, *The Fellowship of the Ring*, *Fahrenheit 451*).
+  - Legendary songs (*Bohemian Rhapsody*, *Space Oddity*, *Harder, Better, Faster, Stronger*, *Fast Car*, *Comfortably Numb*).
+  - Notable speeches & essays (*Pale Blue Dot*, *Stay Hungry, Stay Foolish*, *The Pleasure of Finding Things Out*, *The Cathedral and the Bazaar*, *We Choose to Go to the Moon*).
+  - Post-race **Text Provenance & Attribution Card** detailing work title, author, year, category, and historical context.
+- **Photorealistic 3D Racing**:
+  - Three.js procedural tracks with supersonic corner banking, physical 3D raised FIA rumble strips, and tire skid marks in heavy braking zones.
   - 3 Themed Global Circuits:
-    - **Tokyo Night Run**: Elevated neon expressway, skyscrapers with illuminated halos, cyber street lamps.
-    - **Swiss Alpine Pass**: Mountain ascent with pine tree forests, granite peaks, and sharp chicanes.
-    - **Dubai Grand Circuit**: Coastal desert sprint with golden dunes and illuminated architectural archways.
-  - Chase camera with dynamic speed FOV expansion and subtle micro-vibration over 85 WPM.
+    - **Tokyo Night Run**: Elevated expressway viaduct with concrete piers, bilingual route direction signs (*C1 都心環状線 SHUTO EXP*, *銀座 GINZA*, *渋谷 SHIBUYA*), high-rises with window grids, and red aviation beacons.
+    - **Swiss Alpine Pass**: Continuous 3D mountain terrain valley, dense Norwegian spruce and Swiss pine forests, traditional timber chalets, and distance braking boards (150m, 100m, 50m).
+    - **Dubai Grand Circuit**: Yas Marina-style turquoise and white runoff friction zones, steel lattice floodlight towers, covered grandstands with fabric canopies, and desert date palms.
+  - Dynamic vehicle forward projection headlights and speed-adaptive chase camera with FOV expansion and high-speed micro-vibrations.
 - **Vehicles & 3D Garage**:
   - **Cyber GT-R**: Twin-turbo hybrid supercar with aggressive aero splitters, rear wing, and custom underglow.
-  - **Apex Hyperion**: Le Mans prototype hypercar with dorsal shark fin, bubble canopy, and Le Mans vertical blades.
+  - **Apex Hyperion**: Le Mans prototype hypercar with dorsal shark fin, bubble canopy, and vertical blades.
   - **Phantom Blade 1200**: Electric superbike with custom motorcycle lean physics through corners.
   - **Ronin Spec-V**: Iconic Japanese tuner coupe with carbon hood, quad round tail lights, and tuner exhaust cannon.
   - Interactive 3D Turntable Showroom with 360° orbit inspection and 7 custom aero paint swatches.

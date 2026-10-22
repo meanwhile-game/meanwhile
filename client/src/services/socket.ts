@@ -16,7 +16,7 @@ class SocketService {
 
       this.socket.on('connect', () => {
         this.isConnected = true;
-        console.log('[Socket] Connected to Veloce Server, ID:', this.socket?.id);
+        console.log('[Socket] Connected to Meanwhile Server, ID:', this.socket?.id);
       });
 
       this.socket.on('disconnect', () => {

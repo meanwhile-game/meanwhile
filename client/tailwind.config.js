@@ -15,6 +15,14 @@ export default {
           700: '#232b3b',
           600: '#344055',
         },
+        meanwhile: {
+          lime: '#00ff87',
+          neon: '#10e760',
+          darkgreen: '#05381e',
+          cyan: '#00e5ff',
+          amber: '#ffaa00',
+          crimson: '#ff3366',
+        },
         veloce: {
           lime: '#00ff87',
           neon: '#10e760',

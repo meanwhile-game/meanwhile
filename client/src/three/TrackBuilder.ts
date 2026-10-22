@@ -528,7 +528,7 @@ export class TrackBuilder {
     bCtx.fillStyle = '#00ff87';
     bCtx.font = '900 48px sans-serif';
     bCtx.textAlign = 'center';
-    bCtx.fillText('VELOCE GRAND PRIX', 256, 80);
+    bCtx.fillText('MEANWHILE GRAND PRIX', 256, 80);
 
     const bannerTex = new THREE.CanvasTexture(bannerCanvas);
     const bannerMat = new THREE.MeshBasicMaterial({ map: bannerTex });
