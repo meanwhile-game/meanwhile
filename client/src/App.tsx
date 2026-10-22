@@ -424,11 +424,18 @@ export const App: React.FC = () => {
     raceSceneRef.current?.updateProgress(socketService.getSocketId(), stats.progress, stats.wpm);
   };
 
-  const handleSelectVehicle = (vehicleId: string, color: string) => {
+  const handleSelectVehicle = (vehicleId: string, color: string, customization?: any) => {
     setSelectedVehicleId(vehicleId);
     setSelectedVehicleColor(color);
     localStorage.setItem('meanwhile_vehicle_id', vehicleId);
     localStorage.setItem('meanwhile_vehicle_color', color);
+    if (customization) {
+      try {
+        localStorage.setItem(`meanwhile_custom_${vehicleId}`, JSON.stringify(customization));
+      } catch (e) {
+        // ignore
+      }
+    }
     socketService.updateVehicle(vehicleId, color);
   };
 

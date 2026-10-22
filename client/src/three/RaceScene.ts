@@ -152,7 +152,17 @@ export class RaceSceneManager {
         if (existing) {
           this.scene.remove(existing.mesh);
         }
-        const mesh = VehicleFactory.createVehicle(r.vehicleId, r.vehicleColor);
+        // If this is the local racer, check for custom tuning options
+        let customParam: any = r.vehicleColor;
+        if (r.id === this.localPlayerId) {
+          try {
+            const raw = localStorage.getItem(`meanwhile_custom_${r.vehicleId}`);
+            if (raw) customParam = JSON.parse(raw);
+          } catch (e) {
+            // fallback to color
+          }
+        }
+        const mesh = VehicleFactory.createVehicle(r.vehicleId, customParam);
         this.scene.add(mesh);
         existing = {
           mesh,
@@ -278,6 +288,10 @@ export class RaceSceneManager {
       if (mesh.exhaustFires && mesh.exhaustFires.length > 0) {
         const flareScale = 0.8 + Math.sin(now / 50) * 0.3 * (data.wpm > 60 ? 1.5 : 0.5);
         mesh.exhaustFires.forEach(f => f.scale.set(flareScale, flareScale, flareScale));
+      }
+
+      if (mesh.underglowMode === 'pulse' && mesh.underglow) {
+        (mesh.underglow.material as THREE.MeshBasicMaterial).opacity = 0.45 + 0.35 * Math.sin(now * 0.008);
       }
 
       if (id === this.localPlayerId) {

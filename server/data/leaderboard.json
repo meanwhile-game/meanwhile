@@ -133,6 +133,18 @@
   },
   {
     "rank": 12,
+    "id": "_xbFERQsFAeIzGxwAAAL",
+    "username": "Racer__xbFE",
+    "avatar": "🏎️",
+    "bestWpm": 77,
+    "averageWpm": 77,
+    "wins": 0,
+    "races": 1,
+    "level": 1,
+    "rankTier": "Bronze"
+  },
+  {
+    "rank": 13,
     "id": "1jbC8vG5es8Su_QwAAAD",
     "username": "Racer_1jbC8",
     "avatar": "🏎️",
@@ -144,7 +156,7 @@
     "rankTier": "Gold"
   },
   {
-    "rank": 13,
+    "rank": 14,
     "id": "88e5nULMsRmg2K-EAAAC",
     "username": "Racer_88e5n",
     "avatar": "🏎️",
@@ -156,7 +168,7 @@
     "rankTier": "Bronze"
   },
   {
-    "rank": 14,
+    "rank": 15,
     "id": "9mPXmLugOecVrFfcAAAF",
     "username": "Racer_9mPXm",
     "avatar": "🏎️",
@@ -168,7 +180,7 @@
     "rankTier": "Bronze"
   },
   {
-    "rank": 15,
+    "rank": 16,
     "id": "Jh5FPMJNUITEv4qAAAAD",
     "username": "Racer_Jh5FP",
     "avatar": "🏎️",
@@ -180,7 +192,7 @@
     "rankTier": "Bronze"
   },
   {
-    "rank": 16,
+    "rank": 17,
     "id": "S4OCgaMJp4EmBa_UAAAA",
     "username": "Racer_S4OCg",
     "avatar": "🏎️",
@@ -192,7 +204,7 @@
     "rankTier": "Bronze"
   },
   {
-    "rank": 17,
+    "rank": 18,
     "id": "pilot_bxrebsj",
     "username": "tester",
     "avatar": "🤖",
@@ -204,7 +216,7 @@
     "rankTier": "Bronze"
   },
   {
-    "rank": 18,
+    "rank": 19,
     "id": "pilot_wbowvyp",
     "username": "Racer_pilot",
     "avatar": "🏎️",

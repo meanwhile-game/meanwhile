@@ -1,3 +1,76 @@
+export type PaintFinishType = 'gloss' | 'matte' | 'metallic' | 'carbon';
+export type LiveryStyle = 'clean' | 'stripes' | 'cyber' | 'esports';
+export type SpoilerStyle = 'stock' | 'gt-wing' | 'ducktail';
+export type WindowTintStyle = 'clear' | 'smoke' | 'dark-limo' | 'chameleon';
+export type UnderglowMode = 'solid' | 'pulse' | 'none';
+
+export interface VehicleCustomization {
+  color: string;
+  paintFinish: PaintFinishType;
+  livery: LiveryStyle;
+  spoilerStyle: SpoilerStyle;
+  windowTint: WindowTintStyle;
+  rimColor: string;
+  caliperColor: string;
+  underglowColor: string;
+  underglowMode: UnderglowMode;
+}
+
+export const DEFAULT_VEHICLE_CUSTOMIZATIONS: Record<string, VehicleCustomization> = {
+  'cyber-gt': {
+    color: '#00ff87',
+    paintFinish: 'gloss',
+    livery: 'clean',
+    spoilerStyle: 'gt-wing',
+    windowTint: 'smoke',
+    rimColor: '#e2e8f0',
+    caliperColor: '#00ff87',
+    underglowColor: '#00ff87',
+    underglowMode: 'solid'
+  },
+  'apex-hyper': {
+    color: '#00e5ff',
+    paintFinish: 'metallic',
+    livery: 'esports',
+    spoilerStyle: 'gt-wing',
+    windowTint: 'chameleon',
+    rimColor: '#0f172a',
+    caliperColor: '#38bdf8',
+    underglowColor: '#00e5ff',
+    underglowMode: 'pulse'
+  },
+  'phantom-bike': {
+    color: '#a855f7',
+    paintFinish: 'matte',
+    livery: 'cyber',
+    spoilerStyle: 'stock',
+    windowTint: 'smoke',
+    rimColor: '#0f172a',
+    caliperColor: '#ef4444',
+    underglowColor: '#a855f7',
+    underglowMode: 'solid'
+  },
+  'ronin-turbo': {
+    color: '#ff3366',
+    paintFinish: 'gloss',
+    livery: 'stripes',
+    spoilerStyle: 'ducktail',
+    windowTint: 'dark-limo',
+    rimColor: '#d4af37',
+    caliperColor: '#ef4444',
+    underglowColor: '#ff0055',
+    underglowMode: 'solid'
+  }
+};
+
+export function getDefaultCustomization(vehicleId: string, customColor?: string): VehicleCustomization {
+  const base = DEFAULT_VEHICLE_CUSTOMIZATIONS[vehicleId] || DEFAULT_VEHICLE_CUSTOMIZATIONS['cyber-gt'];
+  return {
+    ...base,
+    color: customColor || base.color
+  };
+}
+
 export interface VehicleConfig {
   id: string;
   name: string;
