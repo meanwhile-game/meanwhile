@@ -78,11 +78,24 @@ export const App: React.FC = () => {
   // Active Race States
   const [countdown, setCountdown] = useState<number>(-1);
   const [isRacing, setIsRacing] = useState<boolean>(false);
-  const [passage, setPassage] = useState<{ id: string; text: string; title: string; category: string }>({
-    id: 'tokyo-shuto',
-    title: 'Midnight Expressway',
-    category: 'Cyberpunk Racing',
-    text: 'Rain slicks the elevated highway as neon reflections streak across carbon fiber bodywork. At two hundred miles per hour through the heart of Tokyo, the blur of brake lights turns the night into a ribbon of crimson and electric cyan.'
+  const [passage, setPassage] = useState<{
+    id: string;
+    text: string;
+    title: string;
+    category: string;
+    sourceType?: 'book' | 'song' | 'article' | 'speech' | 'essay';
+    author: string;
+    year?: number | string;
+    context?: string;
+  }>({
+    id: 'book-gatsby',
+    title: 'The Great Gatsby',
+    author: 'F. Scott Fitzgerald',
+    sourceType: 'book',
+    year: 1925,
+    category: 'Classic Literature',
+    context: 'From Chapter 9 of Fitzgerald’s 1925 masterpiece on ambition, memory, and the green light at the end of the dock.',
+    text: "Gatsby believed in the green light, the orgastic future that year by year recedes before us. It eluded us then, but that's no matter—tomorrow we will run faster, stretch out our arms farther. And then one fine morning—so we beat on, boats against the current, borne back ceaselessly into the past."
   });
 
   const [localStats, setLocalStats] = useState<{
@@ -507,6 +520,9 @@ export const App: React.FC = () => {
             passageText={passage.text}
             passageTitle={passage.title}
             passageCategory={passage.category}
+            passageAuthor={passage.author}
+            passageSourceType={passage.sourceType}
+            passageYear={passage.year}
             isRacing={isRacing}
             countdown={countdown}
             racers={hudRacers}
@@ -522,6 +538,7 @@ export const App: React.FC = () => {
               podium={finalPodium}
               localPlayerId={socketService.getSocketId()}
               trackName={TRACKS.find(t => t.id === (currentRoom?.trackId || selectedTrackId))?.name || 'Tokyo Night Run'}
+              passage={passage}
               onRematch={() => socketService.rematch()}
               onReturnToLobby={() => {
                 setShowResults(false);

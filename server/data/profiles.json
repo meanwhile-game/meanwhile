@@ -151,5 +151,36 @@
         "xpGained": 254
       }
     ]
+  },
+  "Jh5FPMJNUITEv4qAAAAD": {
+    "id": "Jh5FPMJNUITEv4qAAAAD",
+    "username": "Racer_Jh5FP",
+    "avatar": "🏎️",
+    "level": 1,
+    "xp": 208,
+    "nextLevelXp": 500,
+    "rankTier": "Bronze",
+    "totalRaces": 1,
+    "wins": 0,
+    "podiums": 0,
+    "bestWpm": 59,
+    "averageWpm": 59,
+    "averageAccuracy": 100,
+    "favoriteVehicle": "cyber-gt",
+    "favoriteTrack": "tokyo",
+    "recentRaces": [
+      {
+        "id": "race_1792660479509_q1bj",
+        "date": "2026-10-22T09:14:39.509Z",
+        "trackId": "swiss",
+        "vehicleId": "cyber-gt",
+        "placement": 4,
+        "totalRacers": 4,
+        "wpm": 59,
+        "accuracy": 100,
+        "timeMs": 54409,
+        "xpGained": 208
+      }
+    ]
   }
 }

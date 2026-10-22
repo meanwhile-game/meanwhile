@@ -1,10 +1,16 @@
+export type PassageSourceType = 'book' | 'song' | 'article' | 'speech' | 'essay';
+
 export interface Passage {
   id: string;
   title: string;
+  sourceType: PassageSourceType;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard';
   text: string;
-  author?: string;
+  author: string;
+  year?: number | string;
+  context?: string;
+  sourceUrl?: string;
 }
 
 export type RoomState = 'LOBBY' | 'STARTING' | 'RACING' | 'FINISHED';

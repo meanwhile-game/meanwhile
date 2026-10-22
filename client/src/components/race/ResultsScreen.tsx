@@ -1,6 +1,16 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { ArrowRight, RotateCcw, Share2, Check } from 'lucide-react';
+import { 
+  ArrowRight, 
+  RotateCcw, 
+  Share2, 
+  Check, 
+  BookOpen, 
+  Music, 
+  Mic, 
+  FileText, 
+  Newspaper 
+} from 'lucide-react';
 import { sound } from '../../sound/soundEngine.js';
 import { useTheme } from '../../theme/ThemeContext.js';
 
@@ -18,10 +28,24 @@ interface ResultPodiumEntry {
   xpEarned: number;
 }
 
+export interface PassageAttribution {
+  id: string;
+  title: string;
+  sourceType?: 'book' | 'song' | 'article' | 'speech' | 'essay';
+  category: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  text: string;
+  author: string;
+  year?: number | string;
+  context?: string;
+  sourceUrl?: string;
+}
+
 interface ResultsScreenProps {
   podium: ResultPodiumEntry[];
   localPlayerId: string;
   trackName: string;
+  passage?: PassageAttribution;
   onRematch: () => void;
   onReturnToLobby: () => void;
 }
@@ -30,6 +54,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   podium,
   localPlayerId,
   trackName,
+  passage,
   onRematch,
   onReturnToLobby
 }) => {
@@ -64,7 +89,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   };
 
   const handleShare = () => {
-    const text = `🏁 Veloce — Finished P${placement} on ${trackName} with ${localResult.wpm} WPM and ${localResult.accuracy}% Accuracy!`;
+    const text = `🏁 Veloce — Finished P${placement} on ${trackName} with ${localResult.wpm} WPM and ${localResult.accuracy}% Accuracy! Typed: "${passage?.title || 'Race Passage'}" by ${passage?.author || 'Unknown'}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopied(true);
@@ -75,7 +100,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
       <div 
-        className="w-full max-w-2xl rounded-2xl border shadow-2xl p-6 md:p-8 flex flex-col gap-6"
+        className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl border shadow-2xl p-6 md:p-8 flex flex-col gap-5"
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-default)' }}
       >
         {/* Header */}
@@ -185,8 +210,59 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           </div>
         </div>
 
+        {/* Text Provenance & Source Attribution Card */}
+        {passage && (
+          <div 
+            className="rounded-xl border p-4 flex flex-col gap-2.5 transition-all"
+            style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span 
+                  className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold"
+                  style={{ backgroundColor: 'var(--accent-subtle)', color: 'var(--accent)' }}
+                >
+                  {passage.sourceType === 'book' && <BookOpen className="w-3 h-3" />}
+                  {passage.sourceType === 'song' && <Music className="w-3 h-3" />}
+                  {passage.sourceType === 'speech' && <Mic className="w-3 h-3" />}
+                  {passage.sourceType === 'essay' && <FileText className="w-3 h-3" />}
+                  {passage.sourceType === 'article' && <Newspaper className="w-3 h-3" />}
+                  {passage.sourceType ? `From the ${passage.sourceType}` : 'Literature Source'}
+                </span>
+                <h4 className="text-sm font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                  "{passage.title}"
+                </h4>
+              </div>
+
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded border" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
+                {passage.category}
+              </span>
+            </div>
+
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              Written / Composed by <strong style={{ color: 'var(--text-primary)' }}>{passage.author}</strong> {passage.year ? `(${passage.year})` : ''}
+            </div>
+
+            {/* Quoted passage excerpt */}
+            <div 
+              className="text-xs italic leading-relaxed pl-3 border-l-2 py-0.5 rounded-r"
+              style={{ borderColor: 'var(--accent)', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-secondary)' }}
+            >
+              "{passage.text}"
+            </div>
+
+            {/* Context trivia note */}
+            {passage.context && (
+              <div className="text-[11px] leading-normal flex items-start gap-1.5 mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                <span className="font-semibold" style={{ color: 'var(--accent)' }}>Provenance:</span>
+                <span>{passage.context}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Actions */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between pt-1">
           <button
             onClick={handleShare}
             className="px-4 py-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"

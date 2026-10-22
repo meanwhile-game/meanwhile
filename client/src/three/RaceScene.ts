@@ -25,6 +25,8 @@ export class RaceSceneManager {
   private trackConfig: TrackConfig;
   private dirLight: THREE.DirectionalLight | null = null;
   private ambLight: THREE.AmbientLight | null = null;
+  private vehicleHeadlight: THREE.SpotLight | null = null;
+  private headlightTarget: THREE.Object3D | null = null;
 
   // Racers map: racerId -> { mesh, data }
   private racerMeshes: Map<string, { mesh: VehicleMeshObject; data: RacerDisplayData }> = new Map();
@@ -106,6 +108,14 @@ export class RaceSceneManager {
     }
 
     this.scene.add(this.dirLight);
+
+    // Vehicle forward projection headlight
+    this.headlightTarget = new THREE.Object3D();
+    this.scene.add(this.headlightTarget);
+
+    this.vehicleHeadlight = new THREE.SpotLight(0xfff6eb, 2.5, 75, Math.PI / 5, 0.5, 1.2);
+    this.vehicleHeadlight.target = this.headlightTarget;
+    this.scene.add(this.vehicleHeadlight);
   }
 
   public loadTrack(config: TrackConfig): void {
@@ -320,6 +330,15 @@ export class RaceSceneManager {
         );
         this.dirLight.target.position.copy(localVehiclePos);
         this.dirLight.target.updateMatrixWorld();
+      }
+
+      // Update forward headlight beam
+      if (this.vehicleHeadlight && this.headlightTarget) {
+        this.vehicleHeadlight.position.copy(localVehiclePos).addScaledVector(localVehicleTangent, 1.6);
+        this.vehicleHeadlight.position.y += 0.9;
+        this.headlightTarget.position.copy(localVehiclePos).addScaledVector(localVehicleTangent, 40.0);
+        this.headlightTarget.position.y += 0.2;
+        this.headlightTarget.updateMatrixWorld();
       }
     }
 

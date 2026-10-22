@@ -22,6 +22,9 @@ interface RaceHudProps {
   passageText: string;
   passageTitle: string;
   passageCategory: string;
+  passageAuthor?: string;
+  passageSourceType?: string;
+  passageYear?: number | string;
   isRacing: boolean;
   countdown: number;
   racers: RacerHudData[];
@@ -40,6 +43,9 @@ export const RaceHud: React.FC<RaceHudProps> = ({
   passageText,
   passageTitle,
   passageCategory,
+  passageAuthor,
+  passageSourceType,
+  passageYear,
   isRacing,
   countdown,
   racers,
@@ -262,8 +268,20 @@ export const RaceHud: React.FC<RaceHudProps> = ({
           </div>
 
           <div className="hidden sm:flex flex-col text-right text-xs">
-            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{passageTitle}</span>
-            <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{passageCategory}</span>
+            <div className="flex items-center justify-end gap-1.5">
+              {passageSourceType && (
+                <span 
+                  className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border tracking-wider font-semibold"
+                  style={{ backgroundColor: 'var(--accent-subtle)', borderColor: 'var(--border-subtle)', color: 'var(--accent)' }}
+                >
+                  {passageSourceType === 'book' ? '📖 Book' : passageSourceType === 'song' ? '🎵 Song' : passageSourceType === 'speech' ? '🎙️ Speech' : '📰 Article'}
+                </span>
+              )}
+              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{passageTitle}</span>
+            </div>
+            <span className="text-[10px] mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>
+              {passageAuthor ? `${passageAuthor}${passageYear ? ` (${passageYear})` : ''} • ` : ''}{passageCategory}
+            </span>
           </div>
         </div>
 
