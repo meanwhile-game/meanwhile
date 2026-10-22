@@ -9,10 +9,14 @@ import {
   Music, 
   Mic, 
   FileText, 
-  Newspaper 
+  Newspaper,
+  Trophy,
+  Crown,
+  Sparkles,
+  Zap,
+  Gauge
 } from 'lucide-react';
 import { sound } from '../../sound/soundEngine.js';
-import { useTheme } from '../../theme/ThemeContext.js';
 
 interface ResultPodiumEntry {
   id: string;
@@ -58,7 +62,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   onRematch,
   onReturnToLobby
 }) => {
-  const { isLight } = useTheme();
   const [copied, setCopied] = React.useState(false);
 
   const localResult = podium.find(p => p.id === localPlayerId) || podium[0];
@@ -70,10 +73,10 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
     if (placement === 1) {
       try {
         confetti({
-          particleCount: 80,
-          spread: 60,
+          particleCount: 100,
+          spread: 70,
           origin: { y: 0.6 },
-          colors: ['#10b981', '#3b82f6', '#f59e0b', '#ffffff']
+          colors: ['#00ff87', '#00e5ff', '#f59e0b', '#ffffff']
         });
       } catch (e) {}
     }
@@ -89,6 +92,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   };
 
   const handleShare = () => {
+    sound.playKeystroke(60, true);
     const text = `🏁 Meanwhile — Finished P${placement} on ${trackName} with ${localResult.wpm} WPM and ${localResult.accuracy}% Accuracy! Typed: "${passage?.title || 'Race Passage'}" by ${passage?.author || 'Unknown'}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
@@ -98,110 +102,113 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md select-none animate-in fade-in duration-200">
       <div 
-        className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl border shadow-2xl p-6 md:p-8 flex flex-col gap-5"
-        style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-default)' }}
+        className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-800 bg-slate-950/95 shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-6 md:p-8 flex flex-col gap-6 text-white relative overflow-hidden"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: 'var(--border-subtle)' }}>
+        {/* Ambient Top Glow */}
+        <div 
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-36 rounded-full blur-3xl pointer-events-none"
+          style={{ backgroundColor: placement === 1 ? 'rgba(0,255,135,0.15)' : 'rgba(0,229,255,0.15)' }}
+        />
+
+        {/* 1. Header Banner */}
+        <div className="relative z-10 flex items-center justify-between border-b border-slate-800/80 pb-4">
           <div>
-            <span className="text-[11px] font-mono uppercase" style={{ color: 'var(--text-muted)' }}>
-              OFFICIAL RACE TELEMETRY • {trackName}
+            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold flex items-center gap-1.5">
+              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+              OFFICIAL GRAND PRIX CLASSIFICATION • {trackName.toUpperCase()}
             </span>
-            <h2 className="text-2xl font-bold tracking-tight mt-0.5" style={{ color: 'var(--text-primary)' }}>
-              {placement === 1 ? 'First Place Victory' : `P${placement} Grid Finish`}
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-1">
+              {placement === 1 ? '🏆 Grand Prix Victory!' : `🏁 P${placement} Grid Finish`}
             </h2>
           </div>
 
-          <span 
-            className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-base"
-            style={{ backgroundColor: 'var(--accent)', color: '#050608' }}
+          <div 
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg font-mono ${
+              placement === 1 
+                ? 'bg-emerald-400 text-black shadow-[0_0_25px_rgba(0,255,135,0.5)]' 
+                : placement === 2
+                ? 'bg-slate-300 text-black shadow-md'
+                : 'bg-amber-700 text-white shadow-md'
+            }`}
           >
             P{placement}
-          </span>
+          </div>
         </div>
 
-        {/* Telemetry Numbers Grid */}
-        <div 
-          className="p-4 rounded-xl border grid grid-cols-4 gap-4 text-center"
-          style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-        >
+        {/* 2. Driver Telemetry Matrix */}
+        <div className="relative z-10 p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div>
-            <span className="text-[11px] block" style={{ color: 'var(--text-muted)' }}>Average Pace</span>
-            <div className="text-2xl font-bold font-num mt-0.5" style={{ color: 'var(--accent)' }}>
+            <span className="text-[10px] font-mono uppercase text-slate-400 block">Peak Pace</span>
+            <div className="text-3xl font-black font-mono text-emerald-400 mt-0.5">
               {localResult.wpm}
             </div>
-            <span className="text-[10px] font-num" style={{ color: 'var(--text-secondary)' }}>WPM</span>
+            <span className="text-[10px] font-mono text-slate-400 font-bold">WPM</span>
           </div>
 
           <div>
-            <span className="text-[11px] block" style={{ color: 'var(--text-muted)' }}>Precision</span>
-            <div className="text-2xl font-bold font-num mt-0.5" style={{ color: 'var(--text-primary)' }}>
+            <span className="text-[10px] font-mono uppercase text-slate-400 block">Precision</span>
+            <div className="text-3xl font-black font-mono text-cyan-400 mt-0.5">
               {localResult.accuracy}%
             </div>
-            <span className="text-[10px] font-num" style={{ color: 'var(--text-secondary)' }}>ACC</span>
+            <span className="text-[10px] font-mono text-slate-400 font-bold">ACCURACY</span>
           </div>
 
           <div>
-            <span className="text-[11px] block" style={{ color: 'var(--text-muted)' }}>Total Time</span>
-            <div className="text-2xl font-bold font-num mt-0.5" style={{ color: 'var(--text-primary)' }}>
+            <span className="text-[10px] font-mono uppercase text-slate-400 block">Course Time</span>
+            <div className="text-3xl font-black font-mono text-white mt-0.5">
               {formatTime(localResult.elapsedMs)}
             </div>
-            <span className="text-[10px] font-num" style={{ color: 'var(--text-secondary)' }}>MIN:SEC</span>
+            <span className="text-[10px] font-mono text-slate-400 font-bold">MIN:SEC</span>
           </div>
 
           <div>
-            <span className="text-[11px] block" style={{ color: 'var(--text-muted)' }}>Rewards</span>
-            <div className="text-2xl font-bold font-num mt-0.5" style={{ color: 'var(--text-primary)' }}>
+            <span className="text-[10px] font-mono uppercase text-slate-400 block">Racer Reward</span>
+            <div className="text-3xl font-black font-mono text-amber-400 mt-0.5">
               +{localResult.xpEarned || 150}
             </div>
-            <span className="text-[10px] font-num" style={{ color: 'var(--text-secondary)' }}>XP EARNED</span>
+            <span className="text-[10px] font-mono text-slate-400 font-bold">XP EARNED</span>
           </div>
         </div>
 
-        {/* Competitor Standings Table */}
-        <div>
-          <div className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-            Grid Final Standings
+        {/* 3. Grid Competitors Standings */}
+        <div className="relative z-10">
+          <div className="text-xs font-mono uppercase text-slate-400 font-bold mb-2">
+            Final Grid Order
           </div>
-          <div 
-            className="rounded-xl border overflow-hidden"
-            style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-          >
-            <table className="w-full text-left border-collapse text-xs font-num">
-              <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 backdrop-blur-md overflow-hidden">
+            <table className="w-full text-left border-collapse text-xs font-mono">
+              <tbody className="divide-y divide-slate-800/80">
                 {podium.map((racer, idx) => (
                   <tr
                     key={racer.id}
-                    className="transition-colors"
-                    style={racer.isLocal ? { backgroundColor: 'var(--accent-subtle)' } : {}}
+                    className={`transition-colors ${
+                      racer.isLocal ? 'bg-emerald-500/15 font-bold' : 'hover:bg-white/5'
+                    }`}
                   >
-                    <td className="py-2.5 px-4 w-12 font-semibold">
+                    <td className="py-3 px-4 w-12 font-black text-center">
                       #{racer.placement || idx + 1}
                     </td>
-                    <td className="py-2.5 px-4 font-sans font-medium">
+                    <td className="py-3 px-4 font-sans font-bold">
                       <div className="flex items-center gap-2">
                         <span>{racer.avatar}</span>
-                        <span style={{ color: 'var(--text-primary)' }}>{racer.username}</span>
+                        <span className="text-white">{racer.username}</span>
                         {racer.isLocal && (
-                          <span 
-                            className="text-[10px] font-mono px-1.5 py-0.2 rounded"
-                            style={{ backgroundColor: 'var(--accent)', color: '#050608' }}
-                          >
+                          <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-400 text-black font-black">
                             YOU
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="py-2.5 px-4 text-right" style={{ color: 'var(--text-secondary)' }}>
+                    <td className="py-3 px-4 text-right text-slate-400">
                       {formatTime(racer.elapsedMs)}
                     </td>
-                    <td className="py-2.5 px-4 text-right font-semibold" style={{ color: 'var(--accent)' }}>
-                      {racer.wpm} <span className="text-[10px] font-normal" style={{ color: 'var(--text-muted)' }}>WPM</span>
+                    <td className="py-3 px-4 text-right font-black text-emerald-400">
+                      {racer.wpm} <span className="font-normal text-[10px] text-slate-500">WPM</span>
                     </td>
-                    <td className="py-2.5 px-4 text-right" style={{ color: 'var(--text-muted)' }}>
-                      {racer.accuracy}% Acc
+                    <td className="py-3 px-4 text-right text-slate-400">
+                      {racer.accuracy}%
                     </td>
                   </tr>
                 ))}
@@ -210,18 +217,12 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           </div>
         </div>
 
-        {/* Text Provenance & Source Attribution Card */}
+        {/* 4. Text Provenance & Attribution Card */}
         {passage && (
-          <div 
-            className="rounded-xl border p-4 flex flex-col gap-2.5 transition-all"
-            style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-          >
+          <div className="relative z-10 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 flex flex-col gap-3 shadow-lg">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span 
-                  className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold"
-                  style={{ backgroundColor: 'var(--accent-subtle)', color: 'var(--accent)' }}
-                >
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   {passage.sourceType === 'book' && <BookOpen className="w-3 h-3" />}
                   {passage.sourceType === 'song' && <Music className="w-3 h-3" />}
                   {passage.sourceType === 'speech' && <Mic className="w-3 h-3" />}
@@ -229,65 +230,66 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                   {passage.sourceType === 'article' && <Newspaper className="w-3 h-3" />}
                   {passage.sourceType ? `From the ${passage.sourceType}` : 'Literature Source'}
                 </span>
-                <h4 className="text-sm font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                <h4 className="text-sm font-black tracking-tight text-white">
                   "{passage.title}"
                 </h4>
               </div>
 
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded border" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
+              <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300">
                 {passage.category}
               </span>
             </div>
 
-            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              Written / Composed by <strong style={{ color: 'var(--text-primary)' }}>{passage.author}</strong> {passage.year ? `(${passage.year})` : ''}
+            <div className="text-xs text-slate-300">
+              Written / Composed by <strong className="text-white">{passage.author}</strong> {passage.year ? `(${passage.year})` : ''}
             </div>
 
             {/* Quoted passage excerpt */}
-            <div 
-              className="text-xs italic leading-relaxed pl-3 border-l-2 py-0.5 rounded-r"
-              style={{ borderColor: 'var(--accent)', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-secondary)' }}
-            >
+            <div className="text-xs italic leading-relaxed pl-3.5 border-l-2 border-emerald-400 py-1 rounded-r bg-slate-950/80 text-slate-300 font-serif">
               "{passage.text}"
             </div>
 
             {/* Context trivia note */}
             {passage.context && (
-              <div className="text-[11px] leading-normal flex items-start gap-1.5 mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                <span className="font-semibold" style={{ color: 'var(--accent)' }}>Provenance:</span>
+              <div className="text-[11px] leading-normal flex items-start gap-1.5 text-slate-400 font-mono">
+                <span className="font-bold text-emerald-400">Provenance:</span>
                 <span>{passage.context}</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-1">
+        {/* 5. Actions Footer */}
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 pt-2">
           <button
             onClick={handleShare}
-            className="px-4 py-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-            style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
+            className="px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-xs font-mono font-bold text-slate-300 hover:text-white flex items-center gap-2 cursor-pointer transition-colors shadow-md"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
-            {copied ? 'Copied to Clipboard' : 'Share Telemetry'}
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4 text-cyan-400" />}
+            {copied ? 'Copied to Clipboard!' : 'Share Telemetry'}
           </button>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <button
-              onClick={onReturnToLobby}
-              className="px-4 py-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+              onClick={() => {
+                sound.playKeystroke(50, true);
+                onReturnToLobby();
+              }}
+              className="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer transition-colors shadow-md"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-4 h-4 text-slate-400" />
               Lobby
             </button>
 
             <button
-              onClick={onRematch}
-              className="v-btn-primary px-6 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-sm"
+              onClick={() => {
+                sound.playCountdownTick(2);
+                onRematch();
+              }}
+              className="px-7 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black text-xs font-black uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-[0_0_25px_rgba(0,255,135,0.45)] hover:shadow-[0_0_35px_rgba(0,255,135,0.7)] transition-all transform hover:-translate-y-0.5"
             >
               Race Again
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>

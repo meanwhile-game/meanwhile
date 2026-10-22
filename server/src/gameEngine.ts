@@ -216,7 +216,7 @@ export class GameEngine {
     }
 
     this.startCountdown(room.id);
-    return room;
+    return this.sanitizeRoom(room) as Room;
   }
 
   public leaveRoom(socket: Socket): void {
@@ -641,7 +641,7 @@ export class GameEngine {
     this.startCountdown(room.id);
   }
 
-  private sanitizeRoom(room: Room): Partial<Room> {
+  public sanitizeRoom(room: Room): Partial<Room> {
     return {
       id: room.id,
       code: room.code,

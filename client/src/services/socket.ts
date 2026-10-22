@@ -88,7 +88,15 @@ class SocketService {
     },
     callback: (res: { success: boolean; room?: any; error?: string }) => void
   ): void {
-    this.getSocket().emit('start_solo', options, callback);
+    const s = this.getSocket();
+    if (s.connected) {
+      s.emit('start_solo', options, callback);
+    } else {
+      s.once('connect', () => {
+        s.emit('start_solo', options, callback);
+      });
+      s.connect();
+    }
   }
 
   public joinMatchmaking(options: {

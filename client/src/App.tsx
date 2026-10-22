@@ -327,7 +327,14 @@ export const App: React.FC = () => {
         if (res.success && res.room) {
           setCurrentRoom(res.room);
           if (res.room.passage) setPassage(res.room.passage);
+          setCountdown(res.room.countdown ?? 3);
+          setShowResults(false);
+          setIsRacing(false);
+          setRacersProgress({});
+          setLocalStats({ wpm: 0, accuracy: 100, progress: 0, currentTypedIndex: 0 });
           setView('racing');
+        } else {
+          console.error('[Meanwhile] Solo race start failed:', res.error);
         }
       }
     );
@@ -395,14 +402,12 @@ export const App: React.FC = () => {
   };
 
   const handleExitRace = () => {
-    if (window.confirm('Are you sure you want to exit to the lobby?')) {
-      socketService.leaveRoom();
-      sound.stopEngine();
-      setCurrentRoom(null);
-      setIsRacing(false);
-      setShowResults(false);
-      setView('lobby');
-    }
+    socketService.leaveRoom();
+    sound.stopEngine();
+    setCurrentRoom(null);
+    setIsRacing(false);
+    setShowResults(false);
+    setView('lobby');
   };
 
   const handleKeystroke = (index: number, char: string, isError: boolean) => {
@@ -492,6 +497,11 @@ export const App: React.FC = () => {
           onOpenTracks={() => setView('tracks')}
           onOpenLeaderboard={() => setView('leaderboard')}
           onOpenSettings={() => setShowSettings(true)}
+          onUpdateColor={(c) => {
+            setSelectedVehicleColor(c);
+            localStorage.setItem('meanwhile_vehicle_color', c);
+            socketService.updateVehicle(selectedVehicleId, c);
+          }}
         />
       )}
 
@@ -543,6 +553,9 @@ export const App: React.FC = () => {
               onRematch={() => socketService.rematch()}
               onReturnToLobby={() => {
                 setShowResults(false);
+                sound.stopEngine();
+                setCurrentRoom(null);
+                setIsRacing(false);
                 setView('lobby');
                 socketService.leaveRoom();
               }}

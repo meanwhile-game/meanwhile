@@ -64,6 +64,10 @@ class SoundEngine {
     osc.stop(ctx.currentTime + 0.04);
   }
 
+  public playKeystroke(wpm: number = 60, isSpace: boolean = false): void {
+    this.playKeyClick(isSpace);
+  }
+
   public playKeyError(): void {
     if (this.isMuted) return;
     const ctx = this.initContext();

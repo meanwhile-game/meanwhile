@@ -67,7 +67,7 @@ io.on('connection', (socket) => {
   socket.on('create_room', (data, callback) => {
     try {
       const room = gameEngine.createRoom(socket, data);
-      callback?.({ success: true, room });
+      callback?.({ success: true, room: gameEngine.sanitizeRoom(room) });
     } catch (err: any) {
       callback?.({ success: false, error: err.message });
     }
@@ -76,7 +76,11 @@ io.on('connection', (socket) => {
   socket.on('join_room', (data, callback) => {
     try {
       const result = gameEngine.joinRoom(socket, data.roomIdOrCode, data);
-      callback?.(result);
+      callback?.({
+        success: result.success,
+        room: result.room ? gameEngine.sanitizeRoom(result.room) : undefined,
+        error: result.error
+      });
     } catch (err: any) {
       callback?.({ success: false, error: err.message });
     }

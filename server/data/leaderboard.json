@@ -145,6 +145,18 @@
   },
   {
     "rank": 13,
+    "id": "9mPXmLugOecVrFfcAAAF",
+    "username": "Racer_9mPXm",
+    "avatar": "🏎️",
+    "bestWpm": 65,
+    "averageWpm": 65,
+    "wins": 0,
+    "races": 1,
+    "level": 1,
+    "rankTier": "Bronze"
+  },
+  {
+    "rank": 14,
     "id": "Jh5FPMJNUITEv4qAAAAD",
     "username": "Racer_Jh5FP",
     "avatar": "🏎️",
@@ -156,7 +168,7 @@
     "rankTier": "Bronze"
   },
   {
-    "rank": 14,
+    "rank": 15,
     "id": "S4OCgaMJp4EmBa_UAAAA",
     "username": "Racer_S4OCg",
     "avatar": "🏎️",
@@ -168,7 +180,7 @@
     "rankTier": "Bronze"
   },
   {
-    "rank": 15,
+    "rank": 16,
     "id": "pilot_bxrebsj",
     "username": "tester",
     "avatar": "🤖",
