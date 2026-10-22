@@ -69,3 +69,9 @@ npm run dev
 ```
 
 3. Open **`http://localhost:5173`** in your browser to enter the grid!
+
+---
+
+## 📖 Architecture & Deployment Guide
+For complete cloud topology, PostgreSQL schemas, Redis adapter scaling, anti-cheat security, Docker orchestration, and CI/CD pipelines, read the **[System Architecture & Production Deployment Specification](DEPLOYMENT_AND_ARCHITECTURE.md)**.
+
