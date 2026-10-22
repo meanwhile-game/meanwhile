@@ -484,6 +484,9 @@ export const App: React.FC = () => {
         <LandingPage
           onEnterGrid={() => setView('lobby')}
           onStartSolo={() => handleStartSolo('medium')}
+          onOpenGarage={() => setView('garage')}
+          onOpenTracks={() => setView('tracks')}
+          onOpenLeaderboard={() => setView('leaderboard')}
           onlineCount={onlineCount}
         />
       )}

@@ -54,8 +54,101 @@ export class TrackBuilder {
   }
 
   // --- SPLINE POINTS WITH REALISTIC RACING FLOW & ELEVATION ---
-  private static generateTrackPoints(theme: 'tokyo' | 'swiss' | 'dubai'): THREE.Vector3[] {
-    if (theme === 'swiss') {
+  private static generateTrackPoints(theme: TrackConfig['theme']): THREE.Vector3[] {
+    if (theme === 'chennai') {
+      // Chennai Marina Coast: Long seaside straight along Kamarajar Salai, coastal esses & Napier Bridge sweep
+      return [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, 180),          // Seaside acceleration straightaway (Kamarajar Salai)
+        new THREE.Vector3(30, 0.5, 360),      // Gentle right curve past Marina Beach sands
+        new THREE.Vector3(110, 1.2, 480),     // Sweep approaching Marina Lighthouse
+        new THREE.Vector3(220, 2.0, 460),     // Lighthouse turnaround curve
+        new THREE.Vector3(260, 2.5, 340),     // Santhome esses entry
+        new THREE.Vector3(210, 3.0, 200),     // Santhome urban chicane
+        new THREE.Vector3(240, 2.8, 60),      // Fast right kink
+        new THREE.Vector3(220, 3.2, -80),     // Approach to Napier Bridge
+        new THREE.Vector3(150, 4.5, -200),    // Over Napier Bridge arches (elevation rise)
+        new THREE.Vector3(60, 3.5, -280),     // Bridge descent
+        new THREE.Vector3(-40, 1.5, -310),    // Cooum rivermouth curve
+        new THREE.Vector3(-150, 0.5, -240),   // Harbor road left sweeper
+        new THREE.Vector3(-170, 0.2, -110),   // Coastal return lane
+        new THREE.Vector3(-120, 0, 0),        // Final corner onto Main Straight
+      ];
+    } else if (theme === 'hyderabad') {
+      // Hyderabad Cyber Pearl: High-speed highway through HITEC City, over Durgam Cheruvu Cable Bridge
+      return [
+        new THREE.Vector3(0, 8, 0),           // Elevated Mindspace flyover
+        new THREE.Vector3(0, 8, 160),         // High-speed IT corridor sprint
+        new THREE.Vector3(60, 9.5, 300),      // Curve past Cyber Towers
+        new THREE.Vector3(160, 11.0, 380),    // Cable Bridge approach
+        new THREE.Vector3(290, 12.5, 350),    // Durgam Cheruvu Cable-Stayed Bridge main span
+        new THREE.Vector3(380, 12.0, 230),    // Lake crossing descent
+        new THREE.Vector3(360, 9.0, 90),      // Madhapur interchange sweeper
+        new THREE.Vector3(280, 7.5, -20),     // Charminar gateway arch straight
+        new THREE.Vector3(230, 6.0, -140),    // Technical S-curve
+        new THREE.Vector3(140, 7.0, -260),    // Inorbit Mall flyover entry
+        new THREE.Vector3(20, 8.5, -300),     // High-speed carousel
+        new THREE.Vector3(-110, 8.0, -240),   // Knowledge City banking turn
+        new THREE.Vector3(-160, 8.0, -120),   // West corridor straight
+        new THREE.Vector3(-110, 8.0, -20),    // Final turn onto start gantry
+      ];
+    } else if (theme === 'buddh') {
+      // Buddh International Circuit (BIC): Authentic Hermann Tilke F1 layout
+      // Turn 1 hairpin, uphill crest to Turn 3, 1.06km parabolic back straight, banked Turn 10-11 bowl
+      return [
+        new THREE.Vector3(0, 0, 0),           // Start / Finish Main Straight
+        new THREE.Vector3(0, 0, 150),         // Approach to Turn 1
+        new THREE.Vector3(60, 1.0, 240),      // Turn 1 tight downhill hairpin
+        new THREE.Vector3(120, 3.5, 290),     // Turn 2 uphill climb
+        new THREE.Vector3(190, 6.5, 330),     // Turn 3 blind crest
+        new THREE.Vector3(280, 5.0, 350),     // Entry to legendary 1.06km Parabolic Back Straight
+        new THREE.Vector3(420, 3.0, 310),     // Back straight mid-point (highest top speeds in India)
+        new THREE.Vector3(520, 1.5, 200),     // Back straight downhill compression
+        new THREE.Vector3(490, 1.0, 60),      // Turn 4 heavy braking zone (hairpin)
+        new THREE.Vector3(400, 2.0, -40),     // Turns 5-6 high-speed esses
+        new THREE.Vector3(310, 3.5, -120),    // Turns 7-8 chicane
+        new THREE.Vector3(210, 4.0, -210),    // Turn 9 sweeping downhill
+        new THREE.Vector3(90, 2.5, -280),     // Approach to famous banked Parabolica (Turn 10-11)
+        new THREE.Vector3(-40, 1.5, -310),    // Turn 10 multi-apex bowl
+        new THREE.Vector3(-160, 2.0, -240),   // Turn 11 exit
+        new THREE.Vector3(-210, 1.5, -120),   // Turns 12-14 stadium infield section
+        new THREE.Vector3(-160, 0.5, -20),    // Turn 15-16 double right onto pit straight
+      ];
+    } else if (theme === 'monaco') {
+      // Monaco Grand Prix: Harbor sweepers, swimming pool chicane, tunnel egress
+      return [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(10, 0, 130),
+        new THREE.Vector3(65, 1.0, 220),
+        new THREE.Vector3(140, 1.5, 260),
+        new THREE.Vector3(220, 0.5, 210),
+        new THREE.Vector3(240, 0.2, 100),
+        new THREE.Vector3(180, 0.5, 0),
+        new THREE.Vector3(160, 0.2, -110),
+        new THREE.Vector3(110, 0.5, -220),
+        new THREE.Vector3(10, 0.8, -260),
+        new THREE.Vector3(-80, 0.5, -220),
+        new THREE.Vector3(-140, 0.2, -120),
+        new THREE.Vector3(-90, 0, 0),
+      ];
+    } else if (theme === 'silverstone') {
+      // Silverstone Circuit: Copse, Maggotts, Becketts, Wellington Straight
+      return [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, 180),
+        new THREE.Vector3(80, 0.5, 320),
+        new THREE.Vector3(190, 1.2, 400),
+        new THREE.Vector3(330, 1.0, 350),
+        new THREE.Vector3(380, 0.5, 210),
+        new THREE.Vector3(310, 0.2, 70),
+        new THREE.Vector3(220, 0.5, -80),
+        new THREE.Vector3(140, 0.2, -220),
+        new THREE.Vector3(20, 0.5, -300),
+        new THREE.Vector3(-110, 0.8, -260),
+        new THREE.Vector3(-180, 0.5, -130),
+        new THREE.Vector3(-110, 0, -10),
+      ];
+    } else if (theme === 'swiss') {
       // High-altitude mountain pass with sweeping hairpins, elevation ascents & descents
       return [
         new THREE.Vector3(0, 0, 0),
@@ -633,7 +726,466 @@ export class TrackBuilder {
     const scenery = new THREE.Group();
     const up = new THREE.Vector3(0, 1, 0);
 
-    if (config.theme === 'tokyo') {
+    if (config.theme === 'chennai') {
+      // CHENNAI MARINA COAST: Bay of Bengal coast, Marina Lighthouse, Napier Bridge & Tamil signage
+      // 1. Bay of Bengal Ocean Water Surface (Specular Water Reflection)
+      const waterGeo = new THREE.PlaneGeometry(1200, 1200, 48, 48);
+      waterGeo.rotateX(-Math.PI / 2);
+      const waterPos = waterGeo.attributes.position;
+      for (let k = 0; k < waterPos.count; k++) {
+        const vx = waterPos.getX(k);
+        const vz = waterPos.getZ(k);
+        const wave = Math.sin(vx * 0.03 + vz * 0.02) * 0.8 + Math.cos(vz * 0.04) * 0.5;
+        waterPos.setY(k, wave - 1.5);
+      }
+      waterGeo.computeVertexNormals();
+
+      const waterMat = new THREE.MeshStandardMaterial({
+        color: 0x071e3d,
+        roughness: 0.15,
+        metalness: 0.85,
+      });
+      const ocean = new THREE.Mesh(waterGeo, waterMat);
+      ocean.position.set(160, 0, 120);
+      scenery.add(ocean);
+
+      // Marina Beach Golden Sand Shoreline
+      const sandGeo = new THREE.PlaneGeometry(350, 900, 16, 16);
+      sandGeo.rotateX(-Math.PI / 2);
+      const sandMat = new THREE.MeshStandardMaterial({ color: 0xc89b58, roughness: 0.95 });
+      const beach = new THREE.Mesh(sandGeo, sandMat);
+      beach.position.set(40, -0.2, 100);
+      scenery.add(beach);
+
+      // 2. Iconic Chennai Marina Lighthouse (Red & White Striped 38m Tower with Rotating Beacon)
+      const lighthouseGroup = new THREE.Group();
+      const lhBaseGeo = new THREE.CylinderGeometry(6, 7.5, 8, 16);
+      const lhBaseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
+      const lhBase = new THREE.Mesh(lhBaseGeo, lhBaseMat);
+      lhBase.position.y = 4;
+      lighthouseGroup.add(lhBase);
+
+      // 4 Alternate Red and White Striped Cylinders
+      for (let s = 0; s < 4; s++) {
+        const segGeo = new THREE.CylinderGeometry(4.5 - s * 0.25, 4.8 - s * 0.25, 7, 16);
+        const segMat = new THREE.MeshStandardMaterial({
+          color: s % 2 === 0 ? 0xef4444 : 0xf8fafc,
+          roughness: 0.4
+        });
+        const seg = new THREE.Mesh(segGeo, segMat);
+        seg.position.y = 8 + s * 7 + 3.5;
+        lighthouseGroup.add(seg);
+      }
+
+      // Lantern Room & Balcony
+      const balconyGeo = new THREE.CylinderGeometry(5.2, 5.2, 1.2, 16);
+      const balconyMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+      const balcony = new THREE.Mesh(balconyGeo, balconyMat);
+      balcony.position.y = 36.6;
+
+      const glassGeo = new THREE.CylinderGeometry(3.6, 3.6, 4.5, 16);
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0xffedd5, roughness: 0.1, transparent: true, opacity: 0.75 });
+      const lantern = new THREE.Mesh(glassGeo, glassMat);
+      lantern.position.y = 39.2;
+
+      // Dome Roof
+      const domeGeo = new THREE.SphereGeometry(3.8, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+      const domeMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+      const dome = new THREE.Mesh(domeGeo, domeMat);
+      dome.position.y = 41.4;
+
+      // Rotating Spotlight Beam
+      const beaconLight = new THREE.SpotLight(0x00f5ff, 4.0, 180, Math.PI / 6, 0.4, 1.0);
+      beaconLight.position.set(0, 39.5, 0);
+      const beaconTarget = new THREE.Object3D();
+      beaconTarget.position.set(100, 39.5, 0);
+      beaconLight.target = beaconTarget;
+      lighthouseGroup.add(balcony, lantern, dome, beaconLight, beaconTarget);
+
+      lighthouseGroup.position.set(130, 0, 420);
+      scenery.add(lighthouseGroup);
+
+      // 3. Napier Bridge (Bowstring Yellow Illuminated Arches over River Estuary)
+      const napierPt = curve.getPointAt(0.68);
+      const napierTangent = curve.getTangentAt(0.68).normalize();
+      const napierBinormal = new THREE.Vector3().crossVectors(up, napierTangent).normalize();
+      const bridgeGroup = new THREE.Group();
+      bridgeGroup.position.copy(napierPt);
+
+      const archMat = new THREE.MeshStandardMaterial({
+        color: 0xfacc15,
+        metalness: 0.6,
+        roughness: 0.3,
+        emissive: 0xca8a04,
+        emissiveIntensity: 0.25
+      });
+
+      // 4 Parallel Illuminated Bowstring Arch Ribs
+      for (let a = -1; a <= 1; a += 2) {
+        const archRibGeo = new THREE.TorusGeometry(18, 0.65, 12, 32, Math.PI);
+        const archRib = new THREE.Mesh(archRibGeo, archMat);
+        archRib.position.copy(napierBinormal).multiplyScalar(a * (roadWidth / 2 + 1.2));
+        archRib.position.y += 2.0;
+        archRib.rotation.y = Math.PI / 2;
+        bridgeGroup.add(archRib);
+
+        // Suspension Tie Cables
+        for (let c = -4; c <= 4; c++) {
+          const cableGeo = new THREE.CylinderGeometry(0.08, 0.08, 12, 6);
+          const cableMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+          const cable = new THREE.Mesh(cableGeo, cableMat);
+          cable.position.copy(napierBinormal).multiplyScalar(a * (roadWidth / 2 + 1.2));
+          cable.position.x += c * 3.5;
+          cable.position.y += 6.0;
+          bridgeGroup.add(cable);
+        }
+      }
+      scenery.add(bridgeGroup);
+
+      // 4. Bilingual Tamil & English Coastal Highway Gantry Signboards
+      const chennaiSigns = [
+        { main: 'காமராஜர் சாலை', sub: 'KAMARAJAR SALAI (MARINA)', dest: 'சாந்தோம் SANTHOME • அண்ணா சதுக்கம் ANNA SQ' },
+        { main: 'நெப்பியர் பாலம்', sub: 'NAPIER BRIDGE EXPRESSWAY', dest: 'துறைமுகம் CHENNAI PORT • மெரினா MARINA' },
+      ];
+
+      chennaiSigns.forEach((sign, idx) => {
+        const t = idx === 0 ? 0.15 : 0.62;
+        const pt = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d')!;
+
+        // NHAI Indian Highway Green Signboard
+        ctx.fillStyle = '#064e3b';
+        ctx.fillRect(0, 0, 512, 256);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 8;
+        ctx.strokeRect(8, 8, 496, 240);
+
+        ctx.fillStyle = '#fef08a';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.fillText(sign.main, 24, 65);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(sign.sub, 24, 125);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '24px sans-serif';
+        ctx.fillText(sign.dest, 24, 195);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        const signGeo = new THREE.BoxGeometry(roadWidth - 2.0, 3.2, 0.25);
+        const signMesh = new THREE.Mesh(signGeo, new THREE.MeshBasicMaterial({ map: tex }));
+        signMesh.position.set(pt.x, pt.y + 7.5, pt.z);
+        signMesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), binormal);
+
+        const sTruss = new THREE.Mesh(new THREE.BoxGeometry(roadWidth + 2.0, 0.4, 0.4), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+        sTruss.position.set(pt.x, pt.y + 9.2, pt.z);
+        sTruss.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), binormal);
+        scenery.add(signMesh, sTruss);
+      });
+
+      // 5. Tropical Marina Beach Coastal Palm Trees & Sea-Breeze Promenade Lampposts
+      const palmTrunkMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.9 });
+      const palmFrondMat = new THREE.MeshStandardMaterial({ color: 0x166534, roughness: 0.6 });
+      const cyanGlowMat = new THREE.MeshBasicMaterial({ color: 0x00f5ff });
+
+      for (let p = 0; p < 45; p++) {
+        const t = p / 45;
+        const pt = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+        const pPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, -(roadWidth / 2 + 5.0 + Math.random() * 8.0));
+        const pHeight = 8.5 + Math.random() * 3.5;
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.42, pHeight, 8), palmTrunkMat);
+        trunk.position.set(pPos.x, pPos.y + pHeight / 2, pPos.z);
+
+        const fronds = new THREE.Mesh(new THREE.ConeGeometry(4.8, 2.2, 8), palmFrondMat);
+        fronds.position.set(pPos.x, pPos.y + pHeight, pPos.z);
+        scenery.add(trunk, fronds);
+
+        // Seaside Promenade Lamppost
+        if (p % 2 === 0) {
+          const lampPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, roadWidth / 2 + 2.0);
+          const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 7.5), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+          lampPole.position.set(lampPos.x, lampPos.y + 3.75, lampPos.z);
+
+          const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), cyanGlowMat);
+          bulb.position.set(lampPos.x, lampPos.y + 7.5, lampPos.z);
+          scenery.add(lampPole, bulb);
+        }
+      }
+
+    } else if (config.theme === 'hyderabad') {
+      // HYDERABAD CYBER PEARL: Durgam Cheruvu Cable-Stayed Bridge, HITEC City Towers, Charminar Arches
+      // 1. Durgam Cheruvu Lake Water Surface
+      const lakeGeo = new THREE.PlaneGeometry(600, 600, 24, 24);
+      lakeGeo.rotateX(-Math.PI / 2);
+      const lakeMat = new THREE.MeshStandardMaterial({ color: 0x090514, roughness: 0.2, metalness: 0.8 });
+      const lake = new THREE.Mesh(lakeGeo, lakeMat);
+      lake.position.set(280, 0, 320);
+      scenery.add(lake);
+
+      // 2. Durgam Cheruvu Cable-Stayed Suspension Bridge Pylons (48m Tower with Stay Cables)
+      const pylonPt = curve.getPointAt(0.26);
+      const pylonTangent = curve.getTangentAt(0.26).normalize();
+      const pylonBinormal = new THREE.Vector3().crossVectors(up, pylonTangent).normalize();
+      const pylonGroup = new THREE.Group();
+      pylonGroup.position.copy(pylonPt);
+
+      const pylonMat = new THREE.MeshStandardMaterial({
+        color: 0x1e1b4b,
+        metalness: 0.8,
+        roughness: 0.25,
+      });
+
+      // Twin Inverted-Y Suspension Towers
+      for (let side = -1; side <= 1; side += 2) {
+        const legGeo = new THREE.CylinderGeometry(1.4, 2.2, 52, 8);
+        const leg = new THREE.Mesh(legGeo, pylonMat);
+        leg.position.copy(pylonBinormal).multiplyScalar(side * (roadWidth / 2 + 3.5));
+        leg.position.y += 24;
+        pylonGroup.add(leg);
+
+        // Radiant Stay Cables fanning to road deck
+        const cableMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+        for (let c = -6; c <= 6; c++) {
+          if (c === 0) continue;
+          const cableGeo = new THREE.CylinderGeometry(0.06, 0.06, 32, 4);
+          const cable = new THREE.Mesh(cableGeo, cableMat);
+          cable.position.copy(pylonBinormal).multiplyScalar(side * (roadWidth / 2 + 1.5));
+          cable.position.x += c * 4.5;
+          cable.position.y += 20;
+          cable.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(c * 0.2, 0.8, 0).normalize());
+          pylonGroup.add(cable);
+        }
+      }
+      scenery.add(pylonGroup);
+
+      // 3. Charminar-Inspired Neo-Traditional Illuminated Gateway Arches
+      const charminarPt = curve.getPointAt(0.55);
+      const cTangent = curve.getTangentAt(0.55).normalize();
+      const cBinormal = new THREE.Vector3().crossVectors(up, cTangent).normalize();
+      const archGroup = new THREE.Group();
+      archGroup.position.copy(charminarPt);
+
+      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x312e81, roughness: 0.6, metalness: 0.4 });
+      const goldTrim = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+
+      // 4 Minarets (Spire Towers) on Arch Corners
+      for (let mx = -1; mx <= 1; mx += 2) {
+        for (let mz = -1; mz <= 1; mz += 2) {
+          const minaret = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 22, 12), stoneMat);
+          minaret.position.set(mx * (roadWidth / 2 + 3.0), 11, mz * 6.0);
+
+          const minaretDome = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2), goldTrim);
+          minaretDome.position.set(mx * (roadWidth / 2 + 3.0), 22, mz * 6.0);
+          archGroup.add(minaret, minaretDome);
+        }
+      }
+
+      // Grand Archway Header
+      const headerGeo = new THREE.BoxGeometry(roadWidth + 7.0, 3.5, 8.0);
+      const header = new THREE.Mesh(headerGeo, stoneMat);
+      header.position.y = 15;
+      archGroup.add(header);
+      archGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), cTangent);
+      scenery.add(archGroup);
+
+      // 4. HITEC City Cyber Towers & Skyscraper Skyline
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0x090514,
+        roughness: 0.15,
+        metalness: 0.9,
+      });
+
+      for (let b = 0; b < 45; b++) {
+        const t = b / 45;
+        const pt = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+        const side = b % 2 === 0 ? 1 : -1;
+        const bPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, side * (roadWidth / 2 + 25 + Math.random() * 50));
+        const bHeight = 40 + Math.random() * 95;
+        const bMesh = new THREE.Mesh(new THREE.BoxGeometry(18 + Math.random() * 15, bHeight, 18 + Math.random() * 15), glassMat);
+        bMesh.position.set(bPos.x, bPos.y + bHeight / 2 - 10, bPos.z);
+        scenery.add(bMesh);
+      }
+
+      // 5. Bilingual Telugu & English Overhead Signboards
+      const hydSigns = [
+        { main: 'హైటెక్ సిటీ', sub: 'HITEC CITY IT CORRIDOR', dest: 'మాదాపూర్ MADHAPUR • గచ్చిబౌలి GACHIBOWLI' },
+        { main: 'దుర్గం చెరువు కేబుల్ బ్రిడ్జి', sub: 'DURGAM CHERUVU CABLE BRIDGE', dest: 'మైండ్‌స్పేస్ MINDSPACE • జూబ్లీ హిల్స్ JUBILEE HILLS' }
+      ];
+
+      hydSigns.forEach((sign, idx) => {
+        const t = idx === 0 ? 0.08 : 0.45;
+        const pt = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d')!;
+
+        ctx.fillStyle = '#1e1b4b';
+        ctx.fillRect(0, 0, 512, 256);
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 8;
+        ctx.strokeRect(8, 8, 496, 240);
+
+        ctx.fillStyle = '#f43f5e';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.fillText(sign.main, 24, 65);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText(sign.sub, 24, 125);
+
+        ctx.fillStyle = '#a855f7';
+        ctx.font = '24px sans-serif';
+        ctx.fillText(sign.dest, 24, 195);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        const signMesh = new THREE.Mesh(new THREE.BoxGeometry(roadWidth - 2.0, 3.2, 0.25), new THREE.MeshBasicMaterial({ map: tex }));
+        signMesh.position.set(pt.x, pt.y + 11.5, pt.z);
+        signMesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), binormal);
+        scenery.add(signMesh);
+      });
+
+    } else if (config.theme === 'buddh') {
+      // BUDDH INTERNATIONAL CIRCUIT (BIC): Hermann Tilke F1 Stadium Grandstands & Pit Complex
+      // 1. BIC Main Stadium Grandstand with Iconic Red/White Fabric Tensile Canopies
+      const grandstandSeatMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 });
+      const f1CanopyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+
+      for (let g = 0; g < 4; g++) {
+        const t = 0.03 + g * 0.04;
+        const pt = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+        const gPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, -(roadWidth / 2 + 18));
+        const stand = new THREE.Mesh(new THREE.BoxGeometry(16, 7, 32), grandstandSeatMat);
+        stand.position.set(gPos.x, gPos.y + 3.5, gPos.z);
+        stand.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
+
+        const canopy = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 34, 16, 1, false, 0, Math.PI / 2), f1CanopyMat);
+        canopy.position.set(gPos.x, gPos.y + 13, gPos.z);
+        canopy.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
+
+        scenery.add(stand, canopy);
+      }
+
+      // 2. BIC Team Pit Building (24 Pit Garages, Paddock Club & Pit Divider Wall)
+      for (let p = 0; p < 3; p++) {
+        const t = 0.03 + p * 0.045;
+        const pt = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+        const pitPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, (roadWidth / 2 + 16));
+        const pitBldg = new THREE.Mesh(new THREE.BoxGeometry(14, 8.5, 34), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4 }));
+        pitBldg.position.set(pitPos.x, pitPos.y + 4.25, pitPos.z);
+        pitBldg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
+
+        // Pit Lane Divider Wall
+        const wallPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, (roadWidth / 2 + 2.5));
+        const pitWall = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 34), new THREE.MeshStandardMaterial({ color: 0x64748b }));
+        pitWall.position.set(wallPos.x, wallPos.y + 0.7, wallPos.z);
+        pitWall.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
+
+        scenery.add(pitBldg, pitWall);
+      }
+
+      // 3. 1.06km Parabolic Back Straight DRS Activation Boards & Overhead Bridge
+      const drsPt = curve.getPointAt(0.28);
+      const drsTangent = curve.getTangentAt(0.28).normalize();
+      const drsBinormal = new THREE.Vector3().crossVectors(up, drsTangent).normalize();
+
+      const drsCanvas = document.createElement('canvas');
+      drsCanvas.width = 512;
+      drsCanvas.height = 128;
+      const dCtx = drsCanvas.getContext('2d')!;
+      dCtx.fillStyle = '#1e293b';
+      dCtx.fillRect(0, 0, 512, 128);
+      dCtx.fillStyle = '#00ff87';
+      dCtx.font = 'bold 44px sans-serif';
+      dCtx.textAlign = 'center';
+      dCtx.fillText('DRS ZONE 1 // 1.06 KM STRAIGHT', 256, 75);
+
+      const drsTex = new THREE.CanvasTexture(drsCanvas);
+      const drsMesh = new THREE.Mesh(new THREE.BoxGeometry(roadWidth - 2.0, 1.8, 0.2), new THREE.MeshBasicMaterial({ map: drsTex }));
+      drsMesh.position.set(drsPt.x, drsPt.y + 7.5, drsPt.z);
+      drsMesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), drsBinormal);
+      scenery.add(drsMesh);
+
+      // 4. BIC Stadium Floodlight Gantries
+      for (let f = 0; f < 20; f++) {
+        const t = f / 20;
+        const pt = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+        const fPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, roadWidth / 2 + 10.0);
+        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.55, 22, 8), new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8 }));
+        mast.position.set(fPos.x, fPos.y + 11, fPos.z);
+
+        const bulb = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.8, 0.2), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+        bulb.position.set(fPos.x - binormal.x * 0.3, fPos.y + 22, fPos.z - binormal.z * 0.3);
+        bulb.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), binormal);
+        scenery.add(mast, bulb);
+      }
+
+    } else if (config.theme === 'monaco') {
+      // MONACO GP HARBORSIDE: Superyachts, harbor sea plane, tunnel & stone quay walls
+      const seaGeo = new THREE.PlaneGeometry(800, 800, 16, 16);
+      seaGeo.rotateX(-Math.PI / 2);
+      const seaMat = new THREE.MeshStandardMaterial({ color: 0x03254c, roughness: 0.2, metalness: 0.8 });
+      const sea = new THREE.Mesh(seaGeo, seaMat);
+      sea.position.set(120, -1.0, 60);
+      scenery.add(sea);
+
+      // Luxury Mega-Yachts along the marina
+      const yachtHullMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 });
+      const yachtGlassMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1 });
+      for (let y = 0; y < 6; y++) {
+        const yPos = new THREE.Vector3(80 + y * 28, 0, 90 + Math.sin(y) * 40);
+        const hull = new THREE.Mesh(new THREE.BoxGeometry(10, 4.5, 24), yachtHullMat);
+        hull.position.copy(yPos);
+        const cabin = new THREE.Mesh(new THREE.BoxGeometry(7, 3.2, 14), yachtGlassMat);
+        cabin.position.set(yPos.x, yPos.y + 3.8, yPos.z - 2);
+        scenery.add(hull, cabin);
+      }
+
+    } else if (config.theme === 'silverstone') {
+      // SILVERSTONE GP: The Wing Pit Complex, British green meadow outfield & Copse banners
+      const meadowGeo = new THREE.PlaneGeometry(900, 900, 16, 16);
+      meadowGeo.rotateX(-Math.PI / 2);
+      const meadowMat = new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.95 });
+      const meadow = new THREE.Mesh(meadowGeo, meadowMat);
+      meadow.position.set(0, -0.2, 0);
+      scenery.add(meadow);
+
+      // The Wing Pit Building
+      const wingPt = curve.getPointAt(0.05);
+      const wingTangent = curve.getTangentAt(0.05).normalize();
+      const wingBinormal = new THREE.Vector3().crossVectors(up, wingTangent).normalize();
+      const wingPos = new THREE.Vector3().copy(wingPt).addScaledVector(wingBinormal, roadWidth / 2 + 18);
+      const theWing = new THREE.Mesh(new THREE.BoxGeometry(18, 9, 65), new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7 }));
+      theWing.position.set(wingPos.x, wingPos.y + 4.5, wingPos.z);
+      theWing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), wingTangent);
+      scenery.add(theWing);
+
+    } else if (config.theme === 'tokyo') {
       // 1. Concrete Viaduct Piers under elevated expressway
       const pierMat = new THREE.MeshStandardMaterial({
         color: 0x334155,
@@ -695,7 +1247,6 @@ export class TrackBuilder {
         signMesh.position.set(pt.x, pt.y + 7.5, pt.z);
         signMesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), binormal);
 
-        // Sign support truss
         const trussMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
         const sTrussGeo = new THREE.BoxGeometry(roadWidth + 2.0, 0.4, 0.4);
         const sTruss = new THREE.Mesh(sTrussGeo, trussMat);
@@ -712,7 +1263,7 @@ export class TrackBuilder {
         metalness: 0.85,
       });
 
-      const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff0033 }); // Red aviation strobe
+      const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
 
       for (let i = 0; i < 50; i++) {
         const t = (i / 50);
@@ -733,7 +1284,6 @@ export class TrackBuilder {
         bMesh.position.set(bPos.x, bHeight / 2 - 15, bPos.z);
         scenery.add(bMesh);
 
-        // Rooftop antenna tower & red flashing strobe light
         const antennaGeo = new THREE.CylinderGeometry(0.15, 0.35, 12, 6);
         const antennaMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
         const antenna = new THREE.Mesh(antennaGeo, antennaMat);
@@ -760,7 +1310,6 @@ export class TrackBuilder {
         const lamp = new THREE.Mesh(lampPoleGeo, lampMat);
         lamp.position.set(lampPt.x, lampPt.y + 4.25, lampPt.z);
 
-        // Lamp arm arching over roadway
         const armGeo = new THREE.BoxGeometry(2.8, 0.1, 0.1);
         const arm = new THREE.Mesh(armGeo, lampMat);
         arm.position.set(lampPt.x - binormal.x * 1.2, lampPt.y + 8.4, lampPt.z - binormal.z * 1.2);
@@ -774,7 +1323,6 @@ export class TrackBuilder {
       }
 
     } else if (config.theme === 'swiss') {
-      // 1. Continuous Undulating Alpine Valley & Mountain Terrain
       const terrainGeo = new THREE.PlaneGeometry(800, 800, 32, 32);
       terrainGeo.rotateX(-Math.PI / 2);
       const posAttr = terrainGeo.attributes.position;
@@ -782,14 +1330,13 @@ export class TrackBuilder {
         const vx = posAttr.getX(k);
         const vz = posAttr.getZ(k);
         const distFromCenter = Math.sqrt(vx * vx + vz * vz);
-        // Elevate surrounding peaks higher as distance increases
         const peakHeight = Math.sin(vx * 0.015) * Math.cos(vz * 0.015) * 45 + (distFromCenter * 0.18) - 15;
         posAttr.setY(k, peakHeight);
       }
       terrainGeo.computeVertexNormals();
 
       const terrainMat = new THREE.MeshStandardMaterial({
-        color: 0x1f3427, // Alpine meadow dark green
+        color: 0x1f3427,
         roughness: 0.95,
         metalness: 0.05,
       });
@@ -797,7 +1344,6 @@ export class TrackBuilder {
       terrainMesh.position.set(0, -10, 0);
       scenery.add(terrainMesh);
 
-      // 2. High-Density Norwegian Spruce & Swiss Pine Forest
       const pineNeedleMat = new THREE.MeshStandardMaterial({ color: 0x143722, roughness: 0.9 });
       const snowNeedleMat = new THREE.MeshStandardMaterial({ color: 0x244a33, roughness: 0.85 });
       const pineTrunkMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.9 });
@@ -814,12 +1360,10 @@ export class TrackBuilder {
 
         const treeScale = 0.8 + Math.random() * 0.7;
 
-        // Trunk
         const trunkGeo = new THREE.CylinderGeometry(0.35 * treeScale, 0.6 * treeScale, 3.5 * treeScale);
         const trunk = new THREE.Mesh(trunkGeo, pineTrunkMat);
         trunk.position.set(pos.x, pos.y + 1.75 * treeScale, pos.z);
 
-        // 3 Tiers of Conifer Foliage
         const needleMat = i % 3 === 0 ? snowNeedleMat : pineNeedleMat;
         const c1 = new THREE.Mesh(new THREE.ConeGeometry(3.2 * treeScale, 4.5 * treeScale, 7), needleMat);
         c1.position.set(pos.x, pos.y + 4.5 * treeScale, pos.z);
@@ -833,7 +1377,6 @@ export class TrackBuilder {
         scenery.add(trunk, c1, c2, c3);
       }
 
-      // 3. Swiss Timber Chalets with Slate Roofs & Warm Windows
       const chaletWallMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.8 });
       const chaletRoofMat = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.7 });
       const warmWindowMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
@@ -845,19 +1388,15 @@ export class TrackBuilder {
         const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
         const chaletPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, roadWidth / 2 + 32 + Math.random() * 15);
-
-        // House body
         const houseGeo = new THREE.BoxGeometry(10, 6, 8);
         const house = new THREE.Mesh(houseGeo, chaletWallMat);
         house.position.set(chaletPos.x, chaletPos.y + 3, chaletPos.z);
 
-        // Pitched roof
         const roofGeo = new THREE.ConeGeometry(8, 4.5, 4);
         roofGeo.rotateY(Math.PI / 4);
         const roof = new THREE.Mesh(roofGeo, chaletRoofMat);
         roof.position.set(chaletPos.x, chaletPos.y + 7.5, chaletPos.z);
 
-        // Window
         const winGeo = new THREE.BoxGeometry(1.6, 1.6, 0.2);
         const win = new THREE.Mesh(winGeo, warmWindowMat);
         win.position.set(chaletPos.x, chaletPos.y + 3.2, chaletPos.z + 4.1);
@@ -865,7 +1404,6 @@ export class TrackBuilder {
         scenery.add(house, roof, win);
       }
 
-      // 4. Granite Alpine Rock Cliffs
       const rockMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.95 });
       for (let i = 0; i < 25; i++) {
         const t = i / 25;
@@ -882,7 +1420,6 @@ export class TrackBuilder {
 
     } else {
       // DUBAI GRAND CIRCUIT: Modern Grade-1 FIA Grand Prix look
-      // 1. Turquoise & White Painted Asphalt Run-Off Zones (Yas Marina style)
       const runoffMatTurquoise = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.5 });
       const runoffMatWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 });
 
@@ -903,9 +1440,8 @@ export class TrackBuilder {
         scenery.add(rMesh);
       }
 
-      // 2. Tall F1 Stadium Floodlight Towers (Yas Marina style high-mast towers)
       const floodlightMastMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85, roughness: 0.3 });
-      const floodlightBulbMat = new THREE.MeshBasicMaterial({ color: 0xffedd5 }); // Warm intense light
+      const floodlightBulbMat = new THREE.MeshBasicMaterial({ color: 0xffedd5 });
 
       for (let i = 0; i < 18; i++) {
         const t = i / 18;
@@ -914,14 +1450,11 @@ export class TrackBuilder {
         const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
         const fPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, roadWidth / 2 + 12);
-
-        // Mast pole
         const mastHeight = 24.0;
         const mastGeo = new THREE.CylinderGeometry(0.35, 0.6, mastHeight, 8);
         const mast = new THREE.Mesh(mastGeo, floodlightMastMat);
         mast.position.set(fPos.x, fPos.y + mastHeight / 2, fPos.z);
 
-        // Multi-lamp floodlight head (array of 8 lamps)
         const headGeo = new THREE.BoxGeometry(4.2, 2.2, 0.6);
         const head = new THREE.Mesh(headGeo, floodlightMastMat);
         head.position.set(fPos.x, fPos.y + mastHeight, fPos.z);
@@ -935,7 +1468,6 @@ export class TrackBuilder {
         scenery.add(mast, head, bulb);
       }
 
-      // 3. Covered Main Grandstands along start straightaway
       const grandstandSeatMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.6 });
       const canopyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
 
@@ -946,23 +1478,17 @@ export class TrackBuilder {
         const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
         const gPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, -(roadWidth / 2 + 18));
-
-        // Stepped seating stand
-        const standGeo = new THREE.BoxGeometry(14, 6, 28);
-        const stand = new THREE.Mesh(standGeo, grandstandSeatMat);
+        const stand = new THREE.Mesh(new THREE.BoxGeometry(14, 6, 28), grandstandSeatMat);
         stand.position.set(gPos.x, gPos.y + 3, gPos.z);
         stand.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
 
-        // Curved fabric roof canopy
-        const canopyGeo = new THREE.CylinderGeometry(16, 16, 30, 16, 1, false, 0, Math.PI / 2);
-        const canopy = new THREE.Mesh(canopyGeo, canopyMat);
+        const canopy = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 30, 16, 1, false, 0, Math.PI / 2), canopyMat);
         canopy.position.set(gPos.x, gPos.y + 11, gPos.z);
         canopy.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
 
         scenery.add(stand, canopy);
       }
 
-      // 4. Desert Date Palms & Golden Sand Dunes
       const palmTrunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
       const palmFrondMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.7 });
       const duneMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.95 });
@@ -976,20 +1502,16 @@ export class TrackBuilder {
         const side = p % 2 === 0 ? 1 : -1;
         const pPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, side * (roadWidth / 2 + 16 + Math.random() * 45));
 
-        // Palm trunk with slight bend
         const pHeight = 7 + Math.random() * 4;
         const pTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.45, pHeight, 8), palmTrunkMat);
         pTrunk.position.set(pPos.x, pPos.y + pHeight / 2, pPos.z);
 
-        // Fronds canopy
-        const frondGeo = new THREE.ConeGeometry(4.2, 1.8, 8);
-        const fronds = new THREE.Mesh(frondGeo, palmFrondMat);
+        const fronds = new THREE.Mesh(new THREE.ConeGeometry(4.2, 1.8, 8), palmFrondMat);
         fronds.position.set(pPos.x, pPos.y + pHeight, pPos.z);
 
         scenery.add(pTrunk, fronds);
       }
 
-      // Rolling sand dunes
       for (let d = 0; d < 35; d++) {
         const t = d / 35;
         const pt = curve.getPointAt(t);
@@ -1000,9 +1522,8 @@ export class TrackBuilder {
         const dPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, side * (roadWidth / 2 + 40 + Math.random() * 50));
 
         const duneRadius = 20 + Math.random() * 25;
-        const duneGeo = new THREE.SphereGeometry(duneRadius, 14, 8);
-        duneGeo.scale(1.9, 0.35, 1.9);
-        const dune = new THREE.Mesh(duneGeo, duneMat);
+        const dune = new THREE.Mesh(new THREE.SphereGeometry(duneRadius, 14, 8), duneMat);
+        dune.scale.set(1.9, 0.35, 1.9);
         dune.position.set(dPos.x, dPos.y - 4, dPos.z);
         scenery.add(dune);
       }

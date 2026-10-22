@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "cd server && npm run dev",
+    "dev": "concurrently -n \"GO-SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run dev:server:go\" \"npm run dev:client\"",
+    "dev:server": "npm run dev:server:go",
+    "dev:server:go": "cd server-go && go run ./cmd/server",
+    "dev:server:node": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
-    "build:client": "cd client && npm run build",
-    "build:server": "cd server && npm run build"
+    "build:server:go": "cd server-go && go build -o server.exe ./cmd/server",
+    "build:client": "cd client && npm run build"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

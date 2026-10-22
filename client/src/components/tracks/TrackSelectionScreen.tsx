@@ -21,14 +21,83 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
     onSelectTrack(trackId);
   };
 
+  const [activeFilter, setActiveFilter] = React.useState<'all' | 'indian' | 'global'>('all');
+
   const getTrackDetails = (id: string) => {
     switch (id) {
+      case 'chennai':
+        return {
+          bgImage: null,
+          flag: '🇮🇳',
+          badge: 'INDIAN MOTORSPORT HERITAGE',
+          weather: 'Marina Night // Sea Breeze & Wet Tarmac',
+          weatherIcon: CloudRain,
+          elevation: '+4.5m Coastal Surge',
+          corners: '15 Turns',
+          record: 'KarunChandhok • 152 WPM',
+          themeAccent: '#00f5ff',
+          surfaceGrip: '96% High Grip'
+        };
+      case 'hyderabad':
+        return {
+          bgImage: null,
+          flag: '🇮🇳',
+          badge: 'CYBER STREET CIRCUIT',
+          weather: 'Neon Dusk // Durgam Cheruvu Lake Mist',
+          weatherIcon: Sparkles,
+          elevation: '+12.5m Bridge Span',
+          corners: '14 Turns',
+          record: 'CyberRacer • 156 WPM',
+          themeAccent: '#c084fc',
+          surfaceGrip: '95% Street Grip'
+        };
+      case 'buddh':
+        return {
+          bgImage: null,
+          flag: '🇮🇳',
+          badge: 'FIA GRADE 1 F1 CIRCUIT',
+          weather: 'Formula 1 Twilight // High Downforce',
+          weatherIcon: Sun,
+          elevation: '+14m Crest // Turn 3 Drop',
+          corners: '16 Grand Prix Turns',
+          record: 'NarainKarthikeyan • 161 WPM',
+          themeAccent: '#f59e0b',
+          surfaceGrip: '99% FIA Race Grade'
+        };
+      case 'monaco':
+        return {
+          bgImage: null,
+          flag: '🇲🇨',
+          badge: 'TRIPLE CROWN CROWN JEWEL',
+          weather: 'Riviera Harbor Sunset // Tight Barriers',
+          weatherIcon: Sun,
+          elevation: '+42m Stepped Hill',
+          corners: '19 Precision Turns',
+          record: 'SennaGhost • 158 WPM',
+          themeAccent: '#38bdf8',
+          surfaceGrip: '91% Low Margin'
+        };
+      case 'silverstone':
+        return {
+          bgImage: null,
+          flag: '🇬🇧',
+          badge: 'HOME OF BRITISH MOTORSPORT',
+          weather: 'Brisk Meadow Air // Fast Sweep',
+          weatherIcon: Mountain,
+          elevation: '+11m Rolling Hills',
+          corners: '18 High-G Turns',
+          record: 'ApexPredator • 159 WPM',
+          themeAccent: '#60a5fa',
+          surfaceGrip: '98% High Speed'
+        };
       case 'tokyo':
         return {
           bgImage: heroBg,
+          flag: '🇯🇵',
+          badge: 'URBAN NIGHT SPRINT',
           weather: 'Rain Night // Wet Asphalt',
           weatherIcon: CloudRain,
-          elevation: '+18m',
+          elevation: '+18m Viaduct',
           corners: '14 Turns',
           record: 'ApexPredator • 154 WPM',
           themeAccent: '#00ff87',
@@ -37,25 +106,29 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
       case 'swiss':
         return {
           bgImage: swissTrackImg,
+          flag: '🇨🇭',
+          badge: 'ALPINE MOUNTAIN PASS',
           weather: 'Alpine Sunny // Cold Crisp Air',
           weatherIcon: Mountain,
           elevation: '+142m Gradient',
-          corners: '22 Turns',
+          corners: '22 Hairpins',
           record: 'Frostbite • 142 WPM',
           themeAccent: '#38bdf8',
-          surfaceGrip: '89% Grip'
+          surfaceGrip: '89% Cold Tarmac'
         };
       case 'dubai':
       default:
         return {
           bgImage: null,
-          weather: 'Desert Dusk // Golden Highway',
+          flag: '🇦🇪',
+          badge: 'DESERT SUPERCIRCUIT',
+          weather: 'Desert Dusk // Floodlit Yas Runoff',
           weatherIcon: Sun,
           elevation: '+8m Flat',
-          corners: '8 Turns',
+          corners: '8 Wide Sweepers',
           record: 'SultanOfSpeed • 149 WPM',
           themeAccent: '#f59e0b',
-          surfaceGrip: '97% Grip'
+          surfaceGrip: '97% High Grip'
         };
     }
   };
@@ -91,21 +164,55 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
 
       {/* 2. Main Track Grid */}
       <main className="w-full max-w-6xl mx-auto my-auto py-8 z-10">
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono mb-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>AUTHORITATIVE 4-LANE TARMAC GEOMETRY</span>
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono mb-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>FIA SPECIFICATION 4-LANE TARMAC CIRCUITS</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
+              Select Competition Track
+            </h2>
+            <p className="mt-1 text-sm text-slate-400 max-w-2xl leading-relaxed">
+              Featuring India's premier motorsport circuits (Buddh International Circuit, Chennai Marina, Hyderabad Cyber Pearl) alongside legendary global Grand Prix destinations.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-            Select Competition Track
-          </h2>
-          <p className="mt-1 text-sm text-slate-400 max-w-2xl leading-relaxed">
-            Each venue features bespoke banking gradients, road camber physics, and custom environmental acoustics.
-          </p>
+
+          {/* Regional Filter Buttons */}
+          <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 self-start md:self-auto">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                activeFilter === 'all' ? 'bg-emerald-400 text-black shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              ALL ({TRACKS.length})
+            </button>
+            <button
+              onClick={() => setActiveFilter('indian')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                activeFilter === 'indian' ? 'bg-gradient-to-r from-orange-400 to-amber-400 text-black shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🇮🇳 INDIAN GP (3)
+            </button>
+            <button
+              onClick={() => setActiveFilter('global')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                activeFilter === 'global' ? 'bg-sky-400 text-black shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🌍 GLOBAL GP (5)
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TRACKS.map((track) => {
+          {TRACKS.filter((track) => {
+            if (activeFilter === 'indian') return ['chennai', 'hyderabad', 'buddh'].includes(track.id);
+            if (activeFilter === 'global') return !['chennai', 'hyderabad', 'buddh'].includes(track.id);
+            return true;
+          }).map((track) => {
             const isSelected = track.id === selectedTrackId;
             const details = getTrackDetails(track.id);
             const WeatherIcon = details.weatherIcon;
@@ -130,9 +237,10 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-90"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-amber-600/30 via-slate-900 to-slate-950 flex items-center justify-center relative">
+                    <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex flex-col items-center justify-center relative p-4 text-center">
                       <div className="absolute inset-0 bg-cyber-grid opacity-30" />
-                      <Sun className="w-16 h-16 text-amber-500/40 animate-pulse" />
+                      <div className="text-4xl mb-1">{details.flag}</div>
+                      <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">{details.badge}</span>
                     </div>
                   )}
 
@@ -170,9 +278,12 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
                 {/* Track Details & Telemetry */}
                 <div className="p-5 flex-1 flex flex-col justify-between bg-slate-900/90">
                   <div>
-                    <h3 className="text-xl font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors">
-                      {track.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{details.flag}</span>
+                      <h3 className="text-xl font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors">
+                        {track.name}
+                      </h3>
+                    </div>
 
                     <p className="mt-2 text-xs text-slate-400 leading-relaxed">
                       {track.description}

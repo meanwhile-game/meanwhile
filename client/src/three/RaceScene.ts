@@ -268,14 +268,17 @@ export class RaceSceneManager {
       mesh.lookAt(lookTarget);
 
       // Motorcycle lean / car roll into corners
-      const nextT = Math.min(0.999, t + 0.01);
+      const nextT = Math.min(0.999, t + 0.012);
       const nextTangent = curve.getTangentAt(nextT).normalize();
       const curvature = tangent.clone().cross(nextTangent).y;
 
       if (data.vehicleId === 'phantom-bike') {
-        mesh.rotation.z = -curvature * 18.0; // Dynamic motorcycle lean
+        // Natural progressive motorcycle lean up to ~42 degrees with speed damping
+        const leanFactor = Math.min(1.0, Math.max(0.25, data.wpm / 65));
+        const targetRoll = -Math.sign(curvature) * Math.min(Math.PI / 4.2, Math.abs(curvature) * 28.0 * leanFactor);
+        mesh.rotation.z = targetRoll;
       } else {
-        mesh.rotation.z = -curvature * 3.5;  // Subtle car roll
+        mesh.rotation.z = -curvature * 4.2;  // Realistic sports chassis roll
       }
 
       // Rotate wheels based on motion
@@ -301,39 +304,40 @@ export class RaceSceneManager {
       }
     }
 
-    // Dynamic Chase Camera
+    // Dynamic Chase Camera with Speed-Adaptive FOV & G-Force Drift
     if (localVehiclePos && localVehicleTangent) {
-      // Speed-dependent camera offset
       const speedFactor = Math.min(1.0, localWpm / 120);
-      const camDist = 7.8 + speedFactor * 2.4;
-      const camHeight = 3.0 + speedFactor * 0.4;
+      const camDist = 7.6 + speedFactor * 2.8;
+      const camHeight = 2.9 + speedFactor * 0.5;
 
       const targetCamPos = new THREE.Vector3()
         .copy(localVehiclePos)
         .addScaledVector(localVehicleTangent, -camDist);
       targetCamPos.y += camHeight;
 
-      // Micro camera shake at extreme speed (> 85 WPM)
+      // Micro camera shake at extreme racing velocity (> 85 WPM)
       if (localWpm > 85) {
-        targetCamPos.x += (Math.random() - 0.5) * 0.05;
-        targetCamPos.y += (Math.random() - 0.5) * 0.03;
+        targetCamPos.x += (Math.random() - 0.5) * 0.06;
+        targetCamPos.y += (Math.random() - 0.5) * 0.04;
+      }
+
+      // Speed-dependent dynamic FOV expansion (60 deg base -> 74 deg at high WPM)
+      const targetFov = 60 + speedFactor * 14;
+      if (Math.abs(this.camera.fov - targetFov) > 0.1) {
+        this.camera.fov += (targetFov - this.camera.fov) * dt * 4;
+        this.camera.updateProjectionMatrix();
       }
 
       // Smooth camera interpolation
-      this.camera.position.lerp(targetCamPos, dt * 8);
+      this.camera.position.lerp(targetCamPos, dt * 8.5);
 
-      const lookAhead = 15.0;
+      const lookAhead = 16.0;
       const camLookTarget = new THREE.Vector3()
         .copy(localVehiclePos)
         .addScaledVector(localVehicleTangent, lookAhead);
       camLookTarget.y += 0.8;
 
       this.camera.lookAt(camLookTarget);
-
-      // Dynamic FOV for speed sensation (60 up to 72)
-      const targetFov = 60 + speedFactor * 12;
-      this.camera.fov += (targetFov - this.camera.fov) * dt * 3;
-      this.camera.updateProjectionMatrix();
 
       // Shadow light follows player vehicle
       if (this.dirLight) {

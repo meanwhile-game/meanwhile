@@ -106,11 +106,12 @@ flowchart TB
 ### Backend Game Server
 | Component | Technology | Rationale & Capabilities |
 | :--- | :--- | :--- |
-| **Runtime** | Node.js 22 LTS | High-throughput asynchronous event loop, native fetch, V8 JIT performance |
-| **Execution** | TypeScript + TSX | Fast dev execution without build steps; compiles to pure ES Modules |
-| **HTTP Server** | Express 4.21+ | REST health checks, driver telemetry endpoints, CORS middleware |
-| **WebSocket Engine**| Socket.IO 4.8+ | Authoritative multiplayer clock, room segmentation, heartbeat health checks |
-| **Storage (Dev)** | Atomic File I/O (`fs.promises`) | Zero-configuration file database storing `profiles.json` and `leaderboard.json` with in-memory sync |
+| **Runtime & Language** | Go 1.22+ (v1.26/v1.27) | High-performance compiled binary, concurrent goroutine worker pools, zero-GC game loop ticks |
+| **WebSocket Engine** | Native WebSockets (`github.com/gorilla/websocket`) | Low-latency binary/text frames, sub-millisecond roundtrips, custom ack callbacks |
+| **HTTP Server** | Go `net/http` Standard Library | REST profile, leaderboard, and health endpoints (`/health`, `/api/profile`, `/api/leaderboard`) |
+| **Database Tier** | PostgreSQL 16 (`github.com/lib/pq`) | 5 normalized tables (`users`, `player_stats`, `race_results`, `circuits`, `vehicles`) with bcrypt security |
+| **In-Memory Store** | Thread-safe Go sync.RWMutex | Zero-lag active room management, live 15 Hz tick loop, seamless fallback if database is offline |
+| **Password Security**| `golang.org/x/crypto/bcrypt` | Adaptive hashing cost factor 10, preventing credential leaks |
 
 ---
 
@@ -150,93 +151,74 @@ Recommended for scaling beyond 10,000+ concurrent drivers:
 
 ---
 
-## 4. Database Strategy & Migration Guide
+## 4. Database Strategy & PostgreSQL Schema
 
-### Proposed PostgreSQL Relational Schema
-
-Currently, Meanwhile utilizes local JSON databases in `server/data/`. For production scale, transition to PostgreSQL with Prisma ORM or Drizzle ORM.
+Meanwhile utilizes a small, clean, high-performance PostgreSQL schema designed for high-concurrency esports telemetry. Full local and container setup instructions are available in **[DATABASE_SETUP.md](DATABASE_SETUP.md)**.
 
 ```sql
--- 1. Users & Authentication
-CREATE TABLE users (
+-- 1. Users Table (Bcrypt Hashed Security)
+CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(64) PRIMARY KEY,
-    username VARCHAR(32) NOT NULL UNIQUE,
-    email VARCHAR(255) UNIQUE,
-    avatar VARCHAR(8) DEFAULT '🏎️',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    username VARCHAR(64) UNIQUE NOT NULL,
+    email VARCHAR(128) UNIQUE,
+    password_hash VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Persistent Driver Profiles
-CREATE TABLE driver_profiles (
+-- 2. Circuits Table (Indian & Global Circuits)
+CREATE TABLE IF NOT EXISTS circuits (
+    id VARCHAR(64) PRIMARY KEY,
+    name VARCHAR(128) NOT NULL,
+    location VARCHAR(128) NOT NULL,
+    circuit_type VARCHAR(64) NOT NULL,
+    configuration JSONB NOT NULL DEFAULT '{}'
+);
+
+-- 3. Vehicles Table (Machines & Physics Metadata)
+CREATE TABLE IF NOT EXISTS vehicles (
+    id VARCHAR(64) PRIMARY KEY,
+    name VARCHAR(128) NOT NULL,
+    vehicle_type VARCHAR(64) NOT NULL,
+    metadata JSONB NOT NULL DEFAULT '{}'
+);
+
+-- 4. Player Stats Table (Aggregated Career Telemetry)
+CREATE TABLE IF NOT EXISTS player_stats (
     user_id VARCHAR(64) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    level INTEGER DEFAULT 1,
-    xp INTEGER DEFAULT 0,
-    next_level_xp INTEGER DEFAULT 500,
-    rank_tier VARCHAR(20) DEFAULT 'Bronze',
-    total_races INTEGER DEFAULT 0,
-    wins INTEGER DEFAULT 0,
-    podiums INTEGER DEFAULT 0,
-    best_wpm INTEGER DEFAULT 0,
-    average_wpm NUMERIC(5,2) DEFAULT 0.00,
-    average_accuracy NUMERIC(5,2) DEFAULT 100.00,
-    favorite_vehicle VARCHAR(32) DEFAULT 'cyber-gt',
-    favorite_track VARCHAR(32) DEFAULT 'tokyo',
+    total_races INT DEFAULT 0,
+    wins INT DEFAULT 0,
+    best_wpm INT DEFAULT 0,
+    average_wpm INT DEFAULT 0,
+    average_accuracy INT DEFAULT 100,
+    total_xp INT DEFAULT 0,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Curated Literature & Song Passages
-CREATE TABLE passages (
+-- 5. Race Results Table (Historical Race Logs)
+CREATE TABLE IF NOT EXISTS race_results (
     id VARCHAR(64) PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    author VARCHAR(128) NOT NULL,
-    source_type VARCHAR(20) NOT NULL CHECK (source_type IN ('book', 'song', 'speech', 'essay', 'article')),
-    year VARCHAR(16),
-    category VARCHAR(64) NOT NULL,
-    difficulty VARCHAR(16) NOT NULL CHECK (difficulty IN ('easy', 'medium', 'hard')),
-    text TEXT NOT NULL,
-    context TEXT,
-    source_url VARCHAR(512),
+    user_id VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
+    circuit_id VARCHAR(64) REFERENCES circuits(id) ON DELETE SET NULL,
+    vehicle_id VARCHAR(64) REFERENCES vehicles(id) ON DELETE SET NULL,
+    finish_position INT NOT NULL,
+    race_time_ms BIGINT NOT NULL,
+    wpm INT NOT NULL,
+    accuracy INT NOT NULL,
+    errors INT DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Race Sessions
-CREATE TABLE race_sessions (
-    id VARCHAR(64) PRIMARY KEY,
-    room_code VARCHAR(12) NOT NULL,
-    track_id VARCHAR(32) NOT NULL,
-    passage_id VARCHAR(64) REFERENCES passages(id),
-    is_private BOOLEAN DEFAULT FALSE,
-    started_at TIMESTAMP WITH TIME ZONE,
-    finished_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- 5. Race Results & Telemetry
-CREATE TABLE race_results (
-    id VARCHAR(64) PRIMARY KEY,
-    race_id VARCHAR(64) REFERENCES race_sessions(id) ON DELETE CASCADE,
-    user_id VARCHAR(64) REFERENCES users(id),
-    placement INTEGER NOT NULL,
-    total_racers INTEGER NOT NULL,
-    wpm INTEGER NOT NULL,
-    accuracy NUMERIC(5,2) NOT NULL,
-    elapsed_ms INTEGER NOT NULL,
-    xp_earned INTEGER NOT NULL,
-    vehicle_id VARCHAR(32) NOT NULL,
-    vehicle_color VARCHAR(16) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes for Speed & Performance
-CREATE INDEX idx_profiles_best_wpm ON driver_profiles(best_wpm DESC);
-CREATE INDEX idx_profiles_wins ON driver_profiles(wins DESC);
-CREATE INDEX idx_race_results_user ON race_results(user_id, created_at DESC);
+-- High-Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_race_results_user ON race_results(user_id);
+CREATE INDEX IF NOT EXISTS idx_race_results_circuit ON race_results(circuit_id);
+CREATE INDEX IF NOT EXISTS idx_race_results_created ON race_results(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_player_stats_wpm ON player_stats(best_wpm DESC);
+CREATE INDEX IF NOT EXISTS idx_player_stats_wins ON player_stats(wins DESC);
+CREATE INDEX IF NOT EXISTS idx_player_stats_xp ON player_stats(total_xp DESC);
 ```
 
-### Migration Script: Seed JSON to PostgreSQL
-
-To migrate your existing data (`server/data/profiles.json` and `leaderboard.json`), execute this automated script (`server/scripts/migrate-to-db.ts`):
+### Setup & Migrations
+See **[DATABASE_SETUP.md](DATABASE_SETUP.md)** for one-command Docker launch, `.env` parameter configurations, and verification steps.
 
 ```typescript
 import { readFileSync } from 'fs';

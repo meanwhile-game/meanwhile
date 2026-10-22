@@ -91,7 +91,7 @@ export interface TrackConfig {
   lengthMeters: number;
   difficulty: 'easy' | 'medium' | 'hard';
   description: string;
-  theme: 'tokyo' | 'swiss' | 'dubai';
+  theme: 'tokyo' | 'swiss' | 'dubai' | 'chennai' | 'hyderabad' | 'buddh' | 'monaco' | 'silverstone';
   skyColor: string;
   fogColor: string;
   fogNear: number;
@@ -156,6 +156,66 @@ export const VEHICLES: VehicleConfig[] = [
 ];
 
 export const TRACKS: TrackConfig[] = [
+  // --- INDIAN CIRCUITS (PRIORITY) ---
+  {
+    id: 'chennai',
+    name: 'Chennai Marina Coast',
+    location: 'Marina Beach & Santhome High Road, Chennai, India',
+    lengthMeters: 1350,
+    difficulty: 'medium',
+    description: 'High-speed coastal night sprint along the Bay of Bengal, featuring Marina lighthouse beacons, Napier bridge illuminated arches, and humid sea-breeze tarmac.',
+    theme: 'chennai',
+    skyColor: '#040b17',
+    fogColor: '#07162b',
+    fogNear: 45,
+    fogFar: 320,
+    ambientLightColor: '#0e2b47',
+    sunColor: '#00f5ff',
+    sunPosition: [80, 70, -100],
+    roadColor: '#0f1824',
+    curbColor: '#00f5ff',
+    neonColor: '#38bdf8'
+  },
+  {
+    id: 'hyderabad',
+    name: 'Hyderabad Cyber Pearl',
+    location: 'HITEC City & Durgam Cheruvu Expressway, Hyderabad, India',
+    lengthMeters: 1280,
+    difficulty: 'medium',
+    description: 'Futuristic night circuit through India\'s premier cyber hub, sweeping across the Durgam Cheruvu cable-stayed suspension bridge and glowing glass IT towers.',
+    theme: 'hyderabad',
+    skyColor: '#08051a',
+    fogColor: '#120b2e',
+    fogNear: 50,
+    fogFar: 300,
+    ambientLightColor: '#2b124c',
+    sunColor: '#c084fc',
+    sunPosition: [-60, 90, 80],
+    roadColor: '#161026',
+    curbColor: '#a855f7',
+    neonColor: '#f43f5e'
+  },
+  {
+    id: 'buddh',
+    name: 'Buddh International Circuit',
+    location: 'Yamuna Expressway, Greater Noida, India',
+    lengthMeters: 1600,
+    difficulty: 'hard',
+    description: 'India\'s world-renowned Formula 1 Grand Prix venue! Features the iconic 1.06km parabolic back straight, banked multi-apex Turn 10-11 bowl, and FIA fabric grandstands.',
+    theme: 'buddh',
+    skyColor: '#131c26',
+    fogColor: '#1c2836',
+    fogNear: 60,
+    fogFar: 380,
+    ambientLightColor: '#475569',
+    sunColor: '#fbbf24',
+    sunPosition: [120, 110, 60],
+    roadColor: '#212936',
+    curbColor: '#ef4444',
+    neonColor: '#f59e0b'
+  },
+
+  // --- INTERNATIONAL CIRCUITS ---
   {
     id: 'tokyo',
     name: 'Tokyo Night Run',
@@ -174,6 +234,25 @@ export const TRACKS: TrackConfig[] = [
     roadColor: '#12151f',
     curbColor: '#00ff87',
     neonColor: '#00e5ff'
+  },
+  {
+    id: 'monaco',
+    name: 'Monaco GP Harborside',
+    location: 'Monte Carlo Harbor, Principality of Monaco',
+    lengthMeters: 1150,
+    difficulty: 'hard',
+    description: 'The crown jewel of motorsport! Narrow barrier-lined harbor sweepers past superyachts, the iconic swimming pool chicane, and tunnel egress.',
+    theme: 'monaco',
+    skyColor: '#0a192f',
+    fogColor: '#0f2744',
+    fogNear: 50,
+    fogFar: 300,
+    ambientLightColor: '#1e3a5f',
+    sunColor: '#38bdf8',
+    sunPosition: [90, 80, -90],
+    roadColor: '#151f2e',
+    curbColor: '#ef4444',
+    neonColor: '#e2e8f0'
   },
   {
     id: 'swiss',
@@ -195,6 +274,25 @@ export const TRACKS: TrackConfig[] = [
     neonColor: '#f59e0b'
   },
   {
+    id: 'silverstone',
+    name: 'Silverstone Grand Prix',
+    location: 'Northamptonshire, United Kingdom',
+    lengthMeters: 1550,
+    difficulty: 'hard',
+    description: 'The historic home of Formula 1! Legendary ultra-high-speed sweepers through Copse, Maggotts, Becketts, and the Wellington Straight.',
+    theme: 'silverstone',
+    skyColor: '#1e293b',
+    fogColor: '#334155',
+    fogNear: 55,
+    fogFar: 360,
+    ambientLightColor: '#64748b',
+    sunColor: '#93c5fd',
+    sunPosition: [100, 120, -70],
+    roadColor: '#242b38',
+    curbColor: '#ef4444',
+    neonColor: '#60a5fa'
+  },
+  {
     id: 'dubai',
     name: 'Dubai Grand Circuit',
     location: 'Desert Perimeter, Dubai, UAE',
@@ -214,3 +312,4 @@ export const TRACKS: TrackConfig[] = [
     neonColor: '#fbbf24'
   }
 ];
+

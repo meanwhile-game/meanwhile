@@ -15,7 +15,11 @@ import {
   Flame, 
   RotateCw,
   CheckCircle2,
-  Users
+  Users,
+  MapPin,
+  Wrench,
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 import { useTheme } from '../../theme/ThemeContext.js';
 import { sound } from '../../sound/soundEngine.js';
@@ -27,12 +31,18 @@ import swissTrack from '../../assets/swiss-track.jpg';
 interface LandingPageProps {
   onEnterGrid: () => void;
   onStartSolo?: () => void;
+  onOpenGarage?: () => void;
+  onOpenTracks?: () => void;
+  onOpenLeaderboard?: () => void;
   onlineCount: number;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ 
   onEnterGrid, 
-  onStartSolo, 
+  onStartSolo,
+  onOpenGarage,
+  onOpenTracks,
+  onOpenLeaderboard,
   onlineCount 
 }) => {
   const { isLight } = useTheme();
@@ -276,11 +286,56 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-2xl tracking-tighter text-white">Meanwhile</span>
-              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">PRO</span>
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">F1 GP</span>
             </div>
             <span className="text-[10px] font-mono tracking-widest text-slate-400 block -mt-1 uppercase">3D Multiplayer Typing Racing</span>
           </div>
         </div>
+
+        {/* Center Quick Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-lg">
+          {onOpenTracks && (
+            <button
+              onClick={() => {
+                sound.playKeyClick(false);
+                onOpenTracks();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer group"
+            >
+              <MapPin className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <span>Circuits</span>
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40">
+                🇮🇳 3 Indian GPs
+              </span>
+            </button>
+          )}
+
+          {onOpenGarage && (
+            <button
+              onClick={() => {
+                sound.playKeyClick(false);
+                onOpenGarage();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer group"
+            >
+              <Wrench className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span>Garage & Specs</span>
+            </button>
+          )}
+
+          {onOpenLeaderboard && (
+            <button
+              onClick={() => {
+                sound.playKeyClick(false);
+                onOpenLeaderboard();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer group"
+            >
+              <Trophy className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span>Leaderboard</span>
+            </button>
+          )}
+        </nav>
 
         <div className="flex items-center gap-3">
           {onStartSolo && (
@@ -292,7 +347,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl border border-amber-500/40 bg-slate-900/90 hover:bg-amber-500/10 hover:border-amber-400 text-xs font-bold text-amber-300 cursor-pointer transition-all shadow-[0_0_15px_rgba(245,158,11,0.15)] hover:shadow-[0_0_25px_rgba(245,158,11,0.35)]"
             >
               <Play className="w-3.5 h-3.5 fill-current text-amber-400" />
-              Solo Practice
+              Practice
             </button>
           )}
 
@@ -303,7 +358,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             }}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black text-xs font-black uppercase tracking-wider cursor-pointer shadow-[0_0_25px_rgba(0,255,135,0.45)] hover:shadow-[0_0_35px_rgba(0,255,135,0.7)] transition-all transform hover:-translate-y-0.5"
           >
-            Launch Grid
+            Race Now
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -425,7 +480,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="px-8 py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black text-sm font-black uppercase tracking-wider flex items-center gap-2.5 shadow-[0_0_35px_rgba(0,255,135,0.45)] hover:shadow-[0_0_50px_rgba(0,255,135,0.7)] cursor-pointer transform hover:-translate-y-0.5 transition-all"
             >
-              Enter Matchmaking Grid
+              Race Now — Launch Grid
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -439,6 +494,137 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               >
                 <Play className="w-4 h-4 fill-current text-amber-400" />
                 Solo AI Practice
+              </button>
+            )}
+          </div>
+
+          {/* F1 Quick Launch Command Hub (5 Hub Cards) */}
+          <div className="mt-12 w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 text-left">
+            {/* Card 1: Race Now */}
+            <button
+              onClick={() => {
+                sound.playKeystroke(60, true);
+                onEnterGrid();
+              }}
+              className="p-4 rounded-2xl bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-950/30 transition-all cursor-pointer group flex flex-col justify-between shadow-lg hover:shadow-[0_0_25px_rgba(0,255,135,0.2)]"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 group-hover:scale-110 transition-transform">
+                  <Zap className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">LIVE</span>
+              </div>
+              <div>
+                <span className="text-xs font-black uppercase tracking-wider text-white group-hover:text-emerald-300 block">
+                  Race Now
+                </span>
+                <span className="text-[11px] text-slate-400 font-mono mt-0.5 block">
+                  Multiplayer Grid
+                </span>
+              </div>
+            </button>
+
+            {/* Card 2: Solo Practice */}
+            {onStartSolo && (
+              <button
+                onClick={() => {
+                  sound.playCountdownTick(2);
+                  onStartSolo();
+                }}
+                className="p-4 rounded-2xl bg-slate-900/80 border border-amber-500/30 hover:border-amber-400 hover:bg-amber-950/30 transition-all cursor-pointer group flex flex-col justify-between shadow-lg hover:shadow-[0_0_25px_rgba(245,158,11,0.2)]"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 group-hover:scale-110 transition-transform">
+                    <Play className="w-4 h-4 fill-current" />
+                  </span>
+                  <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded">AI BOTS</span>
+                </div>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-white group-hover:text-amber-300 block">
+                    Practice
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono mt-0.5 block">
+                    Telemetry Warmup
+                  </span>
+                </div>
+              </button>
+            )}
+
+            {/* Card 3: Circuits (Indian GPs) */}
+            {onOpenTracks && (
+              <button
+                onClick={() => {
+                  sound.playKeyClick(false);
+                  onOpenTracks();
+                }}
+                className="p-4 rounded-2xl bg-slate-900/80 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/30 transition-all cursor-pointer group flex flex-col justify-between shadow-lg hover:shadow-[0_0_25px_rgba(0,229,255,0.2)]"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 group-hover:scale-110 transition-transform">
+                    <MapPin className="w-4 h-4" />
+                  </span>
+                  <span className="text-[10px] font-mono text-orange-400 font-bold bg-orange-500/10 border border-orange-500/30 px-1.5 py-0.5 rounded">🇮🇳 3 GPs</span>
+                </div>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-white group-hover:text-cyan-300 block">
+                    Circuits
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono mt-0.5 block">
+                    Chennai • Hyderabad • BIC
+                  </span>
+                </div>
+              </button>
+            )}
+
+            {/* Card 4: Vehicle Garage */}
+            {onOpenGarage && (
+              <button
+                onClick={() => {
+                  sound.playKeyClick(false);
+                  onOpenGarage();
+                }}
+                className="p-4 rounded-2xl bg-slate-900/80 border border-purple-500/30 hover:border-purple-400 hover:bg-purple-950/30 transition-all cursor-pointer group flex flex-col justify-between shadow-lg hover:shadow-[0_0_25px_rgba(168,85,247,0.2)]"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/30 group-hover:scale-110 transition-transform">
+                    <Wrench className="w-4 h-4" />
+                  </span>
+                  <span className="text-[10px] font-mono text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded">360°</span>
+                </div>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-white group-hover:text-purple-300 block">
+                    Garage
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono mt-0.5 block">
+                    4 Super Machines
+                  </span>
+                </div>
+              </button>
+            )}
+
+            {/* Card 5: Leaderboard */}
+            {onOpenLeaderboard && (
+              <button
+                onClick={() => {
+                  sound.playKeyClick(false);
+                  onOpenLeaderboard();
+                }}
+                className="p-4 rounded-2xl bg-slate-900/80 border border-yellow-500/30 hover:border-yellow-400 hover:bg-yellow-950/30 transition-all cursor-pointer group flex flex-col justify-between shadow-lg hover:shadow-[0_0_25px_rgba(234,179,8,0.2)] col-span-2 sm:col-span-1"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="p-2 rounded-xl bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 group-hover:scale-110 transition-transform">
+                    <Trophy className="w-4 h-4" />
+                  </span>
+                  <span className="text-[10px] font-mono text-yellow-400 font-bold bg-yellow-500/10 px-1.5 py-0.5 rounded">TOP 100</span>
+                </div>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-white group-hover:text-yellow-300 block">
+                    Leaderboard
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono mt-0.5 block">
+                    Speed & Accuracy Ranks
+                  </span>
+                </div>
               </button>
             )}
           </div>
@@ -567,113 +753,207 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={onEnterGrid}
-              className="w-full py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors border border-slate-700"
-            >
-              Equip Machine on Grid
-              <ArrowRight className="w-4 h-4 text-emerald-400" />
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {onOpenGarage && (
+                <button
+                  onClick={() => {
+                    sound.playKeyClick(false);
+                    onOpenGarage();
+                  }}
+                  className="flex-1 py-3.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/50 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"
+                >
+                  <Wrench className="w-4 h-4 text-purple-400" />
+                  Full 360° Garage
+                </button>
+              )}
+
+              <button
+                onClick={onEnterGrid}
+                className="flex-1 py-3.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md hover:shadow-[0_0_20px_rgba(0,255,135,0.4)]"
+              >
+                Equip on Grid
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 5. Global Circuits Showcase */}
+      {/* 5. 3D Grand Prix Circuits Showcase — Featuring Indian Motorsport */}
       <section className="w-full max-w-7xl mx-auto px-6 py-20 border-t border-slate-800/80">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <span className="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase">
-            3 GLOBAL CIRCUITS
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-1">
-            Engineered Global Tarmac
-          </h2>
-          <p className="text-sm text-slate-400 mt-2">
-            Each track features authentic 4-lane Catmull-Rom spline curvature, dynamic banking into apexes, and 3D FIA rumble strips.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-mono font-bold tracking-widest uppercase mb-2">
+              <span>🇮🇳 INDIAN MOTORSPORT INITIATIVE</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-1">
+              8 Realistic 3D Grand Prix Circuits
+            </h2>
+            <p className="text-sm text-slate-400 mt-2 max-w-2xl">
+              Authentic road geometry, elevation changes, FIA rumble curbs, barriers, grandstands, and atmospheric lighting. 
+              Featuring 3 custom Indian circuits and 5 world-renowned GP destinations.
+            </p>
+          </div>
+
+          {onOpenTracks && (
+            <button
+              onClick={() => {
+                sound.playKeyClick(false);
+                onOpenTracks();
+              }}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 border border-cyan-500/40 text-cyan-400 hover:text-white hover:bg-cyan-950/40 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg hover:shadow-[0_0_20px_rgba(0,229,255,0.25)] self-start md:self-auto"
+            >
+              <MapPin className="w-4 h-4 text-cyan-400" />
+              <span>Explore All 8 Circuits</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Circuit 1: Tokyo */}
-          <div className="group relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/60 hover:border-cyan-500/50 transition-all duration-300">
-            <div className="h-48 overflow-hidden relative">
-              <img 
-                src={heroBg} 
-                alt="Tokyo Night Run" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 filter brightness-75"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+        {/* Featured Indian Circuits Grid (Primary 3 Cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Indian Circuit 1: Chennai */}
+          <div 
+            onClick={() => onOpenTracks ? onOpenTracks() : onEnterGrid()}
+            className="group relative rounded-2xl overflow-hidden border border-orange-500/30 bg-slate-900/80 hover:border-orange-400 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-[0_0_30px_rgba(249,115,22,0.2)]"
+          >
+            <div className="h-52 overflow-hidden relative bg-gradient-to-br from-slate-950 via-cyan-950 to-slate-900 flex items-center justify-center p-6">
+              <div className="text-center z-10">
+                <span className="text-3xl mb-2 block">🌊</span>
+                <span className="text-xs font-mono font-bold text-orange-400 uppercase tracking-widest block">
+                  Marina Beach Coastal Night
+                </span>
+                <span className="text-[11px] font-mono text-cyan-300 mt-1 block">
+                  Bay of Bengal Ocean & Lighthouse Beam
+                </span>
+              </div>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(249,115,22,0.15)_0%,transparent_70%)]" />
+              <span className="absolute top-3 left-3 text-[10px] font-mono px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/40 font-bold flex items-center gap-1">
+                🇮🇳 CHENNAI GP
+              </span>
               <span className="absolute top-3 right-3 text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
-                MEDIUM
+                MEDIUM • 1,350M
               </span>
             </div>
             <div className="p-5">
-              <h3 className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">
-                Tokyo Night Run
+              <h3 className="text-lg font-bold text-white group-hover:text-orange-400 transition-colors flex items-center justify-between">
+                <span>Chennai Marina Coast</span>
+                <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all text-orange-400" />
               </h3>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">Shuto Expressway, Tokyo, Japan</p>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">Kamarajar Salai & Napier Bridge, Tamil Nadu</p>
               <p className="text-xs text-slate-300 mt-3 leading-relaxed">
-                Elevated highway viaducts winding between neon skyscrapers with rainy wet asphalt reflections and sharp chicanes.
+                Coastal sea breezes along the Bay of Bengal, rotating 3D lighthouse spotlights, illuminated Napier Bridge arches, and bilingual Tamil/English overhead expressway gantries.
               </p>
               <div className="mt-4 pt-3 border-t border-slate-800 flex justify-between text-xs font-mono text-slate-400">
-                <span>DISTANCE: 1,200m</span>
-                <span className="text-emerald-400">4 LANES</span>
+                <span className="text-orange-400">PROMINENT LANDMARKS</span>
+                <span className="text-slate-300">NIGHT LIGHTING</span>
               </div>
             </div>
           </div>
 
-          {/* Circuit 2: Swiss Alps */}
-          <div className="group relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/60 hover:border-amber-500/50 transition-all duration-300">
-            <div className="h-48 overflow-hidden relative">
-              <img 
-                src={swissTrack} 
-                alt="Swiss Alpine Pass" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 filter brightness-75"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
-              <span className="absolute top-3 right-3 text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
-                HARD
+          {/* Indian Circuit 2: Hyderabad */}
+          <div 
+            onClick={() => onOpenTracks ? onOpenTracks() : onEnterGrid()}
+            className="group relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-slate-900/80 hover:border-cyan-400 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-[0_0_30px_rgba(6,182,212,0.2)]"
+          >
+            <div className="h-52 overflow-hidden relative bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center p-6">
+              <div className="text-center z-10">
+                <span className="text-3xl mb-2 block">🌉</span>
+                <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest block">
+                  Cyber Corridor & Cable Bridge
+                </span>
+                <span className="text-[11px] font-mono text-blue-300 mt-1 block">
+                  Durgam Cheruvu & HITEC City Towers
+                </span>
+              </div>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(6,182,212,0.15)_0%,transparent_70%)]" />
+              <span className="absolute top-3 left-3 text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-bold flex items-center gap-1">
+                🇮🇳 HYDERABAD GP
               </span>
-            </div>
-            <div className="p-5">
-              <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
-                Swiss Alpine Pass
-              </h3>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">Furka Pass, Swiss Alps</p>
-              <p className="text-xs text-slate-300 mt-3 leading-relaxed">
-                High-altitude mountain road flanked by towering granite peaks, dense Norwegian pine forests, and dramatic hairpin curves.
-              </p>
-              <div className="mt-4 pt-3 border-t border-slate-800 flex justify-between text-xs font-mono text-slate-400">
-                <span>DISTANCE: 1,400m</span>
-                <span className="text-amber-400">ELEVATION 52m</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Circuit 3: Dubai */}
-          <div className="group relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/60 hover:border-emerald-500/50 transition-all duration-300">
-            <div className="h-48 overflow-hidden relative bg-gradient-to-br from-amber-900/40 via-slate-900 to-black flex items-center justify-center">
-              <div className="text-center p-4">
-                <Compass className="w-10 h-10 text-amber-400 mx-auto mb-2" />
-                <span className="text-xs font-mono text-slate-300 uppercase">FIA Grade 1 Sweeper</span>
-              </div>
               <span className="absolute top-3 right-3 text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-bold">
-                EASY
+                FAST • 1,280M
               </span>
             </div>
             <div className="p-5">
-              <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors">
-                Dubai Grand Circuit
+              <h3 className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors flex items-center justify-between">
+                <span>Hyderabad Cyber Corridor</span>
+                <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all text-cyan-400" />
               </h3>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">Desert Perimeter, Dubai, UAE</p>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">HITEC City & Durgam Cheruvu, Telangana</p>
               <p className="text-xs text-slate-300 mt-3 leading-relaxed">
-                High-speed parabolic desert sweepers flanked by illuminated floodlight masts, turquoise runoff zones, and sunset dunes.
+                Hyper-modern urban circuit over the iconic stay-cable suspension bridge, illuminated glass tech headquarters, Charminar ceremonial arches, and Telugu/English highway signage.
               </p>
               <div className="mt-4 pt-3 border-t border-slate-800 flex justify-between text-xs font-mono text-slate-400">
-                <span>DISTANCE: 1,100m</span>
-                <span className="text-cyan-400">HIGH-SPEED</span>
+                <span className="text-cyan-400">CABLE SUSPENSION BRIDGE</span>
+                <span className="text-slate-300">CYBER VIADUCT</span>
               </div>
             </div>
           </div>
+
+          {/* Indian Circuit 3: Buddh International Circuit */}
+          <div 
+            onClick={() => onOpenTracks ? onOpenTracks() : onEnterGrid()}
+            className="group relative rounded-2xl overflow-hidden border border-emerald-500/30 bg-slate-900/80 hover:border-emerald-400 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+          >
+            <div className="h-52 overflow-hidden relative bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 flex items-center justify-center p-6">
+              <div className="text-center z-10">
+                <span className="text-3xl mb-2 block">🏎️</span>
+                <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest block">
+                  FIA Grade 1 Grand Prix Venue
+                </span>
+                <span className="text-[11px] font-mono text-emerald-300 mt-1 block">
+                  Tilke 1.06km Straight & Turn 10-11 Bowl
+                </span>
+              </div>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.15)_0%,transparent_70%)]" />
+              <span className="absolute top-3 left-3 text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold flex items-center gap-1">
+                🇮🇳 BUDDH GP
+              </span>
+              <span className="absolute top-3 right-3 text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
+                TECH • 1,510M
+              </span>
+            </div>
+            <div className="p-5">
+              <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center justify-between">
+                <span>Buddh International Circuit</span>
+                <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all text-emerald-400" />
+              </h3>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">Greater Noida, Uttar Pradesh (F1 Venue)</p>
+              <p className="text-xs text-slate-300 mt-3 leading-relaxed">
+                Authentic representation of India's world championship circuit. Massive covered grandstands with tensile fabric canopies, F1 pit garages, DRS marker boards, and banked parabolic corners.
+              </p>
+              <div className="mt-4 pt-3 border-t border-slate-800 flex justify-between text-xs font-mono text-slate-400">
+                <span className="text-emerald-400">TILKE GP ELEVATION</span>
+                <span className="text-slate-300">1.06KM STRAIGHT</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Global Circuits Mini Row */}
+        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🌍</span>
+            <div>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                Also Race On 5 Global Grand Prix Destinations
+              </h4>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">
+                Tokyo Shuto Expressway • Circuit de Monaco • Silverstone GP • Swiss Furka Pass • Dubai Desert Perimeter
+              </p>
+            </div>
+          </div>
+          {onOpenTracks && (
+            <button
+              onClick={() => {
+                sound.playKeyClick(false);
+                onOpenTracks();
+              }}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors border border-slate-700 whitespace-nowrap"
+            >
+              View Full Track Roster →
+            </button>
+          )}
         </div>
       </section>
 
