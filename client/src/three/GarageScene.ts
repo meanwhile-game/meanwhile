@@ -26,8 +26,8 @@ export class GarageSceneManager {
     // Camera
     const aspect = container.clientWidth / (container.clientHeight || 1);
     this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100);
-    this.camera.position.set(4.5, 2.2, 5.5);
-    this.camera.lookAt(0, 0.6, 0);
+    this.camera.position.set(3.8, 1.8, 4.8);
+    this.camera.lookAt(0, 0.5, 0);
 
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -86,29 +86,41 @@ export class GarageSceneManager {
   }
 
   private setupStudioLighting(): void {
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambLight = new THREE.AmbientLight(0xffffff, 1.2);
     this.scene.add(ambLight);
 
-    // Key spotlight
-    const spotKey = new THREE.SpotLight(0xffffff, 4.5);
-    spotKey.position.set(5, 8, 5);
+    // Overhead Studio Softbox Light (highlights vehicle hood & roof lines)
+    const topLight = new THREE.DirectionalLight(0xffffff, 3.5);
+    topLight.position.set(0, 10, 0);
+    this.scene.add(topLight);
+
+    // Front-Right Studio Key Spotlight
+    const spotKey = new THREE.SpotLight(0xffffff, 5.0);
+    spotKey.position.set(6, 7, 6);
     spotKey.angle = Math.PI / 4;
-    spotKey.penumbra = 0.5;
+    spotKey.penumbra = 0.6;
     spotKey.castShadow = true;
     spotKey.shadow.mapSize.width = 1024;
     spotKey.shadow.mapSize.height = 1024;
     this.scene.add(spotKey);
 
-    // Rim / Back light for sexy silhouette
-    const spotRim = new THREE.SpotLight(0x00e5ff, 5.0);
-    spotRim.position.set(-6, 6, -6);
+    // Cyan Rim Light (edges & side aero)
+    const spotRim = new THREE.SpotLight(0x00e5ff, 4.5);
+    spotRim.position.set(-7, 6, -6);
     spotRim.angle = Math.PI / 3;
     spotRim.penumbra = 0.8;
     this.scene.add(spotRim);
 
-    // Soft fill
-    const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.0);
-    fillLight.position.set(0, 3, 5);
+    // Warm Coral Accent Rim Light
+    const rimAccent = new THREE.SpotLight(0xff0066, 3.2);
+    rimAccent.position.set(6, 4, -7);
+    rimAccent.angle = Math.PI / 3;
+    rimAccent.penumbra = 0.7;
+    this.scene.add(rimAccent);
+
+    // Front Fill Light
+    const fillLight = new THREE.DirectionalLight(0x60a5fa, 1.2);
+    fillLight.position.set(0, 2, 6);
     this.scene.add(fillLight);
   }
 

@@ -114,8 +114,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 3.2, 8.5);
-    camera.lookAt(0, 0.4, 0);
+    camera.position.set(0, 2.2, 6.2);
+    camera.lookAt(0, 0.45, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
@@ -124,13 +124,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
 
-    // Lighting
-    const amb = new THREE.AmbientLight(0xffffff, 1.4);
-    const dirLight = new THREE.DirectionalLight(0x00e5ff, 2.5);
-    dirLight.position.set(5, 10, 7);
-    const rimLight = new THREE.DirectionalLight(0xff0055, 1.8);
-    rimLight.position.set(-6, 4, -5);
-    scene.add(amb, dirLight, rimLight);
+    // Studio Softbox & Multi-Angle Lighting
+    const amb = new THREE.AmbientLight(0xffffff, 1.2);
+    const topSoftbox = new THREE.DirectionalLight(0xffffff, 3.2);
+    topSoftbox.position.set(0, 10, 2);
+    const keyLight = new THREE.DirectionalLight(0x00e5ff, 2.5);
+    keyLight.position.set(5, 7, 7);
+    const rimLight = new THREE.DirectionalLight(0xff0066, 2.8);
+    rimLight.position.set(-6, 5, -5);
+    scene.add(amb, topSoftbox, keyLight, rimLight);
 
     // Holographic Turntable Pedestal
     const turntable = new THREE.Group();

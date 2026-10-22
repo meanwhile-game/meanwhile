@@ -291,8 +291,8 @@ export class RaceSceneManager {
     if (localVehiclePos && localVehicleTangent) {
       // Speed-dependent camera offset
       const speedFactor = Math.min(1.0, localWpm / 120);
-      const camDist = 12.0 + speedFactor * 3.0;
-      const camHeight = 4.2 + speedFactor * 0.6;
+      const camDist = 7.8 + speedFactor * 2.4;
+      const camHeight = 3.0 + speedFactor * 0.4;
 
       const targetCamPos = new THREE.Vector3()
         .copy(localVehiclePos)
@@ -301,18 +301,18 @@ export class RaceSceneManager {
 
       // Micro camera shake at extreme speed (> 85 WPM)
       if (localWpm > 85) {
-        targetCamPos.x += (Math.random() - 0.5) * 0.06;
-        targetCamPos.y += (Math.random() - 0.5) * 0.04;
+        targetCamPos.x += (Math.random() - 0.5) * 0.05;
+        targetCamPos.y += (Math.random() - 0.5) * 0.03;
       }
 
       // Smooth camera interpolation
-      this.camera.position.lerp(targetCamPos, dt * 7);
+      this.camera.position.lerp(targetCamPos, dt * 8);
 
-      const lookAhead = 16.0;
+      const lookAhead = 15.0;
       const camLookTarget = new THREE.Vector3()
         .copy(localVehiclePos)
         .addScaledVector(localVehicleTangent, lookAhead);
-      camLookTarget.y += 1.2;
+      camLookTarget.y += 0.8;
 
       this.camera.lookAt(camLookTarget);
 
