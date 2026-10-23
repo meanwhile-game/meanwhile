@@ -2,6 +2,7 @@ import React from 'react';
 import { TRACKS, TrackConfig } from '../../three/types.js';
 import { ArrowLeft, Check, Compass, MapPin, Gauge, Mountain, Sun, CloudRain, Trophy, Sparkles } from 'lucide-react';
 import { sound } from '../../sound/soundEngine.js';
+import { AdBanner } from '../common/AdBanner.js';
 import heroBg from '../../assets/hero-bg.jpg';
 import swissTrackImg from '../../assets/swiss-track.jpg';
 
@@ -344,6 +345,13 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
           })}
         </div>
       </main>
+
+      {/* SPONSORED CIRCUIT LEADERBOARD BANNER (728x90) */}
+      <AdBanner
+        slotId="ad-tracks-footer-leaderboard"
+        format="leaderboard"
+        className="max-w-4xl mx-auto my-3 z-10"
+      />
 
       {/* 3. Footer */}
       <footer className="w-full max-w-6xl mx-auto flex items-center justify-between text-xs font-mono text-slate-500 border-t border-slate-800/80 pt-4 z-10">

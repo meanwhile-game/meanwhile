@@ -273,6 +273,14 @@ class SocketService {
     this.getSocket().emit('leave_matchmaking');
   }
 
+  public fillRoomWithBots(): void {
+    this.getSocket().emit('fill_bots');
+  }
+
+  public instantBotMatch(trackId: string = 'chennai'): void {
+    this.getSocket().emit('instant_bot_match', { trackId });
+  }
+
   public setReady(isReady: boolean): void {
     this.getSocket().emit('set_ready', { isReady });
   }

@@ -27,6 +27,7 @@ import { VEHICLES, TRACKS } from '../../three/types.js';
 import { VehicleFactory, VehicleMeshObject } from '../../three/VehicleFactory.js';
 import heroBg from '../../assets/hero-bg.jpg';
 import swissTrack from '../../assets/swiss-track.jpg';
+import { AdBanner } from '../common/AdBanner.js';
 
 interface LandingPageProps {
   onEnterGrid: () => void;
@@ -34,6 +35,8 @@ interface LandingPageProps {
   onOpenGarage?: () => void;
   onOpenTracks?: () => void;
   onOpenLeaderboard?: () => void;
+  onJoinTrackId?: (trackId: string) => void;
+  onCreatePrivate?: () => void;
   onlineCount: number;
 }
 
@@ -43,10 +46,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenGarage,
   onOpenTracks,
   onOpenLeaderboard,
+  onJoinTrackId,
+  onCreatePrivate,
   onlineCount 
 }) => {
   const { isLight } = useTheme();
   const [isMuted, setIsMuted] = useState(sound.getMuted());
+  const [landingTrackIdInput, setLandingTrackIdInput] = useState('');
 
   // Interactive Mini-Rev Typing Test State
   const revPrompt = "Shift into gear and release the clutch.";
@@ -494,6 +500,54 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               >
                 <Play className="w-4 h-4 fill-current text-amber-400" />
                 Solo AI Practice
+              </button>
+            )}
+          </div>
+
+          {/* Quick Track ID Direct Join Strip */}
+          <div className="mt-5 w-full max-w-lg p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-xl">
+            <div className="flex items-center gap-2 pl-2 text-xs font-mono text-slate-400">
+              <Users className="w-4 h-4 text-cyan-400" />
+              <span className="font-bold text-slate-300">PRIVATE TRACK:</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5 w-full sm:w-auto flex-1 max-w-xs">
+              <input
+                type="text"
+                placeholder="ENTER TRACK ID (e.g. CHN-882)"
+                value={landingTrackIdInput}
+                onChange={(e) => setLandingTrackIdInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && landingTrackIdInput.trim() && onJoinTrackId) {
+                    onJoinTrackId(landingTrackIdInput.trim());
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-white font-mono font-bold text-center tracking-wider text-xs placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
+                maxLength={16}
+              />
+              <button
+                onClick={() => {
+                  if (landingTrackIdInput.trim() && onJoinTrackId) {
+                    sound.playClick();
+                    onJoinTrackId(landingTrackIdInput.trim());
+                  }
+                }}
+                disabled={!landingTrackIdInput.trim()}
+                className="px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 disabled:opacity-40 text-black font-extrabold text-xs font-mono uppercase tracking-wider cursor-pointer transition-all whitespace-nowrap active:scale-95"
+              >
+                Join
+              </button>
+            </div>
+
+            {onCreatePrivate && (
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  onCreatePrivate();
+                }}
+                className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline cursor-pointer pr-2 whitespace-nowrap"
+              >
+                + Create Track ID
               </button>
             )}
           </div>
@@ -1028,6 +1082,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <span className="text-[10px] font-mono text-slate-500 mt-4 block">Cosmology & Philosophy</span>
           </div>
         </div>
+      </section>
+
+      {/* SPONSORED BILLBOARD UNIT (970x250) */}
+      <section className="w-full max-w-5xl mx-auto px-6 py-4">
+        <AdBanner
+          slotId="ad-landing-showcase-billboard"
+          format="billboard"
+          className="w-full"
+        />
       </section>
 
       {/* 7. Bottom Call to Action Grid */}

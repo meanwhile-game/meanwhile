@@ -8,6 +8,15 @@ interface TypingEngineProps {
   onStatsUpdate: (stats: { wpm: number; accuracy: number; progress: number; currentTypedIndex: number }) => void;
 }
 
+// Unicode character normalization for frictionless typing
+export const normalizeChar = (c: string): string => {
+  if (c === '“' || c === '”') return '"';
+  if (c === '‘' || c === '’') return "'";
+  if (c === '—' || c === '–') return '-';
+  if (c === '\u00A0') return ' ';
+  return c;
+};
+
 export const TypingEngine: React.FC<TypingEngineProps> = ({
   passageText,
   isRacing,
@@ -23,17 +32,19 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
   const startTimeRef = useRef<number | null>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (isRacing && hiddenInputRef.current) {
+  // Focus retention
+  const ensureFocus = useCallback(() => {
+    if (hiddenInputRef.current && isRacing) {
       hiddenInputRef.current.focus();
     }
   }, [isRacing]);
 
-  const handleContainerClick = () => {
-    if (hiddenInputRef.current) {
-      hiddenInputRef.current.focus();
-    }
-  };
+  useEffect(() => {
+    ensureFocus();
+    const handleGlobalClick = () => ensureFocus();
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, [ensureFocus]);
 
   useEffect(() => {
     setTypedIndex(0);
@@ -83,14 +94,17 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
       return;
     }
 
-    if (key === expectedChar) {
+    // Compare with unicode normalization
+    const isMatch = key === expectedChar || normalizeChar(key) === normalizeChar(expectedChar);
+
+    if (isMatch) {
       sound.playKeyClick(key === ' ');
       const newIndex = typedIndex + 1;
       setTypedIndex(newIndex);
-      onKeystroke(typedIndex, key, false);
+      onKeystroke(typedIndex, expectedChar, false);
 
-      const elapsedMin = (Date.now() - (startTimeRef.current || Date.now())) / 60000;
-      const wpm = elapsedMin > 0 ? Math.round((newIndex / 5) / elapsedMin) : 0;
+      const elapsedMin = Math.max(0.015, (Date.now() - (startTimeRef.current || Date.now())) / 60000);
+      const wpm = Math.min(240, Math.round((newIndex / 5) / elapsedMin));
       const acc = totalKeystrokes + 1 > 0
         ? Math.max(0, Math.round(((totalKeystrokes + 1 - errorsCount) / (totalKeystrokes + 1)) * 100))
         : 100;
@@ -105,8 +119,8 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
       setErrorsCount(prev => prev + 1);
       onKeystroke(typedIndex, key, true);
 
-      const elapsedMin = (Date.now() - (startTimeRef.current || Date.now())) / 60000;
-      const wpm = elapsedMin > 0 ? Math.round((typedIndex / 5) / elapsedMin) : 0;
+      const elapsedMin = Math.max(0.015, (Date.now() - (startTimeRef.current || Date.now())) / 60000);
+      const wpm = Math.min(240, Math.round((typedIndex / 5) / elapsedMin));
       const acc = Math.max(0, Math.round(((totalKeystrokes + 1 - (errorsCount + 1)) / (totalKeystrokes + 1)) * 100));
       const progress = typedIndex / passageText.length;
 
@@ -121,7 +135,7 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
   return (
     <div
       className="relative w-full cursor-text select-none focus:outline-none"
-      onClick={handleContainerClick}
+      onClick={ensureFocus}
     >
       <input
         ref={hiddenInputRef}
@@ -135,7 +149,7 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
         aria-label="Race Typing Input"
       />
 
-      <div className="font-mono text-base sm:text-lg md:text-xl leading-relaxed tracking-wide">
+      <div className="font-mono text-sm sm:text-base md:text-lg leading-relaxed tracking-wide max-h-24 sm:max-h-28 overflow-hidden">
         {/* Correct text */}
         <span style={{ color: 'var(--accent)' }} className="font-medium">
           {correctText}
@@ -145,12 +159,12 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
         {typedIndex < passageText.length && (
           <span className="relative inline-block">
             {hasError ? (
-              <span className="bg-red-500/80 text-white px-0.5 rounded font-bold">
+              <span className="bg-red-500 text-white px-1 rounded font-bold animate-pulse">
                 {incorrectChar === ' ' ? '␣' : incorrectChar}
               </span>
             ) : (
               <span 
-                className="relative px-0.5 font-bold rounded-sm border-b-2"
+                className="relative px-0.5 font-bold rounded-sm border-b-2 shadow-sm"
                 style={{ 
                   backgroundColor: 'var(--accent-subtle)', 
                   borderColor: 'var(--accent)',

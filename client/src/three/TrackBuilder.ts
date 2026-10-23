@@ -19,15 +19,32 @@ export class TrackBuilder {
     const curve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.5);
     const length = curve.getLength();
 
-    // 2. Realistic Road Surface with Banking, Apex Skids, and Grid Slots
+    // 0. Celestial Atmospheric Sky Dome (Twilight gradient, stars, horizon skyline)
+    const skyDome = this.createSkyDome(config);
+    trackGroup.add(skyDome);
+
+    // 1. Vast Motorsport Terrain / Ground Foundation
+    const groundGeo = new THREE.PlaneGeometry(2400, 2400);
+    groundGeo.rotateX(-Math.PI / 2);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x090d16,
+      roughness: 0.98,
+      metalness: 0.05
+    });
+    const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+    groundMesh.position.y = -3.5;
+    groundMesh.receiveShadow = true;
+    trackGroup.add(groundMesh);
+
+    // 2. Realistic 3D Road Surface with Solid Thickness & Viaduct Underbelly
     const roadMesh = this.generateRealisticRoadMesh(curve, roadWidth, config);
     trackGroup.add(roadMesh);
 
-    // 3. 3D Raised Beveled Rumble Strips (Kerbs) on apexes
-    const kerbs = this.generate3DKerbs(curve, roadWidth, config);
-    trackGroup.add(kerbs);
+    // 3. Continuous FIA Rumble Strips (Kerbs) and Turf Runoff Shoulders
+    const curbsAndRunoffs = this.generateContinuousCurbsAndRunoff(curve, roadWidth, config);
+    trackGroup.add(curbsAndRunoffs);
 
-    // 4. Realistic Armco Steel Crash Barriers & Tire Walls
+    // 4. Realistic Armco Steel Crash Barriers & Tire Walls (along outer perimeter)
     const barriers = this.generateRealisticBarriers(curve, roadWidth, config);
     trackGroup.add(barriers);
 
@@ -44,6 +61,16 @@ export class TrackBuilder {
     const scenery = this.generateThemeScenery(curve, roadWidth, config);
     trackGroup.add(scenery);
 
+    // 8. Highway Street Light Poles with Conical Illuminated Light Pools on Road
+    const streetLights = this.generateStreetLightsWithLightPools(curve, roadWidth, config);
+    trackGroup.add(streetLights);
+
+    // 9. Indian Roadside Distance Placards & Landmark Badges (Only on Indian Circuits)
+    if (config.theme === 'chennai' || config.theme === 'hyderabad' || config.theme === 'buddh') {
+      const indianLandmarks = this.generateIndianRoadsideLandmarks(curve, roadWidth, config);
+      trackGroup.add(indianLandmarks);
+    }
+
     return {
       curve,
       trackGroup,
@@ -53,13 +80,13 @@ export class TrackBuilder {
     };
   }
 
-  // --- SPLINE POINTS WITH REALISTIC RACING FLOW & ELEVATION ---
+  // --- SPLINE POINTS WITH REALISTIC RACING FLOW & STRAIGHT START/FINISH ---
   private static generateTrackPoints(theme: TrackConfig['theme']): THREE.Vector3[] {
     if (theme === 'chennai') {
       // Chennai Marina Coast: Long seaside straight along Kamarajar Salai, coastal esses & Napier Bridge sweep
       return [
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, 180),          // Seaside acceleration straightaway (Kamarajar Salai)
+        new THREE.Vector3(0, 0, 0),           // Start / Finish Line (Straight)
+        new THREE.Vector3(0, 0, 180),         // Seaside acceleration straightaway (Kamarajar Salai)
         new THREE.Vector3(30, 0.5, 360),      // Gentle right curve past Marina Beach sands
         new THREE.Vector3(110, 1.2, 480),     // Sweep approaching Marina Lighthouse
         new THREE.Vector3(220, 2.0, 460),     // Lighthouse turnaround curve
@@ -71,13 +98,14 @@ export class TrackBuilder {
         new THREE.Vector3(60, 3.5, -280),     // Bridge descent
         new THREE.Vector3(-40, 1.5, -310),    // Cooum rivermouth curve
         new THREE.Vector3(-150, 0.5, -240),   // Harbor road left sweeper
-        new THREE.Vector3(-170, 0.2, -110),   // Coastal return lane
-        new THREE.Vector3(-120, 0, 0),        // Final corner onto Main Straight
+        new THREE.Vector3(-160, 0.2, -150),   // Coastal return lane
+        new THREE.Vector3(-70, 0, -140),      // Final corner entry onto main straight
+        new THREE.Vector3(0, 0, -100),        // Start straightaway alignment
       ];
     } else if (theme === 'hyderabad') {
       // Hyderabad Cyber Pearl: High-speed highway through HITEC City, over Durgam Cheruvu Cable Bridge
       return [
-        new THREE.Vector3(0, 8, 0),           // Elevated Mindspace flyover
+        new THREE.Vector3(0, 8, 0),           // Elevated Mindspace flyover Start/Finish
         new THREE.Vector3(0, 8, 160),         // High-speed IT corridor sprint
         new THREE.Vector3(60, 9.5, 300),      // Curve past Cyber Towers
         new THREE.Vector3(160, 11.0, 380),    // Cable Bridge approach
@@ -89,38 +117,39 @@ export class TrackBuilder {
         new THREE.Vector3(140, 7.0, -260),    // Inorbit Mall flyover entry
         new THREE.Vector3(20, 8.5, -300),     // High-speed carousel
         new THREE.Vector3(-110, 8.0, -240),   // Knowledge City banking turn
-        new THREE.Vector3(-160, 8.0, -120),   // West corridor straight
-        new THREE.Vector3(-110, 8.0, -20),    // Final turn onto start gantry
+        new THREE.Vector3(-150, 8.0, -150),   // West corridor return
+        new THREE.Vector3(-70, 8.0, -140),    // Final turn entry
+        new THREE.Vector3(0, 8.0, -100),      // Straightaway run-in to Start Line
       ];
     } else if (theme === 'buddh') {
       // Buddh International Circuit (BIC): Authentic Hermann Tilke F1 layout
-      // Turn 1 hairpin, uphill crest to Turn 3, 1.06km parabolic back straight, banked Turn 10-11 bowl
       return [
         new THREE.Vector3(0, 0, 0),           // Start / Finish Main Straight
-        new THREE.Vector3(0, 0, 150),         // Approach to Turn 1
-        new THREE.Vector3(60, 1.0, 240),      // Turn 1 tight downhill hairpin
-        new THREE.Vector3(120, 3.5, 290),     // Turn 2 uphill climb
-        new THREE.Vector3(190, 6.5, 330),     // Turn 3 blind crest
-        new THREE.Vector3(280, 5.0, 350),     // Entry to legendary 1.06km Parabolic Back Straight
-        new THREE.Vector3(420, 3.0, 310),     // Back straight mid-point (highest top speeds in India)
+        new THREE.Vector3(0, 0, 160),         // Approach to Turn 1
+        new THREE.Vector3(60, 1.0, 250),      // Turn 1 tight downhill hairpin
+        new THREE.Vector3(120, 3.5, 300),     // Turn 2 uphill climb
+        new THREE.Vector3(190, 6.5, 340),     // Turn 3 blind crest
+        new THREE.Vector3(280, 5.0, 360),     // Entry to legendary 1.06km Parabolic Back Straight
+        new THREE.Vector3(420, 3.0, 310),     // Back straight mid-point
         new THREE.Vector3(520, 1.5, 200),     // Back straight downhill compression
         new THREE.Vector3(490, 1.0, 60),      // Turn 4 heavy braking zone (hairpin)
         new THREE.Vector3(400, 2.0, -40),     // Turns 5-6 high-speed esses
         new THREE.Vector3(310, 3.5, -120),    // Turns 7-8 chicane
         new THREE.Vector3(210, 4.0, -210),    // Turn 9 sweeping downhill
-        new THREE.Vector3(90, 2.5, -280),     // Approach to famous banked Parabolica (Turn 10-11)
+        new THREE.Vector3(90, 2.5, -280),     // Approach to famous banked Parabolica
         new THREE.Vector3(-40, 1.5, -310),    // Turn 10 multi-apex bowl
         new THREE.Vector3(-160, 2.0, -240),   // Turn 11 exit
-        new THREE.Vector3(-210, 1.5, -120),   // Turns 12-14 stadium infield section
-        new THREE.Vector3(-160, 0.5, -20),    // Turn 15-16 double right onto pit straight
+        new THREE.Vector3(-180, 1.5, -150),   // Turns 12-14 stadium infield section
+        new THREE.Vector3(-80, 0.5, -140),    // Turn 15-16 double right onto pit straight
+        new THREE.Vector3(0, 0, -90),         // Straightaway run-in to Start Line
       ];
     } else if (theme === 'monaco') {
       // Monaco Grand Prix: Harbor sweepers, swimming pool chicane, tunnel egress
       return [
         new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(10, 0, 130),
-        new THREE.Vector3(65, 1.0, 220),
-        new THREE.Vector3(140, 1.5, 260),
+        new THREE.Vector3(0, 0, 140),
+        new THREE.Vector3(65, 1.0, 230),
+        new THREE.Vector3(140, 1.5, 270),
         new THREE.Vector3(220, 0.5, 210),
         new THREE.Vector3(240, 0.2, 100),
         new THREE.Vector3(180, 0.5, 0),
@@ -128,8 +157,9 @@ export class TrackBuilder {
         new THREE.Vector3(110, 0.5, -220),
         new THREE.Vector3(10, 0.8, -260),
         new THREE.Vector3(-80, 0.5, -220),
-        new THREE.Vector3(-140, 0.2, -120),
-        new THREE.Vector3(-90, 0, 0),
+        new THREE.Vector3(-140, 0.2, -150),
+        new THREE.Vector3(-70, 0, -140),
+        new THREE.Vector3(0, 0, -90),
       ];
     } else if (theme === 'silverstone') {
       // Silverstone Circuit: Copse, Maggotts, Becketts, Wellington Straight
@@ -145,15 +175,16 @@ export class TrackBuilder {
         new THREE.Vector3(140, 0.2, -220),
         new THREE.Vector3(20, 0.5, -300),
         new THREE.Vector3(-110, 0.8, -260),
-        new THREE.Vector3(-180, 0.5, -130),
-        new THREE.Vector3(-110, 0, -10),
+        new THREE.Vector3(-170, 0.5, -160),
+        new THREE.Vector3(-70, 0, -140),
+        new THREE.Vector3(0, 0, -90),
       ];
     } else if (theme === 'swiss') {
       // High-altitude mountain pass with sweeping hairpins, elevation ascents & descents
       return [
         new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(15, 3, 110),
-        new THREE.Vector3(75, 10, 210),
+        new THREE.Vector3(0, 1, 140),
+        new THREE.Vector3(65, 8, 230),
         new THREE.Vector3(150, 18, 260),
         new THREE.Vector3(220, 28, 230),
         new THREE.Vector3(230, 36, 140),
@@ -163,10 +194,10 @@ export class TrackBuilder {
         new THREE.Vector3(-40, 46, -200),
         new THREE.Vector3(-140, 38, -230),
         new THREE.Vector3(-220, 28, -170),
-        new THREE.Vector3(-250, 18, -80),
-        new THREE.Vector3(-220, 10, 20),
-        new THREE.Vector3(-150, 5, 90),
-        new THREE.Vector3(-70, 2, 40),
+        new THREE.Vector3(-240, 18, -120),
+        new THREE.Vector3(-160, 8, -150),
+        new THREE.Vector3(-70, 2, -120),
+        new THREE.Vector3(0, 0, -80),
       ];
     } else if (theme === 'dubai') {
       // Modern Grade-1 FIA grand prix layout with fast chicanes and wide parabolic sweepers
@@ -183,76 +214,176 @@ export class TrackBuilder {
         new THREE.Vector3(160, 2.2, -250),
         new THREE.Vector3(50, 1.2, -310),
         new THREE.Vector3(-90, 0.5, -270),
-        new THREE.Vector3(-190, 1.5, -150),
-        new THREE.Vector3(-160, 0.5, -30),
-        new THREE.Vector3(-70, 0, 0),
+        new THREE.Vector3(-180, 1.5, -170),
+        new THREE.Vector3(-80, 0.5, -140),
+        new THREE.Vector3(0, 0, -90),
       ];
     } else {
       // Tokyo Night Run: Elevated Shuto expressway with bridges, tunnels & urban viaducts
       return [
-        new THREE.Vector3(0, 6, 0),
-        new THREE.Vector3(0, 6, 130),
-        new THREE.Vector3(45, 7.5, 250),
-        new THREE.Vector3(120, 9.5, 330),
-        new THREE.Vector3(230, 11, 350),
-        new THREE.Vector3(320, 9, 270),
-        new THREE.Vector3(335, 7.5, 170),
-        new THREE.Vector3(265, 6, 70),
-        new THREE.Vector3(230, 6.5, -30),
-        new THREE.Vector3(250, 8.5, -150),
-        new THREE.Vector3(195, 10.5, -250),
-        new THREE.Vector3(110, 9.5, -310),
-        new THREE.Vector3(5, 7.5, -290),
-        new THREE.Vector3(-95, 6, -210),
-        new THREE.Vector3(-145, 7, -110),
-        new THREE.Vector3(-105, 6, -15),
+        new THREE.Vector3(0, 0, 0),           // Main Start/Finish Straight (Ground level / Viaduct start)
+        new THREE.Vector3(0, 0, 160),         // High-speed expressway sprint
+        new THREE.Vector3(45, 1.5, 280),      // Sweeping right past neon towers
+        new THREE.Vector3(120, 3.5, 360),     // Elevated viaduct rise
+        new THREE.Vector3(230, 4.5, 370),     // Tokyo bay turnaround
+        new THREE.Vector3(320, 3.5, 280),     // Rainbow bridge approach
+        new THREE.Vector3(335, 2.5, 180),     // Waterfront curve
+        new THREE.Vector3(265, 1.5, 70),      // Ginza interchange
+        new THREE.Vector3(230, 1.0, -30),     // Shinjuku tunnel entry
+        new THREE.Vector3(250, 2.0, -150),    // Viaduct elevation
+        new THREE.Vector3(195, 3.0, -250),    // High curve
+        new THREE.Vector3(110, 2.5, -310),    // Carousel
+        new THREE.Vector3(5, 1.5, -290),      // Return descent
+        new THREE.Vector3(-95, 0.5, -210),    // West expressway
+        new THREE.Vector3(-145, 0.2, -140),   // Final turn entry
+        new THREE.Vector3(-60, 0, -150),      // Corner exit onto main straight
+        new THREE.Vector3(0, 0, -100),        // Straightaway run-in to Start Line
       ];
     }
   }
 
-  // --- REALISTIC ROAD MESH WITH CURVE BANKING & DETAILED SHADER/CANVAS ---
+  // --- 0. CELESTIAL ATMOSPHERIC SKY DOME WITH HORIZON GLOW & STARS ---
+  private static createSkyDome(config: TrackConfig): THREE.Mesh {
+    const skyGeo = new THREE.SphereGeometry(850, 48, 32);
+    const canvas = document.createElement('canvas');
+    canvas.width = 2048;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d')!;
+
+    // Vertical Atmospheric Sky Gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, 1024);
+    if (config.theme === 'tokyo') {
+      grad.addColorStop(0.0, '#02040a');
+      grad.addColorStop(0.45, '#070d1e');
+      grad.addColorStop(0.72, '#0c2340');
+      grad.addColorStop(0.88, '#1e1b4b');
+      grad.addColorStop(0.96, '#00e5ff');
+      grad.addColorStop(1.0, '#070913');
+    } else if (config.theme === 'chennai') {
+      grad.addColorStop(0.0, '#020611');
+      grad.addColorStop(0.50, '#08172e');
+      grad.addColorStop(0.75, '#0f2b48');
+      grad.addColorStop(0.90, '#1e3a8a');
+      grad.addColorStop(0.97, '#0284c7');
+      grad.addColorStop(1.0, '#060d19');
+    } else if (config.theme === 'hyderabad') {
+      grad.addColorStop(0.0, '#03020c');
+      grad.addColorStop(0.45, '#0c0721');
+      grad.addColorStop(0.72, '#1e133e');
+      grad.addColorStop(0.88, '#4a154b');
+      grad.addColorStop(0.96, '#a855f7');
+      grad.addColorStop(1.0, '#0b081e');
+    } else if (config.theme === 'buddh') {
+      grad.addColorStop(0.0, '#030712');
+      grad.addColorStop(0.48, '#0b1528');
+      grad.addColorStop(0.76, '#1e293b');
+      grad.addColorStop(0.90, '#334155');
+      grad.addColorStop(0.97, '#f59e0b');
+      grad.addColorStop(1.0, '#0f172a');
+    } else if (config.theme === 'swiss') {
+      grad.addColorStop(0.0, '#020611');
+      grad.addColorStop(0.48, '#071829');
+      grad.addColorStop(0.76, '#0f344d');
+      grad.addColorStop(0.90, '#1b5275');
+      grad.addColorStop(0.97, '#38bdf8');
+      grad.addColorStop(1.0, '#061320');
+    } else {
+      grad.addColorStop(0.0, '#030712');
+      grad.addColorStop(0.50, '#0a192f');
+      grad.addColorStop(0.78, '#143152');
+      grad.addColorStop(0.92, '#1e40af');
+      grad.addColorStop(0.98, '#38bdf8');
+      grad.addColorStop(1.0, '#080e1a');
+    }
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 2048, 1024);
+
+    // Stars in the celestial dome
+    ctx.fillStyle = '#ffffff';
+    for (let s = 0; s < 700; s++) {
+      const sx = Math.random() * 2048;
+      const sy = Math.random() * 600;
+      const rad = Math.random() * 1.5 + 0.4;
+      ctx.globalAlpha = Math.random() * 0.7 + 0.3;
+      ctx.beginPath();
+      ctx.arc(sx, sy, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Distant skyline silhouette along the horizon
+    ctx.fillStyle = 'rgba(5, 8, 18, 0.96)';
+    let curX = 0;
+    while (curX < 2048) {
+      const bWidth = 20 + Math.random() * 45;
+      const bHeight = 35 + Math.random() * 95;
+      ctx.fillRect(curX, 980 - bHeight, bWidth, bHeight + 50);
+      curX += bWidth + 2;
+    }
+
+    const skyTex = new THREE.CanvasTexture(canvas);
+    const skyMat = new THREE.MeshBasicMaterial({
+      map: skyTex,
+      side: THREE.BackSide,
+      fog: false
+    });
+    return new THREE.Mesh(skyGeo, skyMat);
+  }
+
+  // --- REALISTIC ROAD MESH WITH SOLID THICKNESS & CONCRETE UNDERBELLY ---
   private static generateRealisticRoadMesh(
     curve: THREE.CatmullRomCurve3,
     roadWidth: number,
     config: TrackConfig
-  ): THREE.Mesh {
-    const numSteps = 500;
+  ): THREE.Group {
+    const roadGroup = new THREE.Group();
+    const numSteps = 600;
     const halfWidth = roadWidth / 2;
+    const up = new THREE.Vector3(0, 1, 0);
 
     const positions: number[] = [];
-    const normals: number[] = [];
     const uvs: number[] = [];
     const indices: number[] = [];
 
-    const up = new THREE.Vector3(0, 1, 0);
+    // Viaduct underside & barrier side walls
+    const deckPositions: number[] = [];
+    const deckIndices: number[] = [];
 
     for (let i = 0; i <= numSteps; i++) {
-      const t = i / numSteps;
+      const stepIdx = i % numSteps;
+      const t = stepIdx / numSteps;
       const point = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t).normalize();
-      let binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+      const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
-      // Realistic Corner Banking (tilt road into apex)
-      const nextT = Math.min(1.0, t + 0.008);
+      // Gentle banking into corners
+      const nextT = (stepIdx + 4) % numSteps / numSteps;
       const nextTangent = curve.getTangentAt(nextT).normalize();
       const curvature = tangent.clone().cross(nextTangent).y;
-      const bankAngle = THREE.MathUtils.clamp(-curvature * 12.0, -0.15, 0.15);
-
-      // Rotate binormal slightly along tangent to bank road
+      const bankAngle = THREE.MathUtils.clamp(-curvature * 10.0, -0.12, 0.12);
       const bankedBinormal = binormal.clone().applyAxisAngle(tangent, bankAngle);
-      const normal = new THREE.Vector3().crossVectors(tangent, bankedBinormal).normalize();
 
-      // Left vertex
-      const leftPos = new THREE.Vector3().copy(point).addScaledVector(bankedBinormal, -halfWidth);
+      // Road Surface Left and Right
+      const leftPos = point.clone().addScaledVector(bankedBinormal, -halfWidth);
+      const rightPos = point.clone().addScaledVector(bankedBinormal, halfWidth);
+
       positions.push(leftPos.x, leftPos.y, leftPos.z);
-      normals.push(normal.x, normal.y, normal.z);
-      uvs.push(0, t * 100);
-
-      // Right vertex
-      const rightPos = new THREE.Vector3().copy(point).addScaledVector(bankedBinormal, halfWidth);
       positions.push(rightPos.x, rightPos.y, rightPos.z);
-      normals.push(normal.x, normal.y, normal.z);
-      uvs.push(1, t * 100);
+      uvs.push(0, t);
+      uvs.push(1, t);
+
+      // Road Viaduct Underside (dropped by 0.45m)
+      const deckLeft = leftPos.clone();
+      deckLeft.y -= 0.45;
+      const deckRight = rightPos.clone();
+      deckRight.y -= 0.45;
+
+      // 4 deck vertices per cross section: leftTop, leftBottom, rightBottom, rightTop
+      deckPositions.push(leftPos.x, leftPos.y, leftPos.z);
+      deckPositions.push(deckLeft.x, deckLeft.y, deckLeft.z);
+      deckPositions.push(deckRight.x, deckRight.y, deckRight.z);
+      deckPositions.push(rightPos.x, rightPos.y, rightPos.z);
 
       if (i < numSteps) {
         const v1 = i * 2;
@@ -260,33 +391,227 @@ export class TrackBuilder {
         const v3 = (i + 1) * 2;
         const v4 = (i + 1) * 2 + 1;
 
-        indices.push(v1, v2, v3);
-        indices.push(v2, v4, v3);
+        indices.push(v1, v3, v2);
+        indices.push(v2, v3, v4);
+
+        // Deck side skirts and bottom
+        const dBase = i * 4;
+        const dNext = (i + 1) * 4;
+        // Left side skirt
+        deckIndices.push(dBase, dNext, dBase + 1);
+        deckIndices.push(dBase + 1, dNext, dNext + 1);
+        // Bottom deck
+        deckIndices.push(dBase + 1, dNext + 1, dBase + 2);
+        deckIndices.push(dBase + 2, dNext + 1, dNext + 2);
+        // Right side skirt
+        deckIndices.push(dBase + 2, dNext + 2, dBase + 3);
+        deckIndices.push(dBase + 3, dNext + 2, dNext + 3);
       }
     }
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
+    const roadGeo = new THREE.BufferGeometry();
+    roadGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    roadGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    roadGeo.setIndex(indices);
+    roadGeo.computeVertexNormals();
 
-    // High-resolution procedural texture with asphalt grain, tire skid marks, and lane markings
     const roadTexture = this.createRealisticRoadTexture(config);
     roadTexture.wrapS = THREE.RepeatWrapping;
     roadTexture.wrapT = THREE.RepeatWrapping;
-    roadTexture.repeat.set(1, 140);
+    roadTexture.repeat.set(1, 110);
 
     const roadMaterial = new THREE.MeshStandardMaterial({
       map: roadTexture,
-      roughness: config.theme === 'tokyo' ? 0.28 : 0.45,
-      metalness: 0.15,
+      roughness: 0.52,
+      metalness: 0.12,
+      side: THREE.DoubleSide
     });
 
-    const mesh = new THREE.Mesh(geometry, roadMaterial);
-    mesh.receiveShadow = true;
-    return mesh;
+    const roadMesh = new THREE.Mesh(roadGeo, roadMaterial);
+    roadMesh.receiveShadow = true;
+    roadGroup.add(roadMesh);
+
+    // Concrete Deck Underbody
+    const deckGeo = new THREE.BufferGeometry();
+    deckGeo.setAttribute('position', new THREE.Float32BufferAttribute(deckPositions, 3));
+    deckGeo.setIndex(deckIndices);
+    deckGeo.computeVertexNormals();
+    const deckMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.85,
+      metalness: 0.2
+    });
+    const deckMesh = new THREE.Mesh(deckGeo, deckMat);
+    deckMesh.receiveShadow = true;
+    roadGroup.add(deckMesh);
+
+    return roadGroup;
+  }
+
+  // --- CONTINUOUS FIA RUMBLE STRIPS (KERBS) & TURF RUNOFF SHOULDERS ---
+  private static generateContinuousCurbsAndRunoff(
+    curve: THREE.CatmullRomCurve3,
+    roadWidth: number,
+    config: TrackConfig
+  ): THREE.Group {
+    const group = new THREE.Group();
+    const numSteps = 600;
+    const halfWidth = roadWidth / 2;
+    const curbWidth = 1.2;
+    const runoffWidth = 5.2;
+    const up = new THREE.Vector3(0, 1, 0);
+
+    // 1. Procedural Red & White Kerb Texture
+    const kerbCanvas = document.createElement('canvas');
+    kerbCanvas.width = 128;
+    kerbCanvas.height = 256;
+    const kCtx = kerbCanvas.getContext('2d')!;
+    const isIndian = config.theme === 'chennai' || config.theme === 'hyderabad' || config.theme === 'buddh';
+    const cColor1 = isIndian ? '#f59e0b' : (config.theme === 'tokyo' ? '#00e5ff' : '#dc2626');
+    const cColor2 = config.theme === 'tokyo' ? '#0f172a' : '#f8fafc';
+    kCtx.fillStyle = cColor1;
+    kCtx.fillRect(0, 0, 128, 128);
+    kCtx.fillStyle = cColor2;
+    kCtx.fillRect(0, 128, 128, 128);
+
+    const kerbTex = new THREE.CanvasTexture(kerbCanvas);
+    kerbTex.wrapS = THREE.RepeatWrapping;
+    kerbTex.wrapT = THREE.RepeatWrapping;
+    kerbTex.repeat.set(1, 120);
+
+    const kerbMat = new THREE.MeshStandardMaterial({
+      map: kerbTex,
+      roughness: 0.5,
+      metalness: 0.1,
+      side: THREE.DoubleSide
+    });
+
+    // 2. Procedural AstroTurf / Runoff Gravel Texture
+    const turfCanvas = document.createElement('canvas');
+    turfCanvas.width = 256;
+    turfCanvas.height = 256;
+    const tCtx = turfCanvas.getContext('2d')!;
+    const turfBase = config.theme === 'swiss' ? '#143722' : (isIndian ? '#1b2c21' : '#111c16');
+    tCtx.fillStyle = turfBase;
+    tCtx.fillRect(0, 0, 256, 256);
+    for (let g = 0; g < 2000; g++) {
+      tCtx.fillStyle = Math.random() > 0.5 ? 'rgba(34, 197, 94, 0.08)' : 'rgba(0, 0, 0, 0.12)';
+      tCtx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+    }
+    const turfTex = new THREE.CanvasTexture(turfCanvas);
+    turfTex.wrapS = THREE.RepeatWrapping;
+    turfTex.wrapT = THREE.RepeatWrapping;
+    turfTex.repeat.set(2, 80);
+
+    const turfMat = new THREE.MeshStandardMaterial({
+      map: turfTex,
+      roughness: 0.9,
+      metalness: 0.04,
+      side: THREE.DoubleSide
+    });
+
+    // Kerbs Ribbon (Left & Right)
+    const kPos: number[] = [];
+    const kUvs: number[] = [];
+    const kIdx: number[] = [];
+
+    // Runoff Ribbon (Left & Right)
+    const rPos: number[] = [];
+    const rUvs: number[] = [];
+    const rIdx: number[] = [];
+
+    for (let i = 0; i <= numSteps; i++) {
+      const stepIdx = i % numSteps;
+      const t = stepIdx / numSteps;
+      const point = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t).normalize();
+      const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+      // Left curb: outer edge at -(halfWidth + curbWidth), inner edge at -halfWidth
+      const kLeftOuter = point.clone().addScaledVector(binormal, -(halfWidth + curbWidth));
+      kLeftOuter.y += 0.04;
+      const kLeftInner = point.clone().addScaledVector(binormal, -halfWidth);
+      kLeftInner.y += 0.01;
+
+      // Right curb: inner edge at +halfWidth, outer edge at +(halfWidth + curbWidth)
+      const kRightInner = point.clone().addScaledVector(binormal, halfWidth);
+      kRightInner.y += 0.01;
+      const kRightOuter = point.clone().addScaledVector(binormal, halfWidth + curbWidth);
+      kRightOuter.y += 0.04;
+
+      // Left runoff: outer edge at -(halfWidth + curbWidth + runoffWidth), inner edge at -(halfWidth + curbWidth)
+      const rLeftOuter = point.clone().addScaledVector(binormal, -(halfWidth + curbWidth + runoffWidth));
+      rLeftOuter.y -= 0.02;
+      const rLeftInner = kLeftOuter.clone();
+
+      // Right runoff: inner edge at +(halfWidth + curbWidth), outer edge at +(halfWidth + curbWidth + runoffWidth)
+      const rRightInner = kRightOuter.clone();
+      const rRightOuter = point.clone().addScaledVector(binormal, halfWidth + curbWidth + runoffWidth);
+      rRightOuter.y -= 0.02;
+
+      // Left Kerb vertices (0, 1) & Right Kerb vertices (2, 3)
+      kPos.push(kLeftOuter.x, kLeftOuter.y, kLeftOuter.z);
+      kPos.push(kLeftInner.x, kLeftInner.y, kLeftInner.z);
+      kUvs.push(0, t);
+      kUvs.push(1, t);
+
+      kPos.push(kRightInner.x, kRightInner.y, kRightInner.z);
+      kPos.push(kRightOuter.x, kRightOuter.y, kRightOuter.z);
+      kUvs.push(0, t);
+      kUvs.push(1, t);
+
+      // Left Runoff vertices (0, 1) & Right Runoff vertices (2, 3)
+      rPos.push(rLeftOuter.x, rLeftOuter.y, rLeftOuter.z);
+      rPos.push(rLeftInner.x, rLeftInner.y, rLeftInner.z);
+      rUvs.push(0, t);
+      rUvs.push(1, t);
+
+      rPos.push(rRightInner.x, rRightInner.y, rRightInner.z);
+      rPos.push(rRightOuter.x, rRightOuter.y, rRightOuter.z);
+      rUvs.push(0, t);
+      rUvs.push(1, t);
+
+      if (i < numSteps) {
+        // Left kerb indices
+        const baseK = i * 4;
+        const nextK = (i + 1) * 4;
+        kIdx.push(baseK, baseK + 1, nextK);
+        kIdx.push(baseK + 1, nextK + 1, nextK);
+
+        // Right kerb indices
+        kIdx.push(baseK + 2, baseK + 3, nextK + 2);
+        kIdx.push(baseK + 3, nextK + 3, nextK + 2);
+
+        // Left runoff indices
+        const baseR = i * 4;
+        const nextR = (i + 1) * 4;
+        rIdx.push(baseR, baseR + 1, nextR);
+        rIdx.push(baseR + 1, nextR + 1, nextR);
+
+        // Right runoff indices
+        rIdx.push(baseR + 2, baseR + 3, nextR + 2);
+        rIdx.push(baseR + 3, nextR + 3, nextR + 2);
+      }
+    }
+
+    const kerbGeo = new THREE.BufferGeometry();
+    kerbGeo.setAttribute('position', new THREE.Float32BufferAttribute(kPos, 3));
+    kerbGeo.setAttribute('uv', new THREE.Float32BufferAttribute(kUvs, 2));
+    kerbGeo.setIndex(kIdx);
+    kerbGeo.computeVertexNormals();
+    const kerbMesh = new THREE.Mesh(kerbGeo, kerbMat);
+    kerbMesh.receiveShadow = true;
+
+    const runoffGeo = new THREE.BufferGeometry();
+    runoffGeo.setAttribute('position', new THREE.Float32BufferAttribute(rPos, 3));
+    runoffGeo.setAttribute('uv', new THREE.Float32BufferAttribute(rUvs, 2));
+    runoffGeo.setIndex(rIdx);
+    runoffGeo.computeVertexNormals();
+    const runoffMesh = new THREE.Mesh(runoffGeo, turfMat);
+    runoffMesh.receiveShadow = true;
+
+    group.add(kerbMesh, runoffMesh);
+    return group;
   }
 
   // --- PROCEDURAL REALISTIC ASPHALT & RACING ROAD TEXTURE ---
@@ -337,21 +662,41 @@ export class TrackBuilder {
 
     // 6. Realistic Dashed Lane Lines (4 Lanes, 3 Dividers)
     // Lane 1 divider (x ~ 285)
-    // Center divider (x = 512, double dashed line)
-    // Lane 3 divider (x ~ 739)
+    // 6. Realistic Dashed Lane Lines & Center Double Yellow (Indian City & GP Expressway Style)
+    const isIndianTrack = config.theme === 'chennai' || config.theme === 'hyderabad' || config.theme === 'buddh';
+    const centerColor = isIndianTrack ? '#f59e0b' : (config.theme === 'swiss' ? '#eab308' : '#ffffff');
+    const laneDashColor = 'rgba(255, 255, 255, 0.92)';
+
+    // Outer Shoulder Solid White Lines (Heavy visibility)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(40, 0, 14, 1024);
+    ctx.fillRect(1024 - 54, 0, 14, 1024);
+
+    // Continuous or Heavy Dashed Double Center Line (Signature Indian Road feature)
+    if (isIndianTrack) {
+      // Solid Double Yellow Center Divider
+      ctx.fillStyle = centerColor;
+      ctx.fillRect(506, 0, 5, 1024);
+      ctx.fillRect(515, 0, 5, 1024);
+    } else {
+      const dashLength = 96;
+      const gapLength = 64;
+      const totalCycle = dashLength + gapLength;
+      ctx.fillStyle = centerColor;
+      for (let y = 0; y < 1024; y += totalCycle) {
+        ctx.fillRect(507, y, 5, dashLength);
+        ctx.fillRect(516, y, 5, dashLength);
+      }
+    }
+
+    // Lane 1/2 and Lane 3/4 White Dashed Dividers
     const dashLength = 96;
     const gapLength = 64;
     const totalCycle = dashLength + gapLength;
-
-    ctx.fillStyle = config.theme === 'swiss' ? '#eab308' : 'rgba(255, 255, 255, 0.85)';
+    ctx.fillStyle = laneDashColor;
     for (let y = 0; y < 1024; y += totalCycle) {
-      // Lane 1/2 divider
-      ctx.fillRect(288, y, 8, dashLength);
-      // Center line (double bright high-visibility)
-      ctx.fillRect(507, y, 5, dashLength);
-      ctx.fillRect(516, y, 5, dashLength);
-      // Lane 3/4 divider
-      ctx.fillRect(736, y, 8, dashLength);
+      ctx.fillRect(284, y, 8, dashLength);
+      ctx.fillRect(734, y, 8, dashLength);
     }
 
     const texture = new THREE.CanvasTexture(canvas);
@@ -430,7 +775,7 @@ export class TrackBuilder {
   ): THREE.Group {
     const barriersGroup = new THREE.Group();
     const numPoints = 280;
-    const halfWidth = roadWidth / 2 + 1.2;
+    const halfWidth = roadWidth / 2 + 6.4;
     const up = new THREE.Vector3(0, 1, 0);
 
     const steelMat = new THREE.MeshStandardMaterial({
@@ -580,8 +925,9 @@ export class TrackBuilder {
     const gantry = new THREE.Group();
     const lights: THREE.Mesh[] = [];
 
-    const startPt = curve.getPointAt(0.0);
-    const tangent = curve.getTangentAt(0.0).normalize();
+    const gantryT = 0.022;
+    const startPt = curve.getPointAt(gantryT);
+    const tangent = curve.getTangentAt(gantryT).normalize();
     const up = new THREE.Vector3(0, 1, 0);
     const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
@@ -591,10 +937,10 @@ export class TrackBuilder {
       metalness: 0.8,
     });
 
-    const halfW = roadWidth / 2 + 1.8;
-    const height = 7.0;
+    const halfW = roadWidth / 2 + 3.5;
+    const height = 7.5;
 
-    // Upright pillars
+    // Upright pillars (set wide so camera and racers never clip)
     const pillarGeo = new THREE.BoxGeometry(0.9, height, 0.9);
     const leftPillar = new THREE.Mesh(pillarGeo, trussMat);
     leftPillar.position.copy(startPt).addScaledVector(binormal, -halfW);
@@ -605,7 +951,7 @@ export class TrackBuilder {
     rightPillar.position.y += height / 2;
 
     // Crossbeam truss
-    const beamGeo = new THREE.BoxGeometry(roadWidth + 3.6, 1.1, 1.1);
+    const beamGeo = new THREE.BoxGeometry(roadWidth + 7.0, 1.1, 1.1);
     const beam = new THREE.Mesh(beamGeo, trussMat);
     beam.position.copy(startPt);
     beam.position.y += height;
@@ -662,8 +1008,8 @@ export class TrackBuilder {
   // --- FINISH ARCH & CHECKERED BANNER ---
   private static generateFinishArch(curve: THREE.CatmullRomCurve3, roadWidth: number): THREE.Group {
     const arch = new THREE.Group();
-    const finishPt = curve.getPointAt(0.995);
-    const tangent = curve.getTangentAt(0.995).normalize();
+    const finishPt = curve.getPointAt(0.95);
+    const tangent = curve.getTangentAt(0.95).normalize();
     const up = new THREE.Vector3(0, 1, 0);
     const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
@@ -673,8 +1019,8 @@ export class TrackBuilder {
       metalness: 0.8,
     });
 
-    const halfW = roadWidth / 2 + 1.5;
-    const height = 7.5;
+    const halfW = roadWidth / 2 + 5.5;
+    const height = 8.8;
 
     // Posts
     const pGeo = new THREE.BoxGeometry(0.9, height, 0.9);
@@ -707,7 +1053,7 @@ export class TrackBuilder {
 
     const checkTex = new THREE.CanvasTexture(checkCanvas);
     const bannerMat = new THREE.MeshBasicMaterial({ map: checkTex });
-    const bannerGeo = new THREE.BoxGeometry(roadWidth + 3.0, 1.8, 0.6);
+    const bannerGeo = new THREE.BoxGeometry(roadWidth + 11.0, 1.8, 0.6);
     const banner = new THREE.Mesh(bannerGeo, bannerMat);
     banner.position.copy(finishPt);
     banner.position.y += height;
@@ -715,6 +1061,25 @@ export class TrackBuilder {
 
     arch.add(lp, rp, banner);
     return arch;
+  }
+
+  // Verify that an arbitrary world position is completely clear of all track road ribbons
+  private static isPositionSafeFromTrack(
+    pos: THREE.Vector3,
+    curve: THREE.CatmullRomCurve3,
+    minDistance: number
+  ): boolean {
+    const samples = 140;
+    const minDistSq = minDistance * minDistance;
+    for (let s = 0; s < samples; s++) {
+      const pt = curve.getPointAt(s / samples);
+      const dx = pt.x - pos.x;
+      const dz = pt.z - pos.z;
+      if (dx * dx + dz * dz < minDistSq) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // --- THEMED SCENERY (TOKYO, SWISS, DUBAI) WITH PHOTOREALISTIC DETAILS ---
@@ -749,12 +1114,16 @@ export class TrackBuilder {
       ocean.position.set(160, 0, 120);
       scenery.add(ocean);
 
-      // Marina Beach Golden Sand Shoreline
-      const sandGeo = new THREE.PlaneGeometry(350, 900, 16, 16);
+      // Marina Beach Golden Sand Shoreline (along the coast toward Bay of Bengal)
+      const sandGeo = new THREE.PlaneGeometry(220, 850, 16, 16);
       sandGeo.rotateX(-Math.PI / 2);
-      const sandMat = new THREE.MeshStandardMaterial({ color: 0xc89b58, roughness: 0.95 });
+      const sandMat = new THREE.MeshStandardMaterial({
+        color: 0x9a6b32,
+        roughness: 0.98,
+        metalness: 0.02
+      });
       const beach = new THREE.Mesh(sandGeo, sandMat);
-      beach.position.set(40, -0.2, 100);
+      beach.position.set(110, -0.4, 120);
       scenery.add(beach);
 
       // 2. Iconic Chennai Marina Lighthouse (Red & White Striped 38m Tower with Rotating Beacon)
@@ -1000,9 +1369,9 @@ export class TrackBuilder {
 
       // 4. HITEC City Cyber Towers & Skyscraper Skyline
       const glassMat = new THREE.MeshStandardMaterial({
-        color: 0x090514,
-        roughness: 0.15,
-        metalness: 0.9,
+        color: 0x1e293b,
+        roughness: 0.35,
+        metalness: 0.75,
       });
 
       for (let b = 0; b < 45; b++) {
@@ -1012,9 +1381,17 @@ export class TrackBuilder {
         const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
         const side = b % 2 === 0 ? 1 : -1;
-        const bPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, side * (roadWidth / 2 + 25 + Math.random() * 50));
+        const bPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, side * (roadWidth / 2 + 55 + Math.random() * 55));
+        const bW = 18 + Math.random() * 15;
+        const bD = 18 + Math.random() * 15;
         const bHeight = 40 + Math.random() * 95;
-        const bMesh = new THREE.Mesh(new THREE.BoxGeometry(18 + Math.random() * 15, bHeight, 18 + Math.random() * 15), glassMat);
+
+        const safeClearance = roadWidth / 2 + Math.max(bW, bD) * 0.75 + 18.0;
+        if (!this.isPositionSafeFromTrack(bPos, curve, safeClearance)) {
+          continue;
+        }
+
+        const bMesh = new THREE.Mesh(new THREE.BoxGeometry(bW, bHeight, bD), glassMat);
         bMesh.position.set(bPos.x, bPos.y + bHeight / 2 - 10, bPos.z);
         scenery.add(bMesh);
       }
@@ -1186,24 +1563,7 @@ export class TrackBuilder {
       scenery.add(theWing);
 
     } else if (config.theme === 'tokyo') {
-      // 1. Concrete Viaduct Piers under elevated expressway
-      const pierMat = new THREE.MeshStandardMaterial({
-        color: 0x334155,
-        roughness: 0.7,
-        metalness: 0.2,
-      });
-
-      for (let i = 0; i < 40; i++) {
-        const t = i / 40;
-        const pt = curve.getPointAt(t);
-        const pierHeight = Math.max(8.0, pt.y + 12);
-        const pierGeo = new THREE.CylinderGeometry(1.2, 1.4, pierHeight, 8);
-        const pier = new THREE.Mesh(pierGeo, pierMat);
-        pier.position.set(pt.x, pt.y - pierHeight / 2 + 0.1, pt.z);
-        scenery.add(pier);
-      }
-
-      // 2. Realistic Japanese Overhead Expressway Route Direction Signs
+      // 1. Realistic Japanese Overhead Expressway Route Direction Signs
       const shutoSigns = [
         { text: 'C1 都心環状線 SHUTO EXP', dest: '銀座 GINZA • 渋谷 SHIBUYA', exit: '出口 12' },
         { text: '11 台場線 BAYSIDE ROUTE', dest: 'レインボーブリッジ RAINBOW BRG', exit: '出口 08' },
@@ -1258,9 +1618,9 @@ export class TrackBuilder {
 
       // 3. Dense Tokyo City Skyline with illuminated window matrices & aviation beacons
       const buildingMatDark = new THREE.MeshStandardMaterial({
-        color: 0x090b14,
-        roughness: 0.25,
-        metalness: 0.85,
+        color: 0x1e293b,
+        roughness: 0.35,
+        metalness: 0.75,
       });
 
       const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
@@ -1272,12 +1632,18 @@ export class TrackBuilder {
         const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
         const side = i % 2 === 0 ? 1 : -1;
-        const dist = roadWidth / 2 + 28 + Math.random() * 55;
+        const dist = roadWidth / 2 + 55 + Math.random() * 55;
         const bPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, side * dist);
 
         const bWidth = 16 + Math.random() * 22;
         const bDepth = 16 + Math.random() * 22;
         const bHeight = 45 + Math.random() * 110;
+
+        // Ensure skyscraper is completely clear of any track road ribbon across the entire circuit
+        const safeClearance = roadWidth / 2 + Math.max(bWidth, bDepth) * 0.75 + 18.0;
+        if (!this.isPositionSafeFromTrack(bPos, curve, safeClearance)) {
+          continue;
+        }
 
         const bGeo = new THREE.BoxGeometry(bWidth, bHeight, bDepth);
         const bMesh = new THREE.Mesh(bGeo, buildingMatDark);
@@ -1531,4 +1897,384 @@ export class TrackBuilder {
 
     return scenery;
   }
+
+  // --- 8. RAISED CONCRETE SIDEWALK CURBS (INDIAN CITY & GP PAVEMENT) ---
+  private static generateSidewalkPavements(
+    curve: THREE.CatmullRomCurve3,
+    roadWidth: number,
+    config: TrackConfig
+  ): THREE.Group {
+    const sidewalkGroup = new THREE.Group();
+    const numSteps = 420;
+    const halfWidth = roadWidth / 2;
+    const sidewalkWidth = 2.6;
+    const curbHeight = 0.22;
+    const up = new THREE.Vector3(0, 1, 0);
+
+    // High-resolution procedural sidewalk flagstone & beveled curb texture
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d')!;
+
+    // Concrete Base
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Concrete slabs / flagstone grid
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 4;
+    for (let x = 0; x < 512; x += 128) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 512);
+      ctx.stroke();
+    }
+    for (let y = 0; y < 512; y += 128) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(512, y);
+      ctx.stroke();
+    }
+
+    // Alternating Indian Curb Stone Edge (Yellow & Black or White & Black segments)
+    const isIndian = config.theme === 'chennai' || config.theme === 'hyderabad' || config.theme === 'buddh';
+    const curbColor1 = isIndian ? '#f59e0b' : '#f8fafc';
+    const curbColor2 = '#1e293b';
+
+    for (let y = 0; y < 512; y += 64) {
+      ctx.fillStyle = (y / 64) % 2 === 0 ? curbColor1 : curbColor2;
+      ctx.fillRect(0, y, 42, 64);
+      ctx.fillRect(512 - 42, y, 42, 64);
+    }
+
+    const sidewalkTex = new THREE.CanvasTexture(canvas);
+    sidewalkTex.wrapS = THREE.RepeatWrapping;
+    sidewalkTex.wrapT = THREE.RepeatWrapping;
+    sidewalkTex.repeat.set(1, 110);
+
+    const sidewalkMat = new THREE.MeshStandardMaterial({
+      map: sidewalkTex,
+      roughness: 0.65,
+      metalness: 0.08,
+    });
+
+    // Generate Left Sidewalk and Right Sidewalk ribbon geometries
+    const createSidewalkMesh = (sideMultiplier: number) => {
+      const positions: number[] = [];
+      const normals: number[] = [];
+      const uvs: number[] = [];
+      const indices: number[] = [];
+
+      for (let i = 0; i <= numSteps; i++) {
+        const t = i / numSteps;
+        const pt = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+        const innerDist = sideMultiplier * halfWidth;
+        const outerDist = sideMultiplier * (halfWidth + sidewalkWidth);
+
+        const innerPt = new THREE.Vector3().copy(pt).addScaledVector(binormal, innerDist);
+        innerPt.y += curbHeight;
+        const outerPt = new THREE.Vector3().copy(pt).addScaledVector(binormal, outerDist);
+        outerPt.y += curbHeight;
+
+        positions.push(innerPt.x, innerPt.y, innerPt.z);
+        normals.push(0, 1, 0);
+        uvs.push(0, t * 110);
+
+        positions.push(outerPt.x, outerPt.y, outerPt.z);
+        normals.push(0, 1, 0);
+        uvs.push(1, t * 110);
+
+        if (i < numSteps) {
+          const v1 = i * 2;
+          const v2 = i * 2 + 1;
+          const v3 = (i + 1) * 2;
+          const v4 = (i + 1) * 2 + 1;
+          indices.push(v1, v2, v3);
+          indices.push(v2, v4, v3);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      const mesh = new THREE.Mesh(geo, sidewalkMat);
+      mesh.receiveShadow = true;
+      return mesh;
+    };
+
+    sidewalkGroup.add(createSidewalkMesh(-1)); // Left sidewalk
+    sidewalkGroup.add(createSidewalkMesh(1));  // Right sidewalk
+
+    return sidewalkGroup;
+  }
+
+  // --- 9. HIGHWAY STREET LIGHT POLES WITH CONICAL ILLUMINATED LIGHT POOLS ON ROAD ---
+  private static generateStreetLightsWithLightPools(
+    curve: THREE.CatmullRomCurve3,
+    roadWidth: number,
+    config: TrackConfig
+  ): THREE.Group {
+    const lightGroup = new THREE.Group();
+    const up = new THREE.Vector3(0, 1, 0);
+    const numPoles = 48;
+
+    // Materials
+    const poleMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      metalness: 0.8,
+      roughness: 0.25,
+    });
+    const luminaireMat = new THREE.MeshBasicMaterial({
+      color: config.theme === 'tokyo' ? 0x00e5ff : 0xfffaed,
+    });
+
+    // Create Soft Conical Radial Light Pool Texture for the Road Surface
+    const poolCanvas = document.createElement('canvas');
+    poolCanvas.width = 256;
+    poolCanvas.height = 256;
+    const poolCtx = poolCanvas.getContext('2d')!;
+    const poolGrad = poolCtx.createRadialGradient(128, 128, 5, 128, 128, 124);
+    poolGrad.addColorStop(0, 'rgba(255, 250, 230, 0.65)');
+    poolGrad.addColorStop(0.35, 'rgba(255, 245, 210, 0.35)');
+    poolGrad.addColorStop(0.7, 'rgba(255, 240, 200, 0.12)');
+    poolGrad.addColorStop(1, 'rgba(255, 240, 200, 0)');
+    poolCtx.fillStyle = poolGrad;
+    poolCtx.beginPath();
+    poolCtx.arc(128, 128, 128, 0, Math.PI * 2);
+    poolCtx.fill();
+
+    const poolTexture = new THREE.CanvasTexture(poolCanvas);
+    const poolMat = new THREE.MeshBasicMaterial({
+      map: poolTexture,
+      transparent: true,
+      opacity: 0.48,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+
+    const poolGeo = new THREE.PlaneGeometry(10.5, 10.5);
+    poolGeo.rotateX(-Math.PI / 2);
+
+    for (let i = 0; i < numPoles; i++) {
+      const t = i / numPoles;
+      const pt = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t).normalize();
+      const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+      // Alternate left and right sidewalk placement
+      const side = i % 2 === 0 ? 1 : -1;
+      const poleOffset = side * (roadWidth / 2 + 1.8);
+      const poleBase = new THREE.Vector3().copy(pt).addScaledVector(binormal, poleOffset);
+
+      // 1. Vertical Pole
+      const poleHeight = 8.2;
+      const poleGeo = new THREE.CylinderGeometry(0.12, 0.16, poleHeight, 8);
+      const poleMesh = new THREE.Mesh(poleGeo, poleMat);
+      poleMesh.position.set(poleBase.x, poleBase.y + poleHeight / 2, poleBase.z);
+
+      // 2. Cantilever Arm extending toward the road
+      const armLength = 2.4;
+      const armGeo = new THREE.CylinderGeometry(0.08, 0.08, armLength, 6);
+      armGeo.rotateZ(side * Math.PI / 3.2);
+      const armMesh = new THREE.Mesh(armGeo, poleMat);
+      armMesh.position.set(
+        poleBase.x - side * binormal.x * (armLength * 0.4),
+        poleBase.y + poleHeight - 0.2,
+        poleBase.z - side * binormal.z * (armLength * 0.4)
+      );
+
+      // 3. Glowing Luminaire Head
+      const lampPos = new THREE.Vector3().copy(poleBase)
+        .addScaledVector(binormal, -side * 1.6);
+      lampPos.y += poleHeight - 0.5;
+
+      const lampGeo = new THREE.BoxGeometry(0.7, 0.18, 0.4);
+      const lampMesh = new THREE.Mesh(lampGeo, luminaireMat);
+      lampMesh.position.copy(lampPos);
+
+      // 4. Ground Conical Light Pool Decal directly under the lamp (Matching reference photo!)
+      const poolMesh = new THREE.Mesh(poolGeo, poolMat);
+      const poolCenter = new THREE.Vector3().copy(pt).addScaledVector(binormal, -side * (roadWidth / 4));
+      poolMesh.position.set(poolCenter.x, poolCenter.y + 0.06, poolCenter.z);
+
+      lightGroup.add(poleMesh, armMesh, lampMesh, poolMesh);
+    }
+
+    return lightGroup;
+  }
+
+  // --- 10. INDIAN ROADSIDE LANDMARK PLACARDS & DISTANCE SIGNS (MATCHING REFERENCE PHOTO) ---
+  private static generateIndianRoadsideLandmarks(
+    curve: THREE.CatmullRomCurve3,
+    roadWidth: number,
+    config: TrackConfig
+  ): THREE.Group {
+    const landmarkGroup = new THREE.Group();
+    const up = new THREE.Vector3(0, 1, 0);
+
+    interface IndianLandmarkSpec {
+      t: number;
+      side: number; // -1 for left, 1 for right
+      badgeText: string;
+      title: string;
+      subText: string;
+      bgColor: string;
+      borderColor: string;
+      iconEmoji: string;
+    }
+
+    const landmarks: IndianLandmarkSpec[] = [
+      {
+        t: 0.06,
+        side: -1,
+        iconEmoji: '🏥',
+        badgeText: 'TAMIL NADU HEALTHCARE',
+        title: 'Chennai General Hospital',
+        subText: 'Emergency Ward • 212m Ahead',
+        bgColor: '#1e293b',
+        borderColor: '#ef4444',
+      },
+      {
+        t: 0.16,
+        side: 1,
+        iconEmoji: '🚕',
+        badgeText: 'TN TRANSPORT HUB',
+        title: 'Central Taxi & Auto Stand',
+        subText: 'Prepaid Fast Auto Bay • 350m',
+        bgColor: '#1e293b',
+        borderColor: '#f59e0b',
+      },
+      {
+        t: 0.32,
+        side: -1,
+        iconEmoji: '🏖️',
+        badgeText: 'COASTAL PROMENADE',
+        title: 'Marina Beach Bayview',
+        subText: 'Bay of Bengal Shoreline • 120m',
+        bgColor: '#0f172a',
+        borderColor: '#06b6d4',
+      },
+      {
+        t: 0.50,
+        side: 1,
+        iconEmoji: '🌉',
+        badgeText: 'HERITAGE TRANSIT',
+        title: 'Napier Bridge Arches',
+        subText: 'Cooum River Crossing • 650m',
+        bgColor: '#1e293b',
+        borderColor: '#10b981',
+      },
+      {
+        t: 0.68,
+        side: -1,
+        iconEmoji: '🗼',
+        badgeText: 'MARITIME BEACON',
+        title: 'Marina Lighthouse',
+        subText: 'Radar Tower • 900m',
+        bgColor: '#1e293b',
+        borderColor: '#8b5cf6',
+      },
+      {
+        t: 0.82,
+        side: 1,
+        iconEmoji: '☕',
+        badgeText: 'CHAI & REFRESHMENTS',
+        title: 'Madras Chai & Tiffin',
+        subText: 'Filter Coffee & Snacks • 400m',
+        bgColor: '#1e293b',
+        borderColor: '#f97316',
+      },
+    ];
+
+    landmarks.forEach((spec) => {
+      const pt = curve.getPointAt(spec.t);
+      const tangent = curve.getTangentAt(spec.t).normalize();
+      const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+      const offsetDist = spec.side * (roadWidth / 2 + 3.8);
+      const signPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, offsetDist);
+      signPos.y += 2.6;
+
+      // Draw crisp 2D Canvas for Placard Board (Identical format to user's photo!)
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 200;
+      const ctx = canvas.getContext('2d')!;
+
+      // Rounded container background
+      ctx.fillStyle = spec.bgColor;
+      ctx.roundRect(10, 10, 492, 180, 20);
+      ctx.fill();
+
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = spec.borderColor;
+      ctx.roundRect(10, 10, 492, 180, 20);
+      ctx.stroke();
+
+      // Top pill tag
+      ctx.fillStyle = `${spec.borderColor}33`;
+      ctx.roundRect(28, 24, 280, 32, 8);
+      ctx.fill();
+      ctx.font = 'bold 16px "JetBrains Mono", monospace';
+      ctx.fillStyle = spec.borderColor;
+      ctx.fillText(spec.badgeText, 40, 46);
+
+      // Icon + Title
+      ctx.font = 'bold 28px "Inter", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(`${spec.iconEmoji} ${spec.title}`, 28, 108);
+
+      // Subtitle
+      ctx.font = '18px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(spec.subText, 28, 150);
+
+      const signTex = new THREE.CanvasTexture(canvas);
+      const signMat = new THREE.MeshBasicMaterial({
+        map: signTex,
+        transparent: true,
+      });
+
+      const signBoard = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 1.8), signMat);
+      signBoard.position.copy(signPos);
+
+      // Look slightly toward road/camera
+      const lookTarget = new THREE.Vector3().copy(pt).add(tangent.clone().multiplyScalar(12));
+      signBoard.lookAt(lookTarget);
+
+      // Support Posts
+      const postMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8 });
+      const post1 = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 3.2, 8), postMat);
+      post1.position.set(signPos.x, signPos.y - 1.2, signPos.z);
+      landmarkGroup.add(signBoard, post1);
+
+      // Add 3D Auto-Rickshaw model near taxi stands
+      if (spec.iconEmoji === '🚕') {
+        const rickshaw = new THREE.Group();
+        const rickBody = new THREE.Mesh(
+          new THREE.BoxGeometry(1.4, 1.2, 2.2),
+          new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.4 }) // Indian green auto body
+        );
+        rickBody.position.y = 0.8;
+        const rickTop = new THREE.Mesh(
+          new THREE.BoxGeometry(1.3, 0.4, 2.0),
+          new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.5 }) // Yellow auto hood
+        );
+        rickTop.position.y = 1.5;
+        rickshaw.add(rickBody, rickTop);
+        rickshaw.position.set(signPos.x + 2.5 * spec.side, signPos.y - 2.4, signPos.z + 4);
+        landmarkGroup.add(rickshaw);
+      }
+    });
+
+    return landmarkGroup;
+  }
 }
+

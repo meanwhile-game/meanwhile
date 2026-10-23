@@ -171,6 +171,26 @@ func (h *Hub) OnMessage(client *Client, msg models.WSMessage) {
 	case "leave_matchmaking":
 		h.engine.RemoveFromMatchmaking(client.ID)
 
+	case "fill_bots":
+		room, err := h.engine.FillRoomWithBots(client.ID)
+		if err != nil {
+			h.SendAck(client.ID, msg.AckID, map[string]any{"success": false, "error": err.Error()})
+		} else {
+			h.SendAck(client.ID, msg.AckID, map[string]any{"success": true, "room": room})
+		}
+
+	case "instant_bot_match":
+		trackID := ""
+		if raw, ok := msg.Data.(map[string]any); ok {
+			trackID, _ = raw["trackId"].(string)
+		}
+		room, err := h.engine.InstantBotMatch(client.ID, trackID)
+		if err != nil {
+			h.SendAck(client.ID, msg.AckID, map[string]any{"success": false, "error": err.Error()})
+		} else {
+			h.SendAck(client.ID, msg.AckID, map[string]any{"success": true, "room": room})
+		}
+
 	case "set_ready":
 		isReady := false
 		if raw, ok := msg.Data.(map[string]any); ok {

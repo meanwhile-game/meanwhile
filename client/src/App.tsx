@@ -21,7 +21,7 @@ type ViewMode = 'landing' | 'lobby' | 'private_lobby' | 'racing' | 'garage' | 't
 
 export const App: React.FC = () => {
   // Navigation & Modals
-  const [view, setView] = useState<ViewMode>('landing');
+  const [view, setView] = useState<ViewMode>('lobby');
   const [showMatchmaking, setShowMatchmaking] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -51,7 +51,7 @@ export const App: React.FC = () => {
     averageWpm: 0,
     averageAccuracy: 100,
     favoriteVehicle: 'cyber-gt',
-    favoriteTrack: 'tokyo',
+    favoriteTrack: 'chennai',
     recentRaces: []
   });
 
@@ -63,7 +63,9 @@ export const App: React.FC = () => {
     return localStorage.getItem('meanwhile_vehicle_color') || localStorage.getItem('veloce_vehicle_color') || '#00ff87';
   });
   const [selectedTrackId, setSelectedTrackId] = useState<string>(() => {
-    return localStorage.getItem('meanwhile_track_id') || localStorage.getItem('veloce_track_id') || 'tokyo';
+    const saved = localStorage.getItem('meanwhile_track_id');
+    if (saved && saved !== 'tokyo') return saved;
+    return 'chennai';
   });
   const [graphicsQuality, setGraphicsQuality] = useState<'low' | 'medium' | 'high'>(() => {
     return (localStorage.getItem('meanwhile_quality') || localStorage.getItem('veloce_quality') as any) || 'high';
@@ -113,9 +115,19 @@ export const App: React.FC = () => {
   const [racersProgress, setRacersProgress] = useState<Record<string, { progress: number; wpm: number; accuracy: number; placement: number | null }>>({});
   const [finalPodium, setFinalPodium] = useState<any[]>([]);
 
-  // 3D Scene Ref
+  // 3D Scene Ref & Camera Mode
   const raceCanvasContainerRef = useRef<HTMLDivElement>(null);
   const raceSceneRef = useRef<RaceSceneManager | null>(null);
+  const [cameraMode, setCameraMode] = useState<'chase' | 'broadcast'>('chase');
+
+  const handleToggleCamera = () => {
+    if (raceSceneRef.current) {
+      const nextMode = raceSceneRef.current.toggleCameraMode();
+      setCameraMode(nextMode);
+    } else {
+      setCameraMode(prev => (prev === 'chase' ? 'broadcast' : 'chase'));
+    }
+  };
 
   // Initial Data Fetch
   useEffect(() => {
@@ -254,17 +266,20 @@ export const App: React.FC = () => {
 
       // Populate racers
       if (currentRoom?.players) {
+        const humanPlayer = Object.values(currentRoom.players).find((p: any) => !p.isAi) as any;
+        const localId = humanPlayer?.id || socketService.getSocketId() || '';
+
         const racerList: RacerDisplayData[] = Object.values(currentRoom.players).map((p: any, idx) => ({
           id: p.id,
           vehicleId: p.vehicleId || 'cyber-gt',
           vehicleColor: p.vehicleColor || '#00ff87',
-          isLocal: p.socketId === socketService.getSocketId() || p.id === socketService.getSocketId(),
+          isLocal: p.id === localId || p.socketId === localId || !p.isAi,
           targetProgress: p.progress || 0,
           currentProgress: p.progress || 0,
           laneIndex: idx % 4,
           wpm: p.wpm || 0
         }));
-        manager.setRacers(racerList, socketService.getSocketId());
+        manager.setRacers(racerList, localId);
       }
 
       return () => {
@@ -278,22 +293,69 @@ export const App: React.FC = () => {
   // Keep racers synchronized in 3D Scene
   useEffect(() => {
     if (view === 'racing' && raceSceneRef.current && currentRoom?.players) {
+      const humanPlayer = Object.values(currentRoom.players).find((p: any) => !p.isAi) as any;
+      const localId = humanPlayer?.id || socketService.getSocketId() || '';
+
       const racerList: RacerDisplayData[] = Object.values(currentRoom.players).map((p: any, idx) => {
         const live = racersProgress[p.id] || {};
+        const isLocal = p.id === localId || p.socketId === localId || !p.isAi;
         return {
           id: p.id,
           vehicleId: p.vehicleId || 'cyber-gt',
           vehicleColor: p.vehicleColor || '#00ff87',
-          isLocal: p.socketId === socketService.getSocketId() || p.id === socketService.getSocketId(),
+          isLocal,
           targetProgress: live.progress !== undefined ? live.progress : (p.progress || 0),
           currentProgress: live.progress !== undefined ? live.progress : (p.progress || 0),
           laneIndex: idx % 4,
           wpm: live.wpm || p.wpm || 0
         };
       });
-      raceSceneRef.current.setRacers(racerList, socketService.getSocketId());
+      raceSceneRef.current.setRacers(racerList, localId);
     }
-  }, [currentRoom?.players, view]);
+  }, [currentRoom?.players, view, racersProgress]);
+
+  // Active AI Simulation for Solo Mode
+  useEffect(() => {
+    if (!isRacing || !currentRoom?.id?.startsWith('solo_') || !currentRoom?.players) return;
+
+    const passageLength = Math.max(120, passage.text.length);
+    const aiIds = ['ai_1', 'ai_2', 'ai_3'];
+
+    const interval = setInterval(() => {
+      setRacersProgress(prev => {
+        const next = { ...prev };
+        let anyUpdated = false;
+
+        aiIds.forEach(id => {
+          const aiPlayer = currentRoom.players[id];
+          if (!aiPlayer) return;
+
+          const currentProg = next[id]?.progress ?? 0;
+          if (currentProg >= 1) return;
+
+          anyUpdated = true;
+          const targetWpm = aiPlayer.targetWpm || 60;
+          const charsTyped = (targetWpm * 5) / 240;
+          const addedProgress = charsTyped / passageLength;
+          const newProgress = Math.min(1, currentProg + addedProgress);
+          const dynamicWpm = Math.max(20, Math.round(targetWpm + Math.sin(Date.now() / 700 + id.charCodeAt(3)) * 4));
+
+          next[id] = {
+            progress: newProgress,
+            wpm: dynamicWpm,
+            accuracy: aiPlayer.accuracy || 98,
+            placement: null
+          };
+
+          raceSceneRef.current?.updateProgress(id, newProgress, dynamicWpm);
+        });
+
+        return anyUpdated ? next : prev;
+      });
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [isRacing, currentRoom?.id, passage.text.length]);
 
   // --- ACTIONS ---
 
@@ -312,7 +374,110 @@ export const App: React.FC = () => {
     socketService.leaveMatchmaking();
   };
 
-  const handleStartSolo = (difficulty: 'easy' | 'medium' | 'hard') => {
+  // Smooth local countdown timer fallback to guarantee 3 -> 2 -> 1 -> GO
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        const next = countdown - 1;
+        setCountdown(next);
+        sound.playCountdownTick(next);
+        raceSceneRef.current?.setCountdown(next);
+        if (next === 0) {
+          setIsRacing(true);
+          sound.startEngine();
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  const handleStartSolo = (difficulty: 'easy' | 'medium' | 'hard' = 'medium') => {
+    sound.playCountdownTick(2);
+
+    const targetWpm = difficulty === 'hard' ? 95 : difficulty === 'easy' ? 45 : 70;
+    const localId = socketService.getSocketId() || `player_${Math.random().toString(36).substring(2, 7)}`;
+
+    // Instant optimistic solo room so user enters the track in 0ms flat
+    const instantRoom = {
+      id: `solo_${Date.now()}`,
+      code: 'SOLO',
+      trackId: selectedTrackId,
+      isPrivate: true,
+      state: 'starting',
+      countdown: 3,
+      passage: passage,
+      players: {
+        [localId]: {
+          id: localId,
+          socketId: localId,
+          username: profile.username || 'Driver',
+          avatar: profile.avatar || '🏎️',
+          vehicleId: selectedVehicleId,
+          vehicleColor: selectedVehicleColor,
+          isReady: true,
+          isHost: true,
+          isAi: false,
+          progress: 0,
+          wpm: 0,
+          accuracy: 100
+        },
+        'ai_1': {
+          id: 'ai_1',
+          socketId: 'ai_1',
+          username: 'Chennai Turbo [AI]',
+          avatar: '🏎️',
+          vehicleId: 'cyber-gt',
+          vehicleColor: '#f97316',
+          isReady: true,
+          isHost: false,
+          isAi: true,
+          targetWpm: targetWpm + 3,
+          progress: 0,
+          wpm: 0,
+          accuracy: 98
+        },
+        'ai_2': {
+          id: 'ai_2',
+          socketId: 'ai_2',
+          username: 'Marina Racer [AI]',
+          avatar: '🌊',
+          vehicleId: 'phantom-blade',
+          vehicleColor: '#38bdf8',
+          isReady: true,
+          isHost: false,
+          isAi: true,
+          targetWpm: targetWpm - 4,
+          progress: 0,
+          wpm: 0,
+          accuracy: 97
+        },
+        'ai_3': {
+          id: 'ai_3',
+          socketId: 'ai_3',
+          username: 'Deccan Drift [AI]',
+          avatar: '🔥',
+          vehicleId: 'ronin-specv',
+          vehicleColor: '#eab308',
+          isReady: true,
+          isHost: false,
+          isAi: true,
+          targetWpm: targetWpm + 7,
+          progress: 0,
+          wpm: 0,
+          accuracy: 99
+        }
+      }
+    };
+
+    setCurrentRoom(instantRoom);
+    setCountdown(3);
+    setShowResults(false);
+    setIsRacing(false);
+    setRacersProgress({});
+    setLocalStats({ wpm: 0, accuracy: 100, progress: 0, currentTypedIndex: 0 });
+    setView('racing');
+
+    // Notify backend
     socketService.startSoloRace(
       {
         username: profile.username,
@@ -327,14 +492,6 @@ export const App: React.FC = () => {
         if (res.success && res.room) {
           setCurrentRoom(res.room);
           if (res.room.passage) setPassage(res.room.passage);
-          setCountdown(res.room.countdown ?? 3);
-          setShowResults(false);
-          setIsRacing(false);
-          setRacersProgress({});
-          setLocalStats({ wpm: 0, accuracy: 100, progress: 0, currentTypedIndex: 0 });
-          setView('racing');
-        } else {
-          console.error('[Meanwhile] Solo race start failed:', res.error);
         }
       }
     );
@@ -417,11 +574,51 @@ export const App: React.FC = () => {
       isError,
       clientTimestamp: Date.now()
     });
+    if (isError) {
+      raceSceneRef.current?.triggerBrakeDive();
+    } else {
+      raceSceneRef.current?.triggerThrottleSurge();
+    }
   };
 
   const handleStatsUpdate = (stats: { wpm: number; accuracy: number; progress: number; currentTypedIndex: number }) => {
     setLocalStats(stats);
-    raceSceneRef.current?.updateProgress(socketService.getSocketId(), stats.progress, stats.wpm);
+    const humanPlayer = Object.values(currentRoom?.players || {}).find((p: any) => !p.isAi) as any;
+    const localId = humanPlayer?.id || socketService.getSocketId() || '';
+    raceSceneRef.current?.updateProgress(localId, stats.progress, stats.wpm);
+
+    // Solo finish detection
+    if (stats.progress >= 1 && currentRoom?.id?.startsWith('solo_') && isRacing) {
+      setIsRacing(false);
+      sound.stopEngine();
+
+      const racersList = Object.values(currentRoom.players).map((p: any) => {
+        const live = racersProgress[p.id] || {};
+        const isMe = p.id === localId || p.socketId === localId || !p.isAi;
+        return {
+          id: p.id,
+          username: p.username,
+          avatar: p.avatar,
+          wpm: isMe ? stats.wpm : (live.wpm || p.targetWpm || 60),
+          accuracy: isMe ? stats.accuracy : (live.accuracy || 98),
+          progress: isMe ? 1 : (live.progress || 0.8),
+          isLocal: isMe
+        };
+      });
+
+      racersList.sort((a, b) => {
+        if (a.progress !== b.progress) return b.progress - a.progress;
+        return b.wpm - a.wpm;
+      });
+
+      const podium = racersList.map((r, idx) => ({
+        ...r,
+        placement: idx + 1
+      }));
+
+      setFinalPodium(podium);
+      setShowResults(true);
+    }
   };
 
   const handleSelectVehicle = (vehicleId: string, color: string, customization?: any) => {
@@ -455,7 +652,9 @@ export const App: React.FC = () => {
   const hudRacers: RacerHudData[] = currentRoom?.players
     ? Object.values(currentRoom.players).map((p: any) => {
         const live = racersProgress[p.id] || {};
-        const isLocal = p.socketId === socketService.getSocketId() || p.id === socketService.getSocketId();
+        const humanPlayer = Object.values(currentRoom.players).find((pl: any) => !pl.isAi) as any;
+        const localId = humanPlayer?.id || socketService.getSocketId() || '';
+        const isLocal = p.id === localId || p.socketId === localId || !p.isAi;
 
         return {
           id: p.id,
@@ -487,6 +686,8 @@ export const App: React.FC = () => {
           onOpenGarage={() => setView('garage')}
           onOpenTracks={() => setView('tracks')}
           onOpenLeaderboard={() => setView('leaderboard')}
+          onJoinTrackId={handleJoinPrivateRoom}
+          onCreatePrivate={handleCreatePrivateRoom}
           onlineCount={onlineCount}
         />
       )}
@@ -512,6 +713,8 @@ export const App: React.FC = () => {
             localStorage.setItem('meanwhile_vehicle_color', c);
             socketService.updateVehicle(selectedVehicleId, c);
           }}
+          onSelectTrack={handleSelectTrack}
+          onSelectVehicle={(vId) => handleSelectVehicle(vId, selectedVehicleColor)}
         />
       )}
 
@@ -544,10 +747,14 @@ export const App: React.FC = () => {
             passageAuthor={passage.author}
             passageSourceType={passage.sourceType}
             passageYear={passage.year}
+            trackId={currentRoom?.trackId || selectedTrackId}
+            trackName={TRACKS.find(t => t.id === (currentRoom?.trackId || selectedTrackId))?.name || 'Chennai Marina Coast'}
             isRacing={isRacing}
             countdown={countdown}
             racers={hudRacers}
             localStats={localStats}
+            cameraMode={cameraMode}
+            onToggleCamera={handleToggleCamera}
             onKeystroke={handleKeystroke}
             onStatsUpdate={handleStatsUpdate}
             onExitRace={handleExitRace}
@@ -606,7 +813,14 @@ export const App: React.FC = () => {
       {showMatchmaking && (
         <MatchmakingModal
           queueLength={queueLength}
+          selectedTrackId={selectedTrackId}
+          username={profile.username}
+          avatar={profile.avatar}
           onCancel={handleCancelMatchmaking}
+          onInstantBotMatch={() => {
+            sound.playClick();
+            socketService.instantBotMatch(selectedTrackId);
+          }}
         />
       )}
 

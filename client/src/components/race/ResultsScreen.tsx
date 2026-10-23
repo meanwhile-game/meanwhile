@@ -17,6 +17,7 @@ import {
   Gauge
 } from 'lucide-react';
 import { sound } from '../../sound/soundEngine.js';
+import { AdBanner } from '../common/AdBanner.js';
 
 interface ResultPodiumEntry {
   id: string;
@@ -80,7 +81,17 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
         });
       } catch (e) {}
     }
-  }, [placement]);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === 'Enter') {
+        e.preventDefault();
+        sound.playCountdownTick(2);
+        onRematch();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [placement, onRematch]);
 
   const formatTime = (ms: number | null) => {
     if (!ms) return '--:--';
@@ -259,11 +270,18 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           </div>
         )}
 
+        {/* SPONSORED MONETIZATION BANNER (Prime post-race slot) */}
+        <AdBanner
+          slotId="ad-results-podium-banner"
+          format="leaderboard"
+          className="my-1 w-full"
+        />
+
         {/* 5. Actions Footer */}
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 pt-2">
           <button
             onClick={handleShare}
-            className="px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-xs font-mono font-bold text-slate-300 hover:text-white flex items-center gap-2 cursor-pointer transition-colors shadow-md"
+            className="btn-arcade-pill px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 hover:bg-slate-800 text-xs font-mono font-bold text-slate-300 hover:text-white flex items-center gap-2 cursor-pointer shadow-md"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4 text-cyan-400" />}
             {copied ? 'Copied to Clipboard!' : 'Share Telemetry'}
@@ -275,7 +293,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 sound.playKeystroke(50, true);
                 onReturnToLobby();
               }}
-              className="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer transition-colors shadow-md"
+              className="btn-arcade-pill px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer shadow-md"
             >
               <RotateCcw className="w-4 h-4 text-slate-400" />
               Lobby
@@ -286,9 +304,12 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 sound.playCountdownTick(2);
                 onRematch();
               }}
-              className="px-7 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black text-xs font-black uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-[0_0_25px_rgba(0,255,135,0.45)] hover:shadow-[0_0_35px_rgba(0,255,135,0.7)] transition-all transform hover:-translate-y-0.5"
+              className="btn-arcade-green px-7 py-3 rounded-xl text-black text-xs font-black uppercase tracking-wider flex items-center gap-2.5 cursor-pointer shadow-xl active:translate-y-1"
             >
-              Race Again
+              <span>Race Again</span>
+              <span className="px-1.5 py-0.5 rounded bg-black/20 text-[9px] font-mono font-bold tracking-tight">
+                SPACE
+              </span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

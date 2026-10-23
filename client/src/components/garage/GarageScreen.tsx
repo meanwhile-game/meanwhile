@@ -31,6 +31,7 @@ import {
   SlidersHorizontal
 } from 'lucide-react';
 import { sound } from '../../sound/soundEngine.js';
+import { AdBanner } from '../common/AdBanner.js';
 
 interface GarageScreenProps {
   currentVehicleId: string;
@@ -402,6 +403,13 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
                 <span className="text-white font-bold capitalize">{customization.spoilerStyle}</span>
               </div>
             </div>
+
+            {/* SPONSORED RECTANGLE AD (300x250) */}
+            <AdBanner
+              slotId="ad-garage-sidebar-rectangle"
+              format="rectangle"
+              className="mt-3 w-full"
+            />
           </div>
         </div>
       </div>

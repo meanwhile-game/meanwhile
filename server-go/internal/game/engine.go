@@ -28,6 +28,7 @@ type MatchmakingEntrant struct {
 	Avatar       string `json:"avatar"`
 	VehicleID    string `json:"vehicleId"`
 	VehicleColor string `json:"vehicleColor"`
+	TrackID      string `json:"trackId"`
 	JoinedAt     int64  `json:"joinedAt"`
 }
 
@@ -69,14 +70,31 @@ func randomID(n int) string {
 	return hex.EncodeToString(b)
 }
 
-func randomRoomCode() string {
-	const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-	b := make([]byte, 6)
-	_, _ = rand.Read(b)
-	for i := range b {
-		b[i] = chars[int(b[i])%len(chars)]
+func randomRoomCode(trackID string) string {
+	prefix := "GP"
+	switch strings.ToLower(trackID) {
+	case "chennai":
+		prefix = "CHN"
+	case "hyderabad":
+		prefix = "HYD"
+	case "buddh":
+		prefix = "BIC"
+	case "monaco":
+		prefix = "MON"
+	case "silverstone":
+		prefix = "SIL"
+	case "tokyo":
+		prefix = "TOK"
+	case "swiss", "swiss-alps":
+		prefix = "SWI"
+	case "dubai":
+		prefix = "DXB"
 	}
-	return string(b)
+
+	b := make([]byte, 2)
+	_, _ = rand.Read(b)
+	num := (int(b[0])<<8|int(b[1]))%900 + 100
+	return fmt.Sprintf("%s-%d", prefix, num)
 }
 
 // --- ROOM CREATION & JOINING ---
@@ -98,7 +116,11 @@ func (e *Engine) CreateRoom(clientID string, params CreateRoomParams) (*models.R
 	defer e.mu.Unlock()
 
 	roomID := randomID(4)
-	code := randomRoomCode()
+	trackID := params.TrackID
+	if trackID == "" {
+		trackID = "chennai"
+	}
+	code := randomRoomCode(trackID)
 	passage := passages.GetRandomPassage(params.PassageDifficulty)
 
 	username := params.Username
@@ -122,9 +144,8 @@ func (e *Engine) CreateRoom(clientID string, params CreateRoomParams) (*models.R
 	if params.IsPrivate != nil {
 		isPrivate = *params.IsPrivate
 	}
-	trackID := params.TrackID
-	if trackID == "" {
-		trackID = "tokyo"
+	if params.TrackID != "" {
+		trackID = params.TrackID
 	}
 
 	hostPlayer := &models.Player{
@@ -190,13 +211,15 @@ func (e *Engine) JoinRoom(clientID string, params JoinRoomParams) (*models.Room,
 	defer e.mu.Unlock()
 
 	target := strings.ToUpper(strings.TrimSpace(params.RoomIDOrCode))
+	targetClean := strings.ReplaceAll(strings.ReplaceAll(target, "-", ""), " ", "")
 	var targetRoom *models.Room
 
 	if r, ok := e.rooms[params.RoomIDOrCode]; ok {
 		targetRoom = r
 	} else {
 		for _, r := range e.rooms {
-			if strings.ToUpper(r.Code) == target {
+			codeClean := strings.ReplaceAll(strings.ToUpper(r.Code), "-", "")
+			if strings.ToUpper(r.Code) == target || codeClean == targetClean || r.ID == target {
 				targetRoom = r
 				break
 			}
@@ -204,7 +227,7 @@ func (e *Engine) JoinRoom(clientID string, params JoinRoomParams) (*models.Room,
 	}
 
 	if targetRoom == nil {
-		return nil, fmt.Errorf("room not found. Check your room code")
+		return nil, fmt.Errorf("track not found. Check the Track ID (e.g. CHN-882)")
 	}
 
 	if targetRoom.State != models.StateLobby {
@@ -316,9 +339,9 @@ func (e *Engine) StartSoloRace(clientID string, params SoloParams) (*models.Room
 	}
 
 	aiTemplates := []AITemplate{
-		{Name: "Kuro Cyber [AI]", Avatar: "🤖", Vehicle: "ronin-turbo", Color: "#f43f5e", TargetWPM: targetWpm},
-		{Name: "Apex Bot [AI]", Avatar: "⚡", Vehicle: "apex-hyper", Color: "#eab308", TargetWPM: targetWpm + 7},
-		{Name: "Alpine Stig [AI]", Avatar: "🏔️", Vehicle: "phantom-bike", Color: "#a855f7", TargetWPM: targetWpm + 15},
+		{Name: "Chennai Turbo [AI]", Avatar: "🏎️", Vehicle: "cyber-gt", Color: "#ff6600", TargetWPM: targetWpm + 3},
+		{Name: "Marina Racer [AI]", Avatar: "🌊", Vehicle: "phantom-blade", Color: "#a855f7", TargetWPM: targetWpm - 4},
+		{Name: "Deccan Drift [AI]", Avatar: "🔥", Vehicle: "ronin-specv", Color: "#eab308", TargetWPM: targetWpm + 7},
 	}
 
 	e.mu.Lock()
@@ -354,6 +377,139 @@ func (e *Engine) StartSoloRace(clientID string, params SoloParams) (*models.Room
 	e.mu.Unlock()
 
 	go e.StartCountdown(roomID)
+	return room, nil
+}
+
+func (e *Engine) FillRoomWithBots(clientID string) (*models.Room, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	roomID, exists := e.socketToRoom[clientID]
+	if !exists {
+		return nil, fmt.Errorf("player not in any room")
+	}
+
+	room, ok := e.rooms[roomID]
+	if !ok {
+		return nil, fmt.Errorf("room not found")
+	}
+
+	if room.HostID != clientID {
+		return nil, fmt.Errorf("only the room host can fill slots with bots")
+	}
+
+	if room.State != models.StateLobby {
+		return nil, fmt.Errorf("race already in progress")
+	}
+
+	needed := 4 - len(room.Players)
+	if needed <= 0 {
+		return room, nil
+	}
+
+	type AITemplate struct {
+		Name      string
+		Avatar    string
+		Vehicle   string
+		Color     string
+		TargetWPM int
+	}
+
+	aiPool := []AITemplate{
+		{Name: "Chennai Turbo [AI]", Avatar: "🏎️", Vehicle: "cyber-gt", Color: "#ff6600", TargetWPM: 68},
+		{Name: "Apex Bot [AI]", Avatar: "⚡", Vehicle: "apex-hyperion", Color: "#00e5ff", TargetWPM: 74},
+		{Name: "Marina Racer [AI]", Avatar: "🌊", Vehicle: "phantom-blade", Color: "#a855f7", TargetWPM: 64},
+		{Name: "Deccan Drift [AI]", Avatar: "🔥", Vehicle: "ronin-specv", Color: "#eab308", TargetWPM: 58},
+	}
+
+	added := 0
+	for _, t := range aiPool {
+		if added >= needed {
+			break
+		}
+		aiID := fmt.Sprintf("ai_%s", randomID(3))
+		room.Players[aiID] = &models.Player{
+			ID:                aiID,
+			SocketID:          aiID,
+			Username:          t.Name,
+			Avatar:            t.Avatar,
+			VehicleID:         t.Vehicle,
+			VehicleColor:      t.Color,
+			IsReady:           true,
+			IsHost:            false,
+			IsAI:              true,
+			TargetWpm:         t.TargetWPM,
+			Progress:          0,
+			CurrentTypedIndex: 0,
+			WPM:               0,
+			RawWPM:            0,
+			Accuracy:          98,
+			ErrorsCount:       1,
+			TotalKeystrokes:   0,
+		}
+		added++
+	}
+
+	if e.hub != nil {
+		e.hub.BroadcastToRoom(room.ID, "room_updated", room)
+	}
+
+	return room, nil
+}
+
+func (e *Engine) InstantBotMatch(clientID string, trackID string) (*models.Room, error) {
+	var username, avatar, vehicleID, vehicleColor string
+	e.mu.Lock()
+	for _, p := range e.matchmakingQueue {
+		if p.SocketID == clientID {
+			username = p.Username
+			avatar = p.Avatar
+			vehicleID = p.VehicleID
+			vehicleColor = p.VehicleColor
+			if trackID == "" {
+				trackID = p.TrackID
+			}
+			break
+		}
+	}
+	e.mu.Unlock()
+
+	e.RemoveFromMatchmaking(clientID)
+
+	if trackID == "" {
+		trackID = "chennai"
+	}
+	if username == "" {
+		username = "Racer"
+	}
+	if avatar == "" {
+		avatar = "🏎️"
+	}
+	if vehicleID == "" {
+		vehicleID = "cyber-gt"
+	}
+	if vehicleColor == "" {
+		vehicleColor = "#00ff87"
+	}
+
+	room, err := e.StartSoloRace(clientID, SoloParams{
+		Username:     username,
+		Avatar:       avatar,
+		VehicleID:    vehicleID,
+		VehicleColor: vehicleColor,
+		TrackID:      trackID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if e.hub != nil {
+		e.hub.SendTo(clientID, "match_found", map[string]any{
+			"room":           room,
+			"filledWithBots": true,
+		})
+	}
+
 	return room, nil
 }
 
@@ -703,6 +859,20 @@ func (e *Engine) startAILoop() {
 					continue
 				}
 
+				// Determine active human racer pacing for authentic dynamic competition
+				humanWpmSum := 0
+				humanCount := 0
+				for _, p := range room.Players {
+					if !p.IsAI && p.WPM > 0 {
+						humanWpmSum += p.WPM
+						humanCount++
+					}
+				}
+				baseHumanWpm := 52.0
+				if humanCount > 0 {
+					baseHumanWpm = float64(humanWpmSum) / float64(humanCount)
+				}
+
 				anyAIUpdated := false
 				for _, player := range room.Players {
 					if !player.IsAI || player.FinishTime != nil {
@@ -716,11 +886,15 @@ func (e *Engine) startAILoop() {
 
 					targetWpm := float64(player.TargetWpm)
 					if targetWpm <= 0 {
-						targetWpm = 65
+						targetWpm = 55.0
 					}
 
-					jitter := math.Sin(float64(now)/1500.0) * 4.0
-					currentExpectedWpm := math.Max(30.0, targetWpm+jitter)
+					// Dynamic rubber-banding: keep AI bots close to player pace
+					diffOffset := (targetWpm - 60.0) * 0.45
+					adjustedTarget := math.Max(32.0, math.Min(95.0, baseHumanWpm+diffOffset))
+
+					jitter := math.Sin(float64(now)/1600.0+float64(player.TargetWpm)) * 3.0
+					currentExpectedWpm := math.Max(26.0, adjustedTarget+jitter)
 					expectedChars := int(math.Floor(currentExpectedWpm * 5.0 * elapsedMinutes))
 
 					if expectedChars > player.CurrentTypedIndex {
@@ -802,6 +976,18 @@ func (e *Engine) startMatchmakingLoop() {
 
 func (e *Engine) processMatchmaking() {
 	e.mu.Lock()
+
+	// Broadcast queue status to all clients currently in matchmaking
+	queueLen := len(e.matchmakingQueue)
+	if e.hub != nil && queueLen > 0 {
+		for _, entrant := range e.matchmakingQueue {
+			e.hub.SendTo(entrant.SocketID, "matchmaking_status", map[string]any{
+				"queueLength": queueLen,
+				"elapsed":     (time.Now().UnixMilli() - entrant.JoinedAt) / 1000,
+			})
+		}
+	}
+
 	if len(e.matchmakingQueue) >= 2 {
 		count := len(e.matchmakingQueue)
 		if count > 4 {
@@ -812,12 +998,17 @@ func (e *Engine) processMatchmaking() {
 		e.mu.Unlock()
 
 		host := matched[0]
+		trackID := host.TrackID
+		if trackID == "" {
+			trackID = "chennai"
+		}
+
 		room, err := e.CreateRoom(host.SocketID, CreateRoomParams{
 			Username:     host.Username,
 			Avatar:       host.Avatar,
 			VehicleID:    host.VehicleID,
 			VehicleColor: host.VehicleColor,
-			TrackID:      "tokyo",
+			TrackID:      trackID,
 		})
 		if err != nil {
 			return
@@ -839,31 +1030,54 @@ func (e *Engine) processMatchmaking() {
 		}
 
 		go func(rID string) {
-			time.Sleep(4 * time.Second)
+			time.Sleep(3 * time.Second)
 			e.StartCountdown(rID)
 		}(room.ID)
 		return
 	}
 
-	// Timeout bot backfill for single players waiting > 6s
+	// Fast 4.5-second bot backfill for single racers searching online
 	now := time.Now().UnixMilli()
-	var timedOutEntrant *MatchmakingEntrant
+	var timedOutEntrant MatchmakingEntrant
+	foundTimedOut := false
 	for i, entrant := range e.matchmakingQueue {
-		if now-entrant.JoinedAt > 6000 {
-			timedOutEntrant = &entrant
+		if now-entrant.JoinedAt > 4200 {
+			timedOutEntrant = entrant
+			foundTimedOut = true
 			e.matchmakingQueue = append(e.matchmakingQueue[:i], e.matchmakingQueue[i+1:]...)
 			break
 		}
 	}
 	e.mu.Unlock()
 
-	if timedOutEntrant != nil {
+	if foundTimedOut {
+		trackID := timedOutEntrant.TrackID
+		if trackID == "" {
+			trackID = "chennai"
+		}
+		username := timedOutEntrant.Username
+		if username == "" {
+			username = "Racer"
+		}
+		avatar := timedOutEntrant.Avatar
+		if avatar == "" {
+			avatar = "🏎️"
+		}
+		vehicleID := timedOutEntrant.VehicleID
+		if vehicleID == "" {
+			vehicleID = "cyber-gt"
+		}
+		vehicleColor := timedOutEntrant.VehicleColor
+		if vehicleColor == "" {
+			vehicleColor = "#00ff87"
+		}
+
 		room, err := e.StartSoloRace(timedOutEntrant.SocketID, SoloParams{
-			Username:     timedOutEntrant.Username,
-			Avatar:       timedOutEntrant.Avatar,
-			VehicleID:    timedOutEntrant.VehicleID,
-			VehicleColor: timedOutEntrant.VehicleColor,
-			TrackID:      "tokyo",
+			Username:     username,
+			Avatar:       avatar,
+			VehicleID:    vehicleID,
+			VehicleColor: vehicleColor,
+			TrackID:      trackID,
 		})
 		if err == nil && e.hub != nil {
 			e.hub.SendTo(timedOutEntrant.SocketID, "match_found", map[string]any{

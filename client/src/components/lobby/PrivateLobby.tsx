@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { TRACKS } from '../../three/types.js';
 import {
   Copy, Check, Crown, Play, CheckCircle2, Circle, ArrowLeft,
-  Users, Share2, Sparkles, MapPin, Compass
+  Users, Share2, Sparkles, MapPin, Compass, Bot, Zap
 } from 'lucide-react';
 import { sound } from '../../sound/soundEngine.js';
+import { socketService } from '../../services/socket.js';
+import { AdBanner } from '../common/AdBanner.js';
 import heroBg from '../../assets/hero-bg.jpg';
 import swissTrackImg from '../../assets/swiss-track.jpg';
 
@@ -30,6 +32,7 @@ interface PrivateLobbyProps {
   onToggleReady: (ready: boolean) => void;
   onChangeTrack: (trackId: string) => void;
   onLeaveRoom: () => void;
+  onFillBots?: () => void;
 }
 
 export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
@@ -41,7 +44,8 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
   onStartRace,
   onToggleReady,
   onChangeTrack,
-  onLeaveRoom
+  onLeaveRoom,
+  onFillBots,
 }) => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -125,11 +129,14 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
           <div>
             <span className="text-[10px] font-mono uppercase text-slate-400 font-bold tracking-widest flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              DIRECT ACCESS DISPATCH CODE
+              PRIVATE TRACK ID (SHARE TO JOIN)
             </span>
             <div className="text-4xl sm:text-5xl font-black font-mono tracking-widest text-cyan-400 mt-1 flex items-center gap-3">
               {roomCode}
             </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Anyone can enter this Track ID on the home screen or lobby to join this private circuit.
+            </p>
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -181,23 +188,47 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
 
               {isHost && (
                 <div className="mt-5 pt-4 border-t border-slate-800/80">
-                  <label className="text-[11px] font-mono uppercase text-slate-400 block mb-2 font-bold">
-                    Host Control: Switch Circuit
-                  </label>
-                  <select
-                    value={trackId}
-                    onChange={(e) => {
-                      sound.playKeystroke(60, true);
-                      onChangeTrack(e.target.value);
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-950 text-xs font-mono font-bold text-white focus:outline-none focus:border-cyan-400 cursor-pointer shadow-md"
-                  >
-                    {TRACKS.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.difficulty.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <label className="text-[11px] font-mono uppercase text-slate-300 font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                      Host Control: Select Circuit
+                    </label>
+                    <span className="text-[10px] font-mono text-cyan-400 font-bold">{TRACKS.length} Tracks</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                    {TRACKS.map(t => {
+                      const isSelected = t.id === trackId;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => {
+                            sound.playKeystroke(60, true);
+                            onChangeTrack(t.id);
+                          }}
+                          className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer ${
+                            isSelected
+                              ? 'border-cyan-400 bg-cyan-950/60 text-white ring-1 ring-cyan-400/50 shadow-md'
+                              : 'border-slate-800 bg-slate-950/70 text-slate-300 hover:border-slate-700 hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <div className="font-bold truncate text-[11px] text-white flex items-center justify-between">
+                            <span className="truncate">{t.name}</span>
+                            {isSelected && <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0 ml-1 shadow-[0_0_6px_#38bdf8]" />}
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between mt-1">
+                            <span className="truncate">{t.location}</span>
+                            <span className={`uppercase font-bold text-[9px] ${
+                              t.difficulty === 'hard' ? 'text-rose-400' : t.difficulty === 'medium' ? 'text-amber-400' : 'text-cyan-400'
+                            }`}>
+                              {t.difficulty}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -293,23 +324,45 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
               )}
 
               {isHost && (
-                <button
-                  onClick={handleStartClick}
-                  disabled={!allPlayersReady}
-                  className={`w-full py-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 cursor-pointer transition-all ${
-                    allPlayersReady
-                      ? 'bg-emerald-400 hover:bg-emerald-300 text-black shadow-[0_0_35px_rgba(0,255,135,0.5)] transform hover:-translate-y-0.5'
-                      : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60'
-                  }`}
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  {allPlayersReady ? 'LAUNCH GRAND PRIX NOW' : 'WAITING FOR ALL RACERS TO READY'}
-                </button>
+                <div className="w-full flex flex-col sm:flex-row items-center gap-3">
+                  {playerList.length < 6 && (
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        if (onFillBots) onFillBots();
+                        else socketService.fillRoomWithBots();
+                      }}
+                      className="w-full sm:w-auto px-4 py-4 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-mono font-bold flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md active:scale-95 whitespace-nowrap"
+                    >
+                      <Bot className="w-4 h-4 text-amber-400" />
+                      Fill Vacant with AI Bots
+                    </button>
+                  )}
+                  <button
+                    onClick={handleStartClick}
+                    disabled={!allPlayersReady}
+                    className={`flex-1 w-full py-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 cursor-pointer transition-all ${
+                      allPlayersReady
+                        ? 'bg-emerald-400 hover:bg-emerald-300 text-black shadow-[0_0_35px_rgba(0,255,135,0.5)] transform hover:-translate-y-0.5'
+                        : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+                    }`}
+                  >
+                    <Play className="w-4 h-4 fill-current" />
+                    {allPlayersReady ? 'LAUNCH GRAND PRIX NOW' : 'WAITING FOR ALL RACERS TO READY'}
+                  </button>
+                </div>
               )}
             </div>
           </div>
         </div>
       </main>
+
+      {/* SPONSORED BANNER (Private Lobby Grid Waiting Slot) */}
+      <AdBanner
+        slotId="ad-private-lobby-leaderboard"
+        format="leaderboard"
+        className="max-w-4xl mx-auto my-3 z-10"
+      />
 
       {/* 3. Footer */}
       <footer className="w-full max-w-5xl mx-auto flex items-center justify-between text-xs font-mono text-slate-500 border-t border-slate-800/80 pt-4 z-10">

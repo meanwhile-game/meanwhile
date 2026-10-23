@@ -14,6 +14,18 @@ export interface RacerDisplayData {
   wpm: number;
 }
 
+export interface RacerPhysicsState {
+  velocity: number;
+  actualProgress: number;
+  pitch: number;
+  roll: number;
+  steerAngle: number;
+  wheelRotation: number;
+  brakeDive: number;
+  brakeFlareTimer: number;
+  accelG: number;
+}
+
 export class RaceSceneManager {
   private container: HTMLDivElement;
   private scene: THREE.Scene;
@@ -30,7 +42,11 @@ export class RaceSceneManager {
 
   // Racers map: racerId -> { mesh, data }
   private racerMeshes: Map<string, { mesh: VehicleMeshObject; data: RacerDisplayData }> = new Map();
+  private racerPhysics: Map<string, RacerPhysicsState> = new Map();
   private localPlayerId: string | null = null;
+  private cameraSnapped: boolean = false;
+  private cameraMode: 'chase' | 'broadcast' = 'chase';
+  private speedLinesMesh: THREE.LineSegments | null = null;
 
   private lastTime: number = performance.now();
   private currentCountdown: number = -1;
@@ -49,7 +65,7 @@ export class RaceSceneManager {
 
     // Camera
     const aspect = container.clientWidth / (container.clientHeight || 1);
-    this.camera = new THREE.PerspectiveCamera(60, aspect, 0.5, 600);
+    this.camera = new THREE.PerspectiveCamera(54, aspect, 0.1, 1200);
     this.camera.position.set(0, 10, -20);
 
     // Renderer
@@ -61,7 +77,7 @@ export class RaceSceneManager {
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality === 'high' ? 2 : 1.5));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.toneMappingExposure = 1.15;
 
     if (quality !== 'low') {
       this.renderer.shadowMap.enabled = true;
@@ -73,6 +89,7 @@ export class RaceSceneManager {
     // Setup Lighting & Track
     this.setupLighting();
     this.loadTrack(config);
+    this.initSpeedLines();
 
     // Start Render Loop
     this.animate = this.animate.bind(this);
@@ -80,6 +97,42 @@ export class RaceSceneManager {
     window.addEventListener('resize', this.handleResize);
 
     this.animate();
+  }
+
+  private initSpeedLines(): void {
+    const lineCount = 48;
+    const positions: number[] = [];
+    for (let i = 0; i < lineCount; i++) {
+      const rx = (Math.random() - 0.5) * 9.0;
+      const ry = 0.4 + Math.random() * 3.6;
+      const rz = (Math.random() - 0.5) * 18.0;
+      const len = 2.5 + Math.random() * 5.0;
+      positions.push(rx, ry, rz);
+      positions.push(rx, ry, rz + len);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const mat = new THREE.LineBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.0,
+      blending: THREE.AdditiveBlending
+    });
+    this.speedLinesMesh = new THREE.LineSegments(geo, mat);
+    this.scene.add(this.speedLinesMesh);
+  }
+
+  public toggleCameraMode(): 'chase' | 'broadcast' {
+    this.cameraMode = this.cameraMode === 'chase' ? 'broadcast' : 'chase';
+    return this.cameraMode;
+  }
+
+  public setCameraMode(mode: 'chase' | 'broadcast'): void {
+    this.cameraMode = mode;
+  }
+
+  public getCameraMode(): 'chase' | 'broadcast' {
+    return this.cameraMode;
   }
 
   private setupLighting(): void {
@@ -100,6 +153,8 @@ export class RaceSceneManager {
       this.dirLight.shadow.mapSize.height = this.graphicsQuality === 'high' ? 2048 : 1024;
       this.dirLight.shadow.camera.near = 10;
       this.dirLight.shadow.camera.far = 400;
+      this.dirLight.shadow.bias = -0.0003;
+      this.dirLight.shadow.normalBias = 0.02;
       const d = 120;
       this.dirLight.shadow.camera.left = -d;
       this.dirLight.shadow.camera.right = d;
@@ -109,7 +164,7 @@ export class RaceSceneManager {
 
     this.scene.add(this.dirLight);
 
-    // Vehicle forward projection headlight
+    // Vehicle forward projection headlight (spotlight)
     this.headlightTarget = new THREE.Object3D();
     this.scene.add(this.headlightTarget);
 
@@ -125,13 +180,20 @@ export class RaceSceneManager {
     this.trackConfig = config;
     this.scene.background = new THREE.Color(config.skyColor);
     this.scene.fog = new THREE.Fog(config.fogColor, config.fogNear, config.fogFar);
+    this.cameraSnapped = false;
 
     this.builtTrack = TrackBuilder.buildTrack(config);
     this.scene.add(this.builtTrack.trackGroup);
   }
 
-  public setRacers(racers: RacerDisplayData[], localId: string): void {
-    this.localPlayerId = localId;
+  public setRacers(racers: RacerDisplayData[], localId?: string): void {
+    // 1. Determine local racer with ironclad fallback:
+    const localRacer = racers.find(r => r.isLocal)
+      || (localId ? racers.find(r => r.id === localId) : undefined)
+      || racers.find(r => !r.id.startsWith('ai_'))
+      || racers[0];
+
+    this.localPlayerId = localRacer ? localRacer.id : (localId || null);
 
     const currentIds = new Set(racers.map(r => r.id));
 
@@ -140,11 +202,13 @@ export class RaceSceneManager {
       if (!currentIds.has(id)) {
         this.scene.remove(item.mesh);
         this.racerMeshes.delete(id);
+        this.racerPhysics.delete(id);
       }
     }
 
     // Add or update racers
     racers.forEach((r, idx) => {
+      const isLocal = r.id === this.localPlayerId || r.isLocal || (!this.localPlayerId && !r.id.startsWith('ai_'));
       const laneIndex = r.laneIndex !== undefined ? r.laneIndex : (idx % 4);
       let existing = this.racerMeshes.get(r.id);
 
@@ -154,7 +218,7 @@ export class RaceSceneManager {
         }
         // If this is the local racer, check for custom tuning options
         let customParam: any = r.vehicleColor;
-        if (r.id === this.localPlayerId) {
+        if (isLocal) {
           try {
             const raw = localStorage.getItem(`meanwhile_custom_${r.vehicleId}`);
             if (raw) customParam = JSON.parse(raw);
@@ -168,6 +232,7 @@ export class RaceSceneManager {
           mesh,
           data: {
             ...r,
+            isLocal,
             laneIndex,
             currentProgress: r.targetProgress || 0
           }
@@ -177,15 +242,47 @@ export class RaceSceneManager {
         existing.data.targetProgress = r.targetProgress;
         existing.data.wpm = r.wpm;
         existing.data.laneIndex = laneIndex;
+        existing.data.isLocal = isLocal;
       }
     });
   }
 
   public updateProgress(racerId: string, progress: number, wpm: number): void {
-    const racer = this.racerMeshes.get(racerId);
+    let racer = this.racerMeshes.get(racerId);
+    if (!racer && this.localPlayerId) {
+      racer = this.racerMeshes.get(this.localPlayerId);
+    }
     if (racer) {
+      const prevProgress = racer.data.targetProgress || 0;
       racer.data.targetProgress = Math.max(0, Math.min(1, progress));
       racer.data.wpm = wpm;
+
+      if (progress > prevProgress) {
+        const p = this.racerPhysics.get(racer.data.id);
+        if (p) {
+          p.accelG = Math.min(1.0, p.accelG + 0.35);
+        }
+      }
+    }
+  }
+
+  public triggerBrakeDive(racerId?: string): void {
+    const id = racerId || this.localPlayerId;
+    if (!id) return;
+    const p = this.racerPhysics.get(id);
+    if (p) {
+      p.brakeDive = -0.055;
+      p.brakeFlareTimer = 0.65;
+      p.accelG = -0.75;
+    }
+  }
+
+  public triggerThrottleSurge(racerId?: string): void {
+    const id = racerId || this.localPlayerId;
+    if (!id) return;
+    const p = this.racerPhysics.get(id);
+    if (p) {
+      p.accelG = Math.min(1.0, p.accelG + 0.45);
     }
   }
 
@@ -237,6 +334,7 @@ export class RaceSceneManager {
     }
 
     const curve = this.builtTrack.curve;
+    const trackLength = this.builtTrack.length || 1400;
     const up = new THREE.Vector3(0, 1, 0);
 
     // Lane offsets: 4 distinct lanes (-4.5, -1.5, +1.5, +4.5)
@@ -244,100 +342,237 @@ export class RaceSceneManager {
 
     let localVehiclePos: THREE.Vector3 | null = null;
     let localVehicleTangent: THREE.Vector3 | null = null;
+    let localVehicleNormal: THREE.Vector3 | null = null;
+    let localVehicleBinormal: THREE.Vector3 | null = null;
+    let localPhysics: RacerPhysicsState | null = null;
     let localWpm: number = 0;
 
-    // Update Racers
+    // Update Racers with continuous momentum physics and road-normal banking
     for (const [id, { mesh, data }] of this.racerMeshes.entries()) {
-      // Smooth lerp progress towards target
-      const lerpSpeed = dt * 10;
-      data.currentProgress += (data.targetProgress - data.currentProgress) * lerpSpeed;
-      const t = Math.max(0, Math.min(0.999, data.currentProgress));
+      let p = this.racerPhysics.get(id);
+      if (!p) {
+        p = {
+          velocity: 0,
+          actualProgress: data.targetProgress || 0,
+          pitch: 0,
+          roll: 0,
+          steerAngle: 0,
+          wheelRotation: 0,
+          brakeDive: 0,
+          brakeFlareTimer: 0,
+          accelG: 0,
+        };
+        this.racerPhysics.set(id, p);
+      }
 
-      // Calculate track position & orientation
+      // Physics momentum towards target
+      const targetP = Math.max(0, Math.min(1, data.targetProgress));
+      const distToTarget = targetP - p.actualProgress;
+
+      if (distToTarget > 0.0001) {
+        // Accelerate smoothly to close gap
+        const desiredSpeed = Math.max(distToTarget * 4.8, (data.wpm / 60) * 0.015);
+        p.velocity = THREE.MathUtils.lerp(p.velocity, desiredSpeed, dt * 7.5);
+      } else {
+        // Coasting with smooth aerodynamic and mechanical drag
+        p.velocity = THREE.MathUtils.lerp(p.velocity, 0, dt * 2.2);
+      }
+
+      // Recover suspension dive & timers
+      if (p.brakeDive < 0) {
+        p.brakeDive = THREE.MathUtils.lerp(p.brakeDive, 0, dt * 6.0);
+      }
+      if (p.brakeFlareTimer > 0) {
+        p.brakeFlareTimer -= dt;
+      }
+      p.accelG = THREE.MathUtils.lerp(p.accelG, 0, dt * 4.0);
+
+      // Advance actual progress
+      const deltaProgress = Math.min(distToTarget, Math.max(0, p.velocity * dt));
+      p.actualProgress += deltaProgress;
+      p.actualProgress = Math.max(0, Math.min(0.999, p.actualProgress));
+      data.currentProgress = p.actualProgress;
+
+      const t = p.actualProgress;
+
+      // 1. Calculate Track Tangent, Binormal, Bank Angle & True Road Normal
       const pt = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t).normalize();
       const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
+      // Lookahead curvature & banking (matching TrackBuilder formula)
+      const nextT = (t + 0.010) % 1.0;
+      const nextTangent = curve.getTangentAt(nextT).normalize();
+      const curvature = tangent.clone().cross(nextTangent).y;
+      const bankAngle = THREE.MathUtils.clamp(-curvature * 10.0, -0.14, 0.14);
+      const bankedBinormal = binormal.clone().applyAxisAngle(tangent, bankAngle).normalize();
+      const roadNormal = new THREE.Vector3().crossVectors(tangent, bankedBinormal).normalize();
+
+      // 2. Position vehicle on banked road surface
       const laneOffset = laneOffsets[data.laneIndex % 4];
-      const vehiclePos = new THREE.Vector3().copy(pt).addScaledVector(binormal, laneOffset);
+      const vehiclePos = pt.clone()
+        .addScaledVector(bankedBinormal, laneOffset)
+        .addScaledVector(roadNormal, 0.035); // 3.5cm wheel contact offset
 
       mesh.position.copy(vehiclePos);
 
-      // Orient forward along tangent
-      const lookTarget = new THREE.Vector3().copy(vehiclePos).add(tangent);
-      mesh.lookAt(lookTarget);
+      // 3. True 3D Camber & Slope Orientation (Matrix basis [X: bankedBinormal, Y: roadNormal, Z: tangent])
+      const rotMatrix = new THREE.Matrix4().makeBasis(bankedBinormal, roadNormal, tangent);
+      mesh.quaternion.setFromRotationMatrix(rotMatrix);
 
-      // Motorcycle lean / car roll into corners
-      const nextT = Math.min(0.999, t + 0.012);
-      const nextTangent = curve.getTangentAt(nextT).normalize();
-      const curvature = tangent.clone().cross(nextTangent).y;
-
-      if (data.vehicleId === 'phantom-bike') {
-        // Natural progressive motorcycle lean up to ~42 degrees with speed damping
-        const leanFactor = Math.min(1.0, Math.max(0.25, data.wpm / 65));
-        const targetRoll = -Math.sign(curvature) * Math.min(Math.PI / 4.2, Math.abs(curvature) * 28.0 * leanFactor);
-        mesh.rotation.z = targetRoll;
-      } else {
-        mesh.rotation.z = -curvature * 4.2;  // Realistic sports chassis roll
+      // 4. Front Wheels Steering (smooth turn in to upcoming apex)
+      const targetSteer = THREE.MathUtils.clamp(-curvature * 24.0, -0.42, 0.42);
+      p.steerAngle = THREE.MathUtils.lerp(p.steerAngle, targetSteer, dt * 14.0);
+      if (mesh.frontSteerNodes && mesh.frontSteerNodes.length > 0) {
+        mesh.frontSteerNodes.forEach(node => {
+          node.rotation.y = p.steerAngle;
+        });
       }
 
-      // Rotate wheels based on motion
-      const wheelSpeed = Math.max(1.0, data.wpm * 0.15);
+      // 5. Chassis Articulation (Squat, Dive, Centrifugal Roll, Rumble)
+      const speedFactor = Math.min(1.0, data.wpm / 115);
+      const isAccelerating = distToTarget > 0.001 && data.wpm > 8;
+      const targetSquat = isAccelerating ? 0.022 * speedFactor : 0.0;
+      const totalPitch = targetSquat + p.brakeDive;
+      p.pitch = THREE.MathUtils.lerp(p.pitch, totalPitch, dt * 8.5);
+
+      const targetRoll = -curvature * 14.0 * Math.max(0.25, speedFactor);
+      p.roll = THREE.MathUtils.lerp(p.roll, targetRoll, dt * 9.0);
+
+      if (mesh.chassisGroup) {
+        mesh.chassisGroup.rotation.x = p.pitch;
+        mesh.chassisGroup.rotation.z = p.roll;
+
+        // Rumble vibration: subtle idle engine pulse when stopped, tire tread vibration at high speed
+        if (data.wpm < 5) {
+          mesh.chassisGroup.position.y = Math.sin(now * 0.04) * 0.006;
+        } else {
+          mesh.chassisGroup.position.y = (Math.random() - 0.5) * 0.006 * speedFactor;
+        }
+      } else if (data.vehicleId === 'phantom-bike') {
+        const leanFactor = Math.min(1.0, Math.max(0.3, data.wpm / 60));
+        const bikeRoll = -Math.sign(curvature) * Math.min(Math.PI / 4.2, Math.abs(curvature) * 26.0 * leanFactor);
+        mesh.rotateZ(bikeRoll);
+      }
+
+      // 6. Wheels Physical Rotation: exactly 1:1 with ground speed
+      const deltaMeters = deltaProgress * trackLength;
+      const deltaWheelRad = deltaMeters / 0.35; // 0.35m wheel radius
+      p.wheelRotation += deltaWheelRad;
       mesh.wheels.forEach(w => {
-        w.rotation.x += wheelSpeed * dt * 15;
+        w.rotation.x = p.wheelRotation;
       });
 
-      // Underglow & exhaust flare
+      // 7. Taillight Flare on Braking / Typo
+      const isBraking = p.brakeFlareTimer > 0;
+      if (mesh.taillightMeshes && mesh.taillightMeshes.length > 0) {
+        mesh.taillightMeshes.forEach(tl => {
+          const mat = tl.material as THREE.MeshStandardMaterial;
+          if (mat) {
+            mat.emissiveIntensity = isBraking ? 6.0 : 1.8;
+            if (isBraking) {
+              mat.emissive.setHex(0xff1133);
+            } else {
+              mat.emissive.setHex(0xbb0022);
+            }
+          }
+        });
+      }
+
+      // 8. Nitro Exhaust Flames
       if (mesh.exhaustFires && mesh.exhaustFires.length > 0) {
-        const flareScale = 0.8 + Math.sin(now / 50) * 0.3 * (data.wpm > 60 ? 1.5 : 0.5);
-        mesh.exhaustFires.forEach(f => f.scale.set(flareScale, flareScale, flareScale));
+        if (data.wpm > 25 && isAccelerating) {
+          const flicker = 0.85 + Math.sin(now * 0.09) * 0.3;
+          const flameLen = THREE.MathUtils.clamp(data.wpm / 70, 0.7, 2.0);
+          mesh.exhaustFires.forEach(f => {
+            f.visible = true;
+            f.scale.set(flicker, flicker, flameLen * flicker);
+          });
+        } else {
+          mesh.exhaustFires.forEach(f => {
+            f.visible = false;
+          });
+        }
       }
 
       if (mesh.underglowMode === 'pulse' && mesh.underglow) {
         (mesh.underglow.material as THREE.MeshBasicMaterial).opacity = 0.45 + 0.35 * Math.sin(now * 0.008);
       }
 
-      if (id === this.localPlayerId) {
+      if (id === this.localPlayerId || data.isLocal || (!localVehiclePos && !id.startsWith('ai_'))) {
         localVehiclePos = vehiclePos;
         localVehicleTangent = tangent;
+        localVehicleNormal = roadNormal;
+        localVehicleBinormal = bankedBinormal;
+        localPhysics = p;
         localWpm = data.wpm;
       }
     }
 
-    // Dynamic Chase Camera with Speed-Adaptive FOV & G-Force Drift
-    if (localVehiclePos && localVehicleTangent) {
+    // Dynamic Spring-Loaded Camera (3D Chase View OR 2.5D Speedway Broadcast View)
+    if (localVehiclePos && localVehicleTangent && localVehicleNormal && localVehicleBinormal && localPhysics) {
       const speedFactor = Math.min(1.0, localWpm / 120);
-      const camDist = 7.6 + speedFactor * 2.8;
-      const camHeight = 2.9 + speedFactor * 0.5;
 
-      const targetCamPos = new THREE.Vector3()
-        .copy(localVehiclePos)
-        .addScaledVector(localVehicleTangent, -camDist);
-      targetCamPos.y += camHeight;
+      if (this.cameraMode === 'broadcast') {
+        // 2.5D Speedway Elevated Broadcast View
+        const targetCamPos = localVehiclePos.clone()
+          .addScaledVector(localVehicleTangent, -14.0)
+          .addScaledVector(localVehicleBinormal, 12.0)
+          .addScaledVector(localVehicleNormal, 14.0);
 
-      // Micro camera shake at extreme racing velocity (> 85 WPM)
-      if (localWpm > 85) {
-        targetCamPos.x += (Math.random() - 0.5) * 0.06;
-        targetCamPos.y += (Math.random() - 0.5) * 0.04;
+        const camLookTarget = localVehiclePos.clone()
+          .addScaledVector(localVehicleTangent, 10.0)
+          .addScaledVector(localVehicleNormal, 0.5);
+
+        if (!this.cameraSnapped) {
+          this.camera.position.copy(targetCamPos);
+          this.cameraSnapped = true;
+        } else {
+          this.camera.position.lerp(targetCamPos, dt * 7.0);
+        }
+        this.camera.up.lerp(localVehicleNormal, dt * 6.0);
+        this.camera.lookAt(camLookTarget);
+      } else {
+        // Immersive 3D Chase Camera with G-Force Acceleration Pushback & Road Banking
+        const gPushback = localPhysics.accelG * 0.45;
+        const camDist = 5.6 + speedFactor * 1.3 + gPushback;
+        const camHeight = 2.2 + speedFactor * 0.25;
+
+        const targetCamPos = localVehiclePos.clone()
+          .sub(localVehicleTangent.clone().multiplyScalar(camDist))
+          .add(localVehicleNormal.clone().multiplyScalar(camHeight));
+
+        // High-speed cockpit rumble
+        if (localWpm > 75) {
+          const rumble = (speedFactor - 0.6) * 0.025;
+          targetCamPos.addScaledVector(localVehicleBinormal, (Math.random() - 0.5) * rumble);
+          targetCamPos.addScaledVector(localVehicleNormal, (Math.random() - 0.5) * rumble * 0.5);
+        }
+
+        // Dynamic speed tunnel vision FOV
+        const targetFov = 54 + speedFactor * 9;
+        if (Math.abs(this.camera.fov - targetFov) > 0.1) {
+          this.camera.fov += (targetFov - this.camera.fov) * dt * 4;
+          this.camera.updateProjectionMatrix();
+        }
+
+        if (!this.cameraSnapped) {
+          this.camera.position.copy(targetCamPos);
+          this.camera.up.copy(localVehicleNormal);
+          this.cameraSnapped = true;
+        } else {
+          this.camera.position.lerp(targetCamPos, dt * 9.0);
+          this.camera.up.lerp(localVehicleNormal, dt * 7.0);
+        }
+
+        // Forward eye-level lookahead along the track toward the horizon
+        const lookAhead = 26.0 + speedFactor * 6.0;
+        const camLookTarget = localVehiclePos.clone()
+          .addScaledVector(localVehicleTangent, lookAhead)
+          .addScaledVector(localVehicleNormal, 0.95);
+
+        this.camera.lookAt(camLookTarget);
       }
-
-      // Speed-dependent dynamic FOV expansion (60 deg base -> 74 deg at high WPM)
-      const targetFov = 60 + speedFactor * 14;
-      if (Math.abs(this.camera.fov - targetFov) > 0.1) {
-        this.camera.fov += (targetFov - this.camera.fov) * dt * 4;
-        this.camera.updateProjectionMatrix();
-      }
-
-      // Smooth camera interpolation
-      this.camera.position.lerp(targetCamPos, dt * 8.5);
-
-      const lookAhead = 16.0;
-      const camLookTarget = new THREE.Vector3()
-        .copy(localVehiclePos)
-        .addScaledVector(localVehicleTangent, lookAhead);
-      camLookTarget.y += 0.8;
-
-      this.camera.lookAt(camLookTarget);
 
       // Shadow light follows player vehicle
       if (this.dirLight) {
@@ -350,13 +585,27 @@ export class RaceSceneManager {
         this.dirLight.target.updateMatrixWorld();
       }
 
-      // Update forward headlight beam
+      // Forward projector headlight beam
       if (this.vehicleHeadlight && this.headlightTarget) {
         this.vehicleHeadlight.position.copy(localVehiclePos).addScaledVector(localVehicleTangent, 1.6);
-        this.vehicleHeadlight.position.y += 0.9;
+        this.vehicleHeadlight.position.addScaledVector(localVehicleNormal, 0.8);
         this.headlightTarget.position.copy(localVehiclePos).addScaledVector(localVehicleTangent, 40.0);
-        this.headlightTarget.position.y += 0.2;
+        this.headlightTarget.position.addScaledVector(localVehicleNormal, 0.2);
         this.headlightTarget.updateMatrixWorld();
+      }
+
+      // High-speed wind stream particles
+      if (this.speedLinesMesh) {
+        if (localWpm > 45) {
+          this.speedLinesMesh.visible = true;
+          (this.speedLinesMesh.material as THREE.LineBasicMaterial).opacity = Math.min(0.65, (localWpm - 45) / 55);
+          this.speedLinesMesh.position.copy(localVehiclePos);
+          this.speedLinesMesh.quaternion.setFromRotationMatrix(
+            new THREE.Matrix4().makeBasis(localVehicleBinormal, localVehicleNormal, localVehicleTangent)
+          );
+        } else {
+          this.speedLinesMesh.visible = false;
+        }
       }
     }
 
@@ -391,6 +640,11 @@ export class RaceSceneManager {
       this.scene.remove(mesh);
     });
     this.racerMeshes.clear();
+    this.racerPhysics.clear();
+
+    if (this.speedLinesMesh) {
+      this.scene.remove(this.speedLinesMesh);
+    }
 
     if (this.builtTrack) {
       this.scene.remove(this.builtTrack.trackGroup);

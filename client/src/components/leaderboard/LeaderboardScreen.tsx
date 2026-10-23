@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LeaderboardEntry, fetchLeaderboard } from '../../services/api.js';
 import { ArrowLeft, Search, Trophy, Crown, Medal, Sparkles, Flame, Shield, ArrowUpRight } from 'lucide-react';
 import { sound } from '../../sound/soundEngine.js';
+import { AdBanner } from '../common/AdBanner.js';
 
 interface LeaderboardScreenProps {
   currentUserId: string;
@@ -167,6 +168,13 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ currentUse
             </div>
           </div>
         )}
+
+        {/* SPONSORED GLOBAL LEADERBOARD BANNER (728x90) */}
+        <AdBanner
+          slotId="ad-leaderboard-mid-leaderboard"
+          format="leaderboard"
+          className="my-4 max-w-4xl mx-auto"
+        />
 
         {/* Filter Chips Bar */}
         <div className="flex items-center gap-2 mb-4">
