@@ -393,45 +393,44 @@ export class RaceSceneManager {
         this.racerPhysics.set(id, p);
       }
 
-      // True Continuous Automotive Powertrain & Momentum Model
+      // Direct Synchronized Automotive Powertrain: car moves strictly as and when typing happens!
       const targetP = Math.max(0, Math.min(1, data.targetProgress));
-      const error = targetP - p.actualProgress;
+      const prevP = p.actualProgress;
+      const progressError = targetP - prevP;
 
-      if (p.throttleTimer > 0) {
-        p.throttleTimer -= dt;
-      }
-
-      const isThrottling = p.throttleTimer > 0 || error > 0.0003;
-
-      if (isThrottling) {
-        // Player has typed ahead or throttle is active: maintain full racing speed
-        const speedFromWpm = Math.max(0.018, (Math.max(28, data.wpm) / 85) * 0.038);
-        const speedFromDist = Math.min(0.065, Math.max(0, error) * 6.5);
-        const targetSpeed = Math.max(speedFromWpm, speedFromDist);
-        p.velocity = THREE.MathUtils.lerp(p.velocity, targetSpeed, dt * 7.5);
+      // When player types or moves, apply continuous smooth momentum towards targetProgress
+      if (p.brakeDive < -0.01) {
+        // Hard braking on typo: instantly clamp forward motion and stop
+        p.velocity = 0;
+        p.actualProgress = THREE.MathUtils.damp(p.actualProgress, targetP, 24.0, dt);
+      } else if (progressError > 0.0001) {
+        // Smooth cruising velocity towards targetProgress based on typing WPM and distance
+        const baseSpeed = Math.max(0.012, (Math.max(15, data.wpm) / 60) * 0.045);
+        const desiredVel = Math.min(baseSpeed * 2.5, Math.max(0.008, progressError * 14.0));
+        p.velocity = THREE.MathUtils.lerp(p.velocity, desiredVel, dt * 14.0);
+        p.actualProgress = Math.min(targetP, p.actualProgress + p.velocity * dt);
+      } else if (progressError < -0.0001) {
+        // Backspace step-back: smooth negative adjustment
+        p.actualProgress = THREE.MathUtils.damp(p.actualProgress, targetP, 18.0, dt);
+        p.velocity = THREE.MathUtils.lerp(p.velocity, 0, dt * 12.0);
       } else {
-        // Car has caught up and user paused typing: smooth deceleration (coast)
-        p.velocity = THREE.MathUtils.lerp(p.velocity, 0, dt * 2.5);
+        // Idle at current position without jerky jitter
+        p.velocity = THREE.MathUtils.lerp(p.velocity, 0, dt * 10.0);
+        p.actualProgress = targetP;
       }
+
+      // Exact frame delta along track for physics and wheel rotation
+      const deltaProgress = p.actualProgress - prevP;
+      const instantVel = deltaProgress / Math.max(0.001, dt);
 
       // Suspension restoration & G-force dissipation
       if (p.brakeDive < 0) {
-        p.brakeDive = THREE.MathUtils.lerp(p.brakeDive, 0, dt * 4.5);
+        p.brakeDive = THREE.MathUtils.lerp(p.brakeDive, 0, dt * 5.0);
       }
       if (p.brakeFlareTimer > 0) {
         p.brakeFlareTimer -= dt;
       }
-      p.accelG = THREE.MathUtils.lerp(p.accelG, 0, dt * 3.5);
-
-      // Advance actual progress along spline (allows subtle backward twitch on backspace, smooth forward on typing)
-      const deltaProgress = p.velocity * dt;
-      p.actualProgress += deltaProgress;
-
-      // Soft progressive boundary cushion: never abruptly jerk/snap to a dead stop!
-      if (p.velocity > 0 && p.actualProgress > targetP + 0.0035) {
-        p.actualProgress = targetP + 0.0035;
-        p.velocity = THREE.MathUtils.lerp(p.velocity, 0.008, dt * 5.0);
-      }
+      p.accelG = THREE.MathUtils.lerp(p.accelG, 0, dt * 4.0);
 
       p.actualProgress = Math.max(0, Math.min(0.999, p.actualProgress));
       data.currentProgress = p.actualProgress;
@@ -474,7 +473,7 @@ export class RaceSceneManager {
 
       // 5. Chassis Articulation (Squat, Dive, Centrifugal Roll, Rumble)
       const speedFactor = Math.min(1.0, data.wpm / 115);
-      const isAccelerating = error > 0.0005 && data.wpm > 8;
+      const isAccelerating = progressError > 0.0002 && data.wpm > 8;
       const targetSquat = isAccelerating ? 0.022 * speedFactor : 0.0;
       const totalPitch = targetSquat + p.brakeDive;
       p.pitch = THREE.MathUtils.lerp(p.pitch, totalPitch, dt * 8.5);
@@ -599,14 +598,9 @@ export class RaceSceneManager {
           this.camera.updateProjectionMatrix();
         }
 
-        if (!this.cameraSnapped) {
-          this.camera.position.copy(targetCamPos);
-          this.camera.up.copy(localVehicleNormal);
-          this.cameraSnapped = true;
-        } else {
-          this.camera.position.lerp(targetCamPos, dt * 8.0);
-          this.camera.up.lerp(localVehicleNormal, dt * 6.5);
-        }
+        // Rock-Solid Arcade Chase Camera: perfectly locked to vehicle frame to eliminate camera jitter
+        this.camera.position.copy(targetCamPos);
+        this.camera.up.copy(localVehicleNormal);
 
         // Forward eye-level lookahead along the track toward the horizon (Matching Crazy Grand Prix)
         const lookAhead = 32.0 + speedFactor * 6.0;

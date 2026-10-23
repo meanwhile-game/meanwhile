@@ -197,30 +197,43 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
     : '1.85 G';
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-slate-950 text-white select-none">
+    <div className="relative w-full h-screen overflow-hidden bg-slate-950 text-slate-900 select-none">
       {/* 3D Turntable Canvas Container */}
       <div ref={containerRef} className="absolute inset-0 z-0 cursor-grab active:cursor-grabbing" />
 
       {/* Atmospheric Vignette & Grid */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950 via-transparent to-slate-950/70" />
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40" />
 
-      {/* 1. Top HUD Header */}
-      <header className="relative z-10 w-full p-6 flex items-center justify-between pointer-events-none">
-        <button
-          onClick={() => {
-            sound.playKeystroke(50, true);
-            onBack();
-          }}
-          className="pointer-events-auto px-4 py-2.5 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800 text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer shadow-lg backdrop-blur-md transition-all hover:border-slate-500"
-        >
-          <ArrowLeft className="w-4 h-4 text-emerald-400" />
-          Return to Grid
-        </button>
+      {/* 1. Top Unified Meanwhile Header */}
+      <header className="relative z-10 w-full px-6 py-3.5 bg-[#10304f] border-b border-[#1b4b7a] flex items-center justify-between shadow-lg">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              sound.playKeystroke(50, true);
+              onBack();
+            }}
+            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-2 cursor-pointer transition-all border border-white/15 shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4 text-emerald-300" />
+            Return to Grid
+          </button>
+
+          {/* Brand Logo */}
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">🏎️</span>
+            <div className="flex flex-col">
+              <span className="text-sm font-black tracking-tight text-white flex items-center gap-1.5 font-mono">
+                MEANWHILE <span className="text-emerald-400 text-xs">GARAGE</span>
+              </span>
+              <span className="text-[10px] text-slate-300">Customization Studio & Engineering</span>
+            </div>
+          </div>
+        </div>
 
         {/* Studio Camera & Inspection Presets */}
-        <div className="hidden md:flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/90 border border-slate-800 backdrop-blur-md pointer-events-auto shadow-xl">
-          <span className="text-[10px] font-mono font-bold text-slate-500 px-2 flex items-center gap-1">
-            <Camera className="w-3 h-3" /> ANGLE:
+        <div className="hidden md:flex items-center gap-1.5 p-1 rounded-xl bg-black/30 border border-white/10 backdrop-blur-md">
+          <span className="text-[10px] font-mono font-bold text-slate-300 px-2 flex items-center gap-1">
+            <Camera className="w-3 h-3 text-cyan-300" /> ANGLE:
           </span>
           {[
             { id: 'hero', label: 'Showroom Hero' },
@@ -235,8 +248,8 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
                 onClick={() => handleCameraChange(cam.id as CameraPreset)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                   active
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(0,255,135,0.3)]'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-[#2ea44f] text-white shadow-md'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {cam.label}
@@ -246,18 +259,18 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
         </div>
 
         {/* Right Action Bar */}
-        <div className="flex items-center gap-3 pointer-events-auto">
+        <div className="flex items-center gap-3">
           {/* Turntable Auto-Rotate Toggle */}
           <button
             onClick={handleToggleAutoRotate}
-            className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-bold flex items-center gap-2 cursor-pointer backdrop-blur-md transition-all ${
+            className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-bold flex items-center gap-2 cursor-pointer transition-all ${
               autoRotate
-                ? 'bg-slate-900/90 border-cyan-500/50 text-cyan-300 shadow-[0_0_15px_rgba(0,229,255,0.25)]'
-                : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-sky-500/20 border-sky-400 text-sky-200'
+                : 'bg-white/10 border-white/15 text-slate-200 hover:text-white'
             }`}
             title="Toggle 360° Showroom Rotation"
           >
-            <RotateCw className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin text-cyan-400' : 'text-slate-500'}`} style={{ animationDuration: '8s' }} />
+            <RotateCw className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin text-sky-300' : 'text-slate-300'}`} style={{ animationDuration: '8s' }} />
             <span className="hidden sm:inline">360° ORBIT</span>
           </button>
 
@@ -266,21 +279,21 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
             onClick={handleRevEngine}
             className={`px-4 py-2 rounded-xl border text-xs font-mono font-bold flex items-center gap-2 cursor-pointer transition-all ${
               isRevving
-                ? 'bg-rose-500/30 border-rose-400 text-rose-300 animate-pulse shadow-[0_0_20px_rgba(244,63,94,0.5)]'
-                : 'bg-slate-900/80 border-slate-700 text-slate-300 hover:text-white hover:border-slate-500'
+                ? 'bg-rose-500/30 border-rose-400 text-rose-200 animate-pulse'
+                : 'bg-white/10 border-white/15 text-slate-200 hover:text-white'
             }`}
           >
-            <Volume2 className={`w-3.5 h-3.5 ${isRevving ? 'text-rose-400 animate-spin' : 'text-amber-400'}`} />
+            <Volume2 className={`w-3.5 h-3.5 ${isRevving ? 'text-rose-400 animate-spin' : 'text-amber-300'}`} />
             <span>{isRevving ? 'REDLINE // 9,000 RPM' : 'TEST THROTTLE'}</span>
           </button>
         </div>
       </header>
 
       {/* 2. Left Machine Lineup Sidebar */}
-      <div className="absolute left-6 top-24 bottom-64 z-10 w-72 flex flex-col gap-2.5 pointer-events-none hidden md:flex">
-        <div className="px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest backdrop-blur-md flex items-center justify-between">
+      <div className="absolute left-6 top-20 bottom-64 z-10 w-72 flex flex-col gap-2.5 pointer-events-none hidden md:flex">
+        <div className="px-3 py-2 rounded-xl bg-white/95 border border-slate-200 text-[10px] font-mono font-bold text-[#16426a] uppercase tracking-wider shadow-md flex items-center justify-between backdrop-blur-md">
           <span>CHAMPIONSHIP MACHINERY</span>
-          <span className="text-emerald-400 font-bold">{VEHICLES.length} RIGS</span>
+          <span className="text-[#2ea44f] font-bold">{VEHICLES.length} RIGS</span>
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-2 pointer-events-auto pr-1">
@@ -294,8 +307,8 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
                 onClick={() => handleSelectVehicle(vehicle)}
                 className={`p-3.5 rounded-xl border transition-all cursor-pointer backdrop-blur-md flex items-center justify-between group ${
                   active
-                    ? 'bg-slate-900/95 border-emerald-400/80 shadow-[0_0_25px_rgba(0,255,135,0.25)]'
-                    : 'bg-slate-950/70 border-slate-800/80 hover:bg-slate-900/80 hover:border-slate-700'
+                    ? 'bg-slate-50 border-[#2ea44f] shadow-md ring-2 ring-emerald-500/20'
+                    : 'bg-white/90 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -309,10 +322,10 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
                     🏎️
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className={`text-xs font-bold ${active ? 'text-emerald-300' : 'text-white group-hover:text-slate-200'}`}>
+                    <span className={`text-xs font-bold ${active ? 'text-[#16426a]' : 'text-slate-900 group-hover:text-black'}`}>
                       {vehicle.name}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400 capitalize">
+                    <span className="text-[10px] font-mono text-slate-500 capitalize">
                       {vehicle.type} • {vehicle.topSpeedKmh} KM/H
                     </span>
                   </div>
@@ -320,12 +333,12 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
 
                 {unlocked ? (
                   active ? (
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#2ea44f] animate-pulse" />
                   ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
                   )
                 ) : (
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">
                     LVL {vehicle.unlockLevel}
                   </span>
                 )}
@@ -336,25 +349,25 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
       </div>
 
       {/* 3. Right Technical Telemetry Card */}
-      <div className="absolute right-6 top-24 z-10 w-64 pointer-events-none hidden lg:flex flex-col gap-3">
-        <div className="p-4 rounded-2xl border border-slate-800/90 bg-slate-950/80 backdrop-blur-md shadow-2xl pointer-events-auto">
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase text-slate-400 mb-3">
+      <div className="absolute right-6 top-20 z-10 w-64 pointer-events-none hidden lg:flex flex-col gap-3">
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md shadow-xl pointer-events-auto text-slate-900">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase text-slate-500 mb-3">
             <span>AERODYNAMIC PROFILE</span>
-            <span className="text-emerald-400 font-bold">{selectedVehicle.type}</span>
+            <span className="text-[#2ea44f] font-bold">{selectedVehicle.type}</span>
           </div>
 
           <div className="space-y-3">
             {/* Top Speed Bar */}
             <div>
               <div className="flex justify-between text-xs font-mono mb-1">
-                <span className="text-slate-400 flex items-center gap-1">
-                  <Gauge className="w-3 h-3 text-emerald-400" /> Top Speed
+                <span className="text-slate-600 flex items-center gap-1">
+                  <Gauge className="w-3 h-3 text-[#2ea44f]" /> Top Speed
                 </span>
-                <span className="font-bold text-white">{selectedVehicle.topSpeedKmh} KM/H</span>
+                <span className="font-bold text-[#16426a]">{selectedVehicle.topSpeedKmh} KM/H</span>
               </div>
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-400 rounded-full"
+                  className="h-full bg-[#2ea44f] rounded-full"
                   style={{ width: `${Math.min(100, (selectedVehicle.topSpeedKmh / 385) * 100)}%` }}
                 />
               </div>
@@ -363,44 +376,44 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
             {/* Acceleration Bar */}
             <div>
               <div className="flex justify-between text-xs font-mono mb-1">
-                <span className="text-slate-400 flex items-center gap-1">
-                  <Zap className="w-3 h-3 text-amber-400" /> Acceleration
+                <span className="text-slate-600 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-amber-500" /> Acceleration
                 </span>
-                <span className="font-bold text-white">{selectedVehicle.accelerationRating} / 10</span>
+                <span className="font-bold text-[#16426a]">{selectedVehicle.accelerationRating} / 10</span>
               </div>
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-amber-400 rounded-full"
+                  className="h-full bg-amber-500 rounded-full"
                   style={{ width: `${selectedVehicle.accelerationRating * 10}%` }}
                 />
               </div>
             </div>
 
             {/* Dynamic Telemetry Specs */}
-            <div className="pt-2 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-center text-xs font-mono">
-              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="text-[9px] text-slate-400 block">DOWNFORCE</span>
-                <span className="font-bold text-cyan-300">{calculatedDownforce} KG</span>
+            <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-center text-xs font-mono">
+              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                <span className="text-[9px] text-slate-500 block">DOWNFORCE</span>
+                <span className="font-bold text-[#16426a]">{calculatedDownforce} KG</span>
               </div>
-              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="text-[9px] text-slate-400 block">LATERAL GRIP</span>
-                <span className="font-bold text-purple-300">{calculatedGrip}</span>
+              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                <span className="text-[9px] text-slate-500 block">LATERAL GRIP</span>
+                <span className="font-bold text-purple-700">{calculatedGrip}</span>
               </div>
             </div>
 
             {/* Active Tuning Specs */}
-            <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80 text-[10px] font-mono space-y-1">
-              <div className="flex justify-between text-slate-400">
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[10px] font-mono space-y-1">
+              <div className="flex justify-between text-slate-500">
                 <span>PAINT FINISH:</span>
-                <span className="text-white font-bold capitalize">{customization.paintFinish}</span>
+                <span className="text-[#16426a] font-bold capitalize">{customization.paintFinish}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-500">
                 <span>LIVERY DECAL:</span>
-                <span className="text-white font-bold capitalize">{customization.livery}</span>
+                <span className="text-[#16426a] font-bold capitalize">{customization.livery}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-500">
                 <span>AERO WING:</span>
-                <span className="text-white font-bold capitalize">{customization.spoilerStyle}</span>
+                <span className="text-[#16426a] font-bold capitalize">{customization.spoilerStyle}</span>
               </div>
             </div>
 
@@ -416,9 +429,9 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
 
       {/* 4. Bottom Supercar Customization Studio Console */}
       <div className="absolute left-6 right-6 bottom-5 z-10 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-5xl rounded-2xl border border-slate-800/90 bg-slate-950/92 shadow-[0_20px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl flex flex-col overflow-hidden">
+        <div className="pointer-events-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white/95 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden text-slate-900">
           {/* Studio Tab Navigation Bar */}
-          <div className="flex items-center justify-between px-5 pt-3 border-b border-slate-800/80 bg-slate-900/40">
+          <div className="flex items-center justify-between px-5 pt-3 border-b border-slate-200 bg-slate-50/60">
             <div className="flex items-center gap-1 overflow-x-auto">
               {[
                 { id: 'paint', label: 'Paint & Finish', icon: Palette },
@@ -441,11 +454,11 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
                     }}
                     className={`px-4 py-2.5 text-xs font-mono font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       active
-                        ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
-                        : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-900/60'
+                        ? 'border-[#2ea44f] text-[#16426a] bg-emerald-50'
+                        : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/60'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${active ? 'text-emerald-400' : 'text-slate-500'}`} />
+                    <Icon className={`w-3.5 h-3.5 ${active ? 'text-[#2ea44f]' : 'text-slate-400'}`} />
                     <span>{tab.label}</span>
                   </button>
                 );
@@ -454,8 +467,8 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
 
             {/* Quick Car Info */}
             <div className="hidden sm:flex items-center gap-2 text-right">
-              <span className="text-xs font-bold text-white">{selectedVehicle.name}</span>
-              <span className="text-[10px] font-mono text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
+              <span className="text-xs font-bold text-[#16426a]">{selectedVehicle.name}</span>
+              <span className="text-[10px] font-mono text-[#2ea44f] font-bold px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200">
                 {selectedVehicle.type.toUpperCase()}
               </span>
             </div>
@@ -750,16 +763,16 @@ export const GarageScreen: React.FC<GarageScreenProps> = ({
                   disabled={isEquipped}
                   className={`px-7 py-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all ${
                     isEquipped
-                      ? 'bg-slate-900 border border-slate-700 text-slate-400 cursor-default opacity-80'
-                      : 'bg-emerald-400 hover:bg-emerald-300 text-black shadow-[0_0_25px_rgba(0,255,135,0.4)] hover:shadow-[0_0_35px_rgba(0,255,135,0.6)] transform hover:-translate-y-0.5'
+                      ? 'bg-slate-100 border border-slate-300 text-slate-500 cursor-default opacity-90'
+                      : 'bg-[#2ea44f] hover:bg-[#2c974b] text-white shadow-lg shadow-emerald-500/25 transform hover:-translate-y-0.5'
                   }`}
                 >
-                  {isEquipped ? <Check className="w-4 h-4 text-emerald-400" /> : <Sparkles className="w-4 h-4" />}
+                  {isEquipped ? <Check className="w-4 h-4 text-emerald-600" /> : <Sparkles className="w-4 h-4" />}
                   {isEquipped ? 'Equipped to Rig' : 'Install to Active Rig'}
                 </button>
               ) : (
-                <div className="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-amber-400 font-bold flex items-center gap-1.5">
-                  <Award className="w-4 h-4" />
+                <div className="px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-300 text-xs font-mono text-amber-700 font-bold flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-amber-600" />
                   License Level {selectedVehicle.unlockLevel} Required
                 </div>
               )}

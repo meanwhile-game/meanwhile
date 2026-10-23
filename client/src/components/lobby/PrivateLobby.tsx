@@ -90,70 +90,72 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
 
   return (
     <div 
-      className="relative min-h-screen w-full flex flex-col justify-between p-6 md:p-12 transition-colors duration-200 select-none bg-slate-950 text-white bg-cyber-grid"
+      className="relative min-h-screen w-full flex flex-col justify-between bg-[#194269] text-slate-100 select-none overflow-x-hidden font-sans"
     >
-      {/* 1. Top Navbar */}
-      <header className="w-full max-w-5xl mx-auto flex items-center justify-between z-10">
-        <button
-          onClick={() => {
-            sound.playKeystroke(50, true);
-            onLeaveRoom();
-          }}
-          className="px-4 py-2.5 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800 text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer shadow-lg backdrop-blur-md transition-all hover:border-slate-500"
-        >
-          <ArrowLeft className="w-4 h-4 text-emerald-400" />
-          Leave Grid
-        </button>
+      {/* 1. Top Navbar Matching Home Page */}
+      <nav className="w-full bg-[#10304f] border-b border-[#1b4b7a] px-4 sm:px-8 py-2.5 flex items-center justify-between z-30 shadow-md">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              sound.playClick();
+              onLeaveRoom();
+            }}
+            className="px-3.5 py-1.5 rounded-lg border border-[#1b4b7a] bg-[#0b2239] hover:bg-[#153a5e] text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer shadow transition-all hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4 text-emerald-400" />
+            Leave Room
+          </button>
 
-        <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
-          <Users className="w-4 h-4 text-cyan-400" />
-          <span className="font-extrabold text-sm tracking-tight text-white">
-            PRIVATE MULTIPLAYER GRID
-          </span>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onLeaveRoom()}>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-slate-950 font-black text-base shadow">
+              <Users className="w-4 h-4 text-slate-950" />
+            </div>
+            <span className="text-xl font-black tracking-tight text-white lowercase">
+              meanwhile <span className="text-xs uppercase font-bold text-cyan-300 font-mono tracking-wider ml-1">Private Race</span>
+            </span>
+          </div>
         </div>
 
-        <span className="text-xs font-mono text-slate-400">
-          {playerList.length} / 6 PILOTS
+        <span className="text-xs font-mono font-bold text-slate-300 bg-[#0b2239] px-3 py-1.5 rounded-lg border border-[#1b4b7a]">
+          {playerList.length} / 6 RACERS
         </span>
-      </header>
+      </nav>
 
       {/* 2. Main Grid Content */}
-      <main className="w-full max-w-5xl mx-auto my-auto py-8 flex flex-col gap-6 z-10">
+      <main className="w-full max-w-5xl mx-auto my-auto px-4 py-6 md:py-8 flex flex-col gap-6 z-10">
         
-        {/* Room Header Banner Strip */}
+        {/* Room Header Banner Strip - Crisp White Card */}
         <div 
-          className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-2xl relative overflow-hidden"
+          className="p-6 rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
           <div>
-            <span className="text-[10px] font-mono uppercase text-slate-400 font-bold tracking-widest flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              PRIVATE TRACK ID (SHARE TO JOIN)
+            <span className="text-[10px] font-mono uppercase text-slate-500 font-bold tracking-widest flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              PRIVATE ROOM CODE (SHARE TO INVITE FRIENDS)
             </span>
-            <div className="text-4xl sm:text-5xl font-black font-mono tracking-widest text-cyan-400 mt-1 flex items-center gap-3">
+            <div className="text-4xl sm:text-5xl font-black font-mono tracking-widest text-[#16426a] mt-1 flex items-center gap-3">
               {roomCode}
             </div>
-            <p className="text-xs text-slate-400 mt-1">
-              Anyone can enter this Track ID on the home screen or lobby to join this private circuit.
+            <p className="text-xs text-slate-600 mt-1 font-medium">
+              Anyone can enter this code in the Track ID box on the Meanwhile home screen to join your race.
             </p>
           </div>
 
           <div className="flex items-center gap-2.5">
             <button
               onClick={handleCopyCode}
-              className="px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 text-xs font-mono font-bold text-white flex items-center gap-2 cursor-pointer transition-all shadow-md hover:border-cyan-400"
+              className="px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-mono font-bold text-slate-900 flex items-center gap-2 cursor-pointer transition-all shadow-sm"
             >
-              {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-cyan-400" />}
+              {copiedCode ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-[#16426a]" />}
               {copiedCode ? 'COPIED!' : 'COPY CODE'}
             </button>
 
             <button
               onClick={handleCopyLink}
-              className="px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 text-xs font-mono font-bold text-white flex items-center gap-2 cursor-pointer transition-all shadow-md hover:border-cyan-400"
+              className="px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-mono font-bold text-slate-900 flex items-center gap-2 cursor-pointer transition-all shadow-sm"
             >
-              {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4 text-cyan-400" />}
-              {copiedLink ? 'LINK COPIED!' : 'INVITE LINK'}
+              {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4 text-[#16426a]" />}
+              {copiedLink ? 'LINK COPIED!' : 'SHARE LINK'}
             </button>
           </div>
         </div>
@@ -161,39 +163,39 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
         {/* 2-Column Command Layout */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
           
-          {/* Circuit Details (5 Cols) */}
+          {/* Circuit Details (5 Cols) - Crisp White Card */}
           <div 
-            className="md:col-span-5 p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md flex flex-col justify-between shadow-xl"
+            className="md:col-span-5 p-6 rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between text-xs font-mono text-slate-400 uppercase mb-2">
-                <span>VENUE PROFILE</span>
-                <span className="text-amber-400 font-bold">{currentTrack.difficulty}</span>
+              <div className="flex items-center justify-between text-xs font-mono text-slate-500 uppercase mb-2">
+                <span className="font-bold">CIRCUIT VENUE</span>
+                <span className="text-amber-600 font-bold">{currentTrack.difficulty}</span>
               </div>
 
-              <h3 className="text-2xl font-black text-white tracking-tight">
+              <h3 className="text-2xl font-black text-[#16426a] tracking-tight">
                 {currentTrack.name}
               </h3>
 
-              <div className="text-xs font-mono text-slate-400 mt-1 flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+              <div className="text-xs font-mono text-slate-600 mt-1 flex items-center gap-2 font-medium">
+                <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                 <span>{currentTrack.location}</span>
                 <span>•</span>
-                <span>{currentTrack.lengthMeters}m Course</span>
+                <span>{currentTrack.lengthMeters}m</span>
               </div>
 
-              <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+              <p className="text-xs text-slate-600 mt-3 leading-relaxed font-medium">
                 {currentTrack.description}
               </p>
 
               {isHost && (
-                <div className="mt-5 pt-4 border-t border-slate-800/80">
+                <div className="mt-5 pt-4 border-t border-slate-100">
                   <div className="flex items-center justify-between mb-2.5">
-                    <label className="text-[11px] font-mono uppercase text-slate-300 font-bold flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                      Host Control: Select Circuit
+                    <label className="text-[11px] font-mono uppercase text-[#16426a] font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      Host: Select Track
                     </label>
-                    <span className="text-[10px] font-mono text-cyan-400 font-bold">{TRACKS.length} Tracks</span>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">{TRACKS.length} Tracks</span>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
@@ -209,19 +211,17 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
                           }}
                           className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-cyan-400 bg-cyan-950/60 text-white ring-1 ring-cyan-400/50 shadow-md'
-                              : 'border-slate-800 bg-slate-950/70 text-slate-300 hover:border-slate-700 hover:bg-slate-800/60'
+                              ? 'border-[#2ea44f] bg-emerald-50 text-[#16426a] ring-2 ring-emerald-500/20 font-bold shadow-sm'
+                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
                           }`}
                         >
-                          <div className="font-bold truncate text-[11px] text-white flex items-center justify-between">
+                          <div className="font-bold truncate text-[11px] text-slate-900 flex items-center justify-between">
                             <span className="truncate">{t.name}</span>
-                            {isSelected && <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0 ml-1 shadow-[0_0_6px_#38bdf8]" />}
+                            {isSelected && <span className="w-2 h-2 rounded-full bg-[#2ea44f] shrink-0 ml-1" />}
                           </div>
-                          <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between mt-1">
-                            <span className="truncate">{t.location}</span>
-                            <span className={`uppercase font-bold text-[9px] ${
-                              t.difficulty === 'hard' ? 'text-rose-400' : t.difficulty === 'medium' ? 'text-amber-400' : 'text-cyan-400'
-                            }`}>
+                          <div className="text-[10px] font-mono text-slate-500 flex items-center justify-between mt-1">
+                            <span className="truncate">{t.location.split(',')[0]}</span>
+                            <span className="uppercase font-bold text-[9px] text-[#16426a]">
                               {t.difficulty}
                             </span>
                           </div>
@@ -233,21 +233,21 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
               )}
             </div>
 
-            <div className="mt-6 pt-3 border-t border-slate-800/80 text-[11px] font-mono text-slate-500">
+            <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-mono text-slate-400">
               LANES SYNCHRONIZED • AUTHORITATIVE PHYSICS
             </div>
           </div>
 
-          {/* Racers Grid Roster (7 Cols) */}
+          {/* Racers Grid Roster (7 Cols) - Crisp White Card */}
           <div 
-            className="md:col-span-7 p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md flex flex-col justify-between shadow-xl"
+            className="md:col-span-7 p-6 rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between text-xs font-mono mb-3">
-                <span className="text-slate-400 uppercase font-bold">
+                <span className="text-slate-600 uppercase font-bold">
                   Grid Formation ({playerList.length}/6 Racers)
                 </span>
-                <span className={`text-[11px] font-bold ${allPlayersReady ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`}>
+                <span className={`text-[11px] font-bold ${allPlayersReady ? 'text-emerald-600' : 'text-amber-600'}`}>
                   {allPlayersReady ? '● ALL DRIVERS READY' : '○ AWAITING READY CONFIRMATION'}
                 </span>
               </div>
@@ -256,32 +256,32 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
                 {playerList.map((player) => (
                   <div
                     key={player.id}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-950/70 backdrop-blur-sm"
+                    className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50"
                   >
                     <div className="flex items-center gap-3">
                       <div 
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-md"
-                        style={{ backgroundColor: `${player.vehicleColor || '#00ff87'}25`, border: `1px solid ${player.vehicleColor || '#00ff87'}50` }}
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-sm border border-slate-200"
+                        style={{ backgroundColor: `${player.vehicleColor || '#2ea44f'}15` }}
                       >
                         {player.avatar}
                       </div>
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white">
+                          <span className="text-xs font-extrabold text-[#16426a]">
                             {player.username}
                           </span>
                           {player.isHost && (
-                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 flex items-center gap-0.5">
-                              <Crown className="w-2.5 h-2.5" /> HOST
+                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-bold border border-amber-300 flex items-center gap-0.5">
+                              <Crown className="w-2.5 h-2.5 text-amber-600" /> HOST
                             </span>
                           )}
                           {player.id === localSocketId && (
-                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40">
+                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 font-bold border border-blue-300">
                               YOU
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] font-mono text-slate-400 capitalize">
+                        <span className="text-[10px] font-mono text-slate-500 capitalize">
                           {player.vehicleId} • Livery {player.vehicleColor}
                         </span>
                       </div>
@@ -289,15 +289,15 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
 
                     <div className="flex items-center gap-2">
                       {player.isHost ? (
-                        <span className="text-[11px] font-mono font-bold text-amber-400 flex items-center gap-1">
+                        <span className="text-[11px] font-mono font-bold text-amber-600 flex items-center gap-1">
                           <Crown className="w-3.5 h-3.5" /> GRID HOST
                         </span>
                       ) : player.isReady ? (
-                        <span className="text-[11px] font-mono font-bold text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> READY
+                        <span className="text-[11px] font-mono font-bold text-emerald-600 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> READY
                         </span>
                       ) : (
-                        <span className="text-[11px] font-mono font-bold text-slate-500 flex items-center gap-1">
+                        <span className="text-[11px] font-mono font-bold text-slate-400 flex items-center gap-1">
                           <Circle className="w-3.5 h-3.5" /> STANDBY
                         </span>
                       )}
@@ -308,14 +308,14 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
             </div>
 
             {/* Bottom Actions */}
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center gap-3">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-3">
               {!isHost && (
                 <button
                   onClick={handleReadyClick}
-                  className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                  className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow ${
                     isLocalReady
-                      ? 'bg-slate-900 border border-emerald-500 text-emerald-300 shadow-[0_0_20px_rgba(0,255,135,0.25)]'
-                      : 'bg-emerald-400 hover:bg-emerald-300 text-black shadow-[0_0_25px_rgba(0,255,135,0.4)]'
+                      ? 'bg-slate-100 border border-slate-300 text-slate-800'
+                      : 'bg-[#2ea44f] hover:bg-[#2c974b] text-white shadow-emerald-900/20'
                   }`}
                 >
                   <Check className="w-4 h-4" />
@@ -332,23 +332,23 @@ export const PrivateLobby: React.FC<PrivateLobbyProps> = ({
                         if (onFillBots) onFillBots();
                         else socketService.fillRoomWithBots();
                       }}
-                      className="w-full sm:w-auto px-4 py-4 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-mono font-bold flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md active:scale-95 whitespace-nowrap"
+                      className="w-full sm:w-auto px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-mono font-bold flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm whitespace-nowrap"
                     >
-                      <Bot className="w-4 h-4 text-amber-400" />
-                      Fill Vacant with AI Bots
+                      <Bot className="w-4 h-4 text-amber-600" />
+                      Add AI Bots
                     </button>
                   )}
                   <button
                     onClick={handleStartClick}
                     disabled={!allPlayersReady}
-                    className={`flex-1 w-full py-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 cursor-pointer transition-all ${
+                    className={`flex-1 w-full py-3.5 rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-lg ${
                       allPlayersReady
-                        ? 'bg-emerald-400 hover:bg-emerald-300 text-black shadow-[0_0_35px_rgba(0,255,135,0.5)] transform hover:-translate-y-0.5'
-                        : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+                        ? 'bg-[#2ea44f] hover:bg-[#2c974b] text-white shadow-emerald-900/20 active:scale-95'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
                     }`}
                   >
                     <Play className="w-4 h-4 fill-current" />
-                    {allPlayersReady ? 'LAUNCH GRAND PRIX NOW' : 'WAITING FOR ALL RACERS TO READY'}
+                    {allPlayersReady ? 'START RACE NOW' : 'WAITING FOR ALL RACERS TO READY'}
                   </button>
                 </div>
               )}

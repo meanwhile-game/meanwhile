@@ -136,82 +136,86 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
 
   return (
     <div 
-      className="relative min-h-screen w-full flex flex-col justify-between p-6 md:p-12 transition-colors duration-200 select-none bg-slate-950 text-white bg-cyber-grid"
+      className="relative min-h-screen w-full flex flex-col justify-between bg-[#194269] text-slate-100 select-none overflow-x-hidden font-sans"
     >
-      {/* 1. Top Navbar */}
-      <header className="w-full max-w-6xl mx-auto flex items-center justify-between z-10">
-        <button
-          onClick={() => {
-            sound.playKeystroke(50, true);
-            onBack();
-          }}
-          className="px-4 py-2.5 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800 text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer shadow-lg backdrop-blur-md transition-all hover:border-slate-500"
-        >
-          <ArrowLeft className="w-4 h-4 text-emerald-400" />
-          Return to Grid
-        </button>
+      {/* 1. Top Navbar Matching Home Page */}
+      <nav className="w-full bg-[#10304f] border-b border-[#1b4b7a] px-4 sm:px-8 py-2.5 flex items-center justify-between z-30 shadow-md">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              sound.playClick();
+              onBack();
+            }}
+            className="px-3.5 py-1.5 rounded-lg border border-[#1b4b7a] bg-[#0b2239] hover:bg-[#153a5e] text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer shadow transition-all hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4 text-emerald-400" />
+            Return to Grid
+          </button>
 
-        <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
-          <Compass className="w-4 h-4 text-emerald-400" />
-          <span className="font-extrabold text-sm tracking-tight text-white">
-            CHAMPIONSHIP CIRCUITS
-          </span>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onBack()}>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-slate-950 font-black text-base shadow">
+              <Compass className="w-4 h-4 text-slate-950" />
+            </div>
+            <span className="text-xl font-black tracking-tight text-white lowercase">
+              meanwhile <span className="text-xs uppercase font-bold text-cyan-300 font-mono tracking-wider ml-1">Circuits</span>
+            </span>
+          </div>
         </div>
 
-        <span className="text-xs font-mono text-slate-400 hidden sm:inline">
-          {TRACKS.length} GLOBAL VENUES
-        </span>
-      </header>
+        {/* Regional Filter Buttons */}
+        <div className="flex items-center gap-1.5 bg-[#0b2239] p-1 rounded-lg border border-[#1b4b7a]">
+          <button
+            onClick={() => setActiveFilter('all')}
+            className={`px-3 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+              activeFilter === 'all' ? 'bg-[#2ea44f] text-white shadow' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            ALL ({TRACKS.length})
+          </button>
+          <button
+            onClick={() => setActiveFilter('indian')}
+            className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+              activeFilter === 'indian' ? 'bg-[#f6c344] text-slate-950 shadow' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            🇮🇳 INDIAN GP (4)
+          </button>
+          <button
+            onClick={() => setActiveFilter('global')}
+            className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+              activeFilter === 'global' ? 'bg-cyan-400 text-slate-950 shadow' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            🌍 GLOBAL GP (5)
+          </button>
+        </div>
+      </nav>
 
       {/* 2. Main Track Grid */}
-      <main className="w-full max-w-6xl mx-auto my-auto py-8 z-10">
-        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <main className="w-full max-w-6xl mx-auto my-auto px-4 py-6 md:py-8 z-10 flex flex-col gap-6">
+        {/* Banner Card */}
+        <div className="w-full rounded-2xl bg-white text-slate-900 p-6 shadow-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono mb-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>FIA SPECIFICATION 4-LANE TARMAC CIRCUITS</span>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 mb-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>FIA OFFICIAL 4-LANE TARMAC VENUES</span>
             </div>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-              Select Competition Track
-            </h2>
-            <p className="mt-1 text-sm text-slate-400 max-w-2xl leading-relaxed">
-              Featuring India's premier motorsport circuits (Buddh International Circuit, Chennai Marina, Hyderabad Cyber Pearl) alongside legendary global Grand Prix destinations.
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#16426a]">
+              Select Championship Circuit
+            </h1>
+            <p className="mt-1 text-sm text-slate-600 font-medium">
+              Choose from India's premier motorsport circuits (Chennai Marina, Mumbai Sea Link, Hyderabad Cyber Pearl, Buddh) alongside legendary global Grand Prix tracks.
             </p>
           </div>
-
-          {/* Regional Filter Buttons */}
-          <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 self-start md:self-auto">
-            <button
-              onClick={() => setActiveFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                activeFilter === 'all' ? 'bg-emerald-400 text-black shadow-md' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              ALL ({TRACKS.length})
-            </button>
-            <button
-              onClick={() => setActiveFilter('indian')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
-                activeFilter === 'indian' ? 'bg-gradient-to-r from-orange-400 to-amber-400 text-black shadow-md' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              🇮🇳 INDIAN GP (3)
-            </button>
-            <button
-              onClick={() => setActiveFilter('global')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
-                activeFilter === 'global' ? 'bg-sky-400 text-black shadow-md' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              🌍 GLOBAL GP (5)
-            </button>
-          </div>
+          <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 shrink-0">
+            {TRACKS.length} ACTIVE TRACKS
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TRACKS.filter((track) => {
-            if (activeFilter === 'indian') return ['chennai', 'hyderabad', 'buddh'].includes(track.id);
-            if (activeFilter === 'global') return !['chennai', 'hyderabad', 'buddh'].includes(track.id);
+            if (activeFilter === 'indian') return ['chennai', 'mumbai', 'hyderabad', 'buddh'].includes(track.id);
+            if (activeFilter === 'global') return !['chennai', 'mumbai', 'hyderabad', 'buddh'].includes(track.id);
             return true;
           }).map((track) => {
             const isSelected = track.id === selectedTrackId;
@@ -222,46 +226,40 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
               <div
                 key={track.id}
                 onClick={() => handleTrackClick(track.id)}
-                className={`rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden group shadow-2xl backdrop-blur-md ${
+                className={`rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden group shadow-xl ${
                   isSelected 
-                    ? 'border-emerald-400 ring-2 ring-emerald-400/80 shadow-[0_0_35px_rgba(0,255,135,0.35)] scale-[1.02]' 
-                    : 'border-slate-800 bg-slate-900/80 hover:border-slate-600 hover:-translate-y-1'
+                    ? 'border-2 border-[#2ea44f] ring-4 ring-emerald-500/20 bg-white shadow-2xl scale-[1.01]' 
+                    : 'border border-slate-200 bg-white hover:border-slate-300 hover:shadow-2xl hover:-translate-y-0.5'
                 }`}
                 style={{ minHeight: '440px' }}
               >
                 {/* Circuit Art Banner Header */}
-                <div className="relative h-44 w-full overflow-hidden bg-slate-950">
+                <div className="relative h-44 w-full overflow-hidden bg-slate-900">
                   {details.bgImage ? (
                     <img 
                       src={details.bgImage} 
                       alt={track.name} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-90"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex flex-col items-center justify-center relative p-4 text-center">
-                      <div className="absolute inset-0 bg-cyber-grid opacity-30" />
+                    <div className="w-full h-full bg-gradient-to-br from-[#10304f] via-[#16426a] to-[#194269] flex flex-col items-center justify-center relative p-4 text-center">
                       <div className="text-4xl mb-1">{details.flag}</div>
-                      <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">{details.badge}</span>
+                      <span className="text-[10px] font-mono tracking-widest text-amber-300 font-bold uppercase">{details.badge}</span>
                     </div>
                   )}
 
                   {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                   {/* Top Badges */}
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-xs">
-                    <span className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[10px] font-mono font-bold text-white border border-white/20 flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-emerald-400" />
+                    <span className="px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-md text-[10px] font-mono font-bold text-white border border-white/20 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-amber-400" />
                       {track.location}
                     </span>
 
                     <span 
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase backdrop-blur-md"
-                      style={{ 
-                        backgroundColor: `${details.themeAccent}25`,
-                        color: details.themeAccent,
-                        border: `1px solid ${details.themeAccent}60`
-                      }}
+                      className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold uppercase backdrop-blur-md bg-black/60 text-white border border-white/20"
                     >
                       {track.difficulty}
                     </span>
@@ -269,74 +267,74 @@ export const TrackSelectionScreen: React.FC<TrackSelectionScreenProps> = ({
 
                   {/* Selected Indicator Ribbon */}
                   {isSelected && (
-                    <div className="absolute bottom-3 right-3 px-3 py-1 rounded-lg bg-emerald-400 text-black font-black text-xs uppercase flex items-center gap-1.5 shadow-lg">
+                    <div className="absolute bottom-3 right-3 px-3 py-1 rounded-md bg-[#2ea44f] text-white font-extrabold text-xs uppercase flex items-center gap-1.5 shadow-lg">
                       <Check className="w-3.5 h-3.5" />
-                      SELECTED
+                      ACTIVE
                     </div>
                   )}
                 </div>
 
                 {/* Track Details & Telemetry */}
-                <div className="p-5 flex-1 flex flex-col justify-between bg-slate-900/90">
+                <div className="p-5 flex-1 flex flex-col justify-between bg-white text-slate-900">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{details.flag}</span>
-                      <h3 className="text-xl font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors">
+                      <h3 className="text-xl font-extrabold tracking-tight text-[#16426a]">
                         {track.name}
                       </h3>
                     </div>
 
-                    <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+                    <p className="mt-2 text-xs text-slate-600 leading-relaxed font-medium">
                       {track.description}
                     </p>
 
                     {/* Circuit Telemetry Grid */}
-                    <div className="mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px] font-mono">
-                      <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                        <span className="text-slate-500 block text-[9px] uppercase">LENGTH</span>
-                        <span className="font-bold text-white">{track.lengthMeters} Meters</span>
+                    <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px] font-mono">
+                      <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                        <span className="text-slate-500 block text-[9px] uppercase font-bold">LENGTH</span>
+                        <span className="font-bold text-slate-900">{track.lengthMeters} Meters</span>
                       </div>
-                      <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                        <span className="text-slate-500 block text-[9px] uppercase">ELEVATION</span>
-                        <span className="font-bold text-cyan-300">{details.elevation}</span>
+                      <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                        <span className="text-slate-500 block text-[9px] uppercase font-bold">ELEVATION</span>
+                        <span className="font-bold text-[#16426a]">{details.elevation}</span>
                       </div>
-                      <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                        <span className="text-slate-500 block text-[9px] uppercase">CHICANES</span>
-                        <span className="font-bold text-amber-300">{details.corners}</span>
+                      <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                        <span className="text-slate-500 block text-[9px] uppercase font-bold">CHICANES</span>
+                        <span className="font-bold text-slate-900">{details.corners}</span>
                       </div>
-                      <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                        <span className="text-slate-500 block text-[9px] uppercase">WEATHER</span>
-                        <span className="font-bold text-slate-300 flex items-center gap-1">
-                          <WeatherIcon className="w-3 h-3 text-emerald-400" />
+                      <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                        <span className="text-slate-500 block text-[9px] uppercase font-bold">WEATHER</span>
+                        <span className="font-bold text-slate-800 flex items-center gap-1">
+                          <WeatherIcon className="w-3 h-3 text-cyan-600" />
                           {details.weather.split(' ')[0]}
                         </span>
                       </div>
                     </div>
 
                     {/* Circuit Record */}
-                    <div className="mt-3 px-3 py-2 rounded-lg bg-slate-950 border border-slate-800/90 flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-slate-400 flex items-center gap-1.5">
-                        <Trophy className="w-3 h-3 text-amber-400" /> RECORD
+                    <div className="mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-amber-800 font-bold flex items-center gap-1.5">
+                        <Trophy className="w-3.5 h-3.5 text-amber-600" /> LAP RECORD
                       </span>
-                      <span className="font-bold text-amber-300">{details.record}</span>
+                      <span className="font-black text-amber-900">{details.record}</span>
                     </div>
                   </div>
 
                   {/* Deploy Button */}
-                  <div className="mt-5 pt-3 border-t border-slate-800/80">
+                  <div className="mt-5 pt-3 border-t border-slate-100">
                     <button
                       onClick={(e) => { 
                         e.stopPropagation(); 
                         handleTrackClick(track.id); 
                       }}
-                      className={`w-full py-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                      className={`w-full py-3 rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow ${
                         isSelected 
-                          ? 'bg-emerald-400 text-black shadow-[0_0_20px_rgba(0,255,135,0.4)]' 
-                          : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 hover:border-slate-500'
+                          ? 'bg-[#2ea44f] hover:bg-[#2c974b] text-white shadow-emerald-900/20' 
+                          : 'bg-[#194269] hover:bg-[#163b5e] text-white'
                       }`}
                     >
                       {isSelected ? <Check className="w-4 h-4" /> : null}
-                      {isSelected ? 'Circuit Active' : 'Deploy to Circuit'}
+                      {isSelected ? 'Circuit Active' : 'Select Circuit'}
                     </button>
                   </div>
                 </div>
