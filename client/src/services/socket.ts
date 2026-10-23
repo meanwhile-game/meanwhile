@@ -208,6 +208,10 @@ class SocketService {
     return this.socket?.connected || false;
   }
 
+  public isConnected(): boolean {
+    return this.getConnected();
+  }
+
   // --- ACTIONS ---
 
   public createRoom(

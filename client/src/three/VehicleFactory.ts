@@ -318,6 +318,8 @@ export class VehicleFactory {
     // Dispatch vehicle construction based on model
     if (vehicleId === 'phantom-bike') {
       this.buildMotorcycle(group, bodyMat, carbonMat, glassMat, tireMat, rimMat, rotorMat, caliperMat, headlightCoreMat, taillightMat, underglowMat, customization);
+    } else if (vehicleId === 'f1-apex') {
+      this.buildFormulaOne(group, bodyMat, carbonMat, glassMat, tireMat, rimMat, rotorMat, caliperMat, headlightCoreMat, taillightMat, titaniumMat, interiorMat, underglowMat, customization);
     } else if (vehicleId === 'apex-hyper') {
       this.buildHypercar(group, bodyMat, carbonMat, glassMat, tireMat, rimMat, rotorMat, caliperMat, headlightCoreMat, headlightLensMat, taillightMat, titaniumMat, interiorMat, underglowMat, customization);
     } else if (vehicleId === 'ronin-turbo') {
@@ -331,7 +333,7 @@ export class VehicleFactory {
     this.addLiveries(chassisTarget, vehicleId, customization);
 
     // Add Detailed Interior Cockpit
-    if (vehicleId !== 'phantom-bike') {
+    if (vehicleId !== 'phantom-bike' && vehicleId !== 'f1-apex') {
       this.addInteriorCockpit(chassisTarget, interiorMat, carbonMat);
     }
 
@@ -515,6 +517,277 @@ export class VehicleFactory {
     cockpitGroup.add(hud);
 
     root.add(cockpitGroup);
+  }
+
+  // ==========================================
+  // FORMULA 1 GRAND PRIX SINGLE-SEATER (MATCHING USER REFERENCE PHOTO 2)
+  // ==========================================
+  private static buildFormulaOne(
+    root: VehicleMeshObject,
+    bodyMat: THREE.Material,
+    carbonMat: THREE.Material,
+    _glassMat: THREE.Material,
+    tireMat: THREE.Material,
+    rimMat: THREE.Material,
+    rotorMat: THREE.Material,
+    caliperMat: THREE.Material,
+    _headlightCoreMat: THREE.Material,
+    taillightMat: THREE.Material,
+    titaniumMat: THREE.Material,
+    interiorMat: THREE.Material,
+    _underglowMat: THREE.Material,
+    _customization: VehicleCustomization
+  ) {
+    const chassis = new THREE.Group();
+    root.add(chassis);
+    root.chassisGroup = chassis;
+
+    // 1. Carbon Ground Effects Stepped Undertray & Tea Tray
+    const floorGeo = new THREE.BoxGeometry(1.65, 0.04, 4.6);
+    const floor = new THREE.Mesh(floorGeo, carbonMat);
+    floor.position.set(0, 0.10, 0);
+    chassis.add(floor);
+
+    // Side edge floor strakes / edge wings
+    const strakeLGeo = new THREE.BoxGeometry(0.04, 0.08, 2.2);
+    const strakeL = new THREE.Mesh(strakeLGeo, carbonMat);
+    strakeL.position.set(-0.84, 0.12, 0.1);
+    const strakeR = strakeL.clone();
+    strakeR.position.x = 0.84;
+    chassis.add(strakeL, strakeR);
+
+    // 2. Central Monocoque Survival Cell
+    const monoGeo = new THREE.BoxGeometry(0.72, 0.38, 2.4);
+    const mono = new THREE.Mesh(monoGeo, bodyMat);
+    mono.position.set(0, 0.32, 0.1);
+    chassis.add(mono);
+
+    // 3. Tapered Front Nosecone
+    const noseGeo = new THREE.BoxGeometry(0.52, 0.26, 1.8);
+    const nose = new THREE.Mesh(noseGeo, bodyMat);
+    nose.position.set(0, 0.28, 1.9);
+    nose.rotation.x = -0.06;
+    chassis.add(nose);
+
+    // Nose tip carbon crash structure
+    const tipGeo = new THREE.BoxGeometry(0.28, 0.14, 0.4);
+    const tip = new THREE.Mesh(tipGeo, carbonMat);
+    tip.position.set(0, 0.21, 2.85);
+    chassis.add(tip);
+
+    // 4. Front Aerodynamic Wing Assembly (2.1m wide)
+    const fwMainGeo = new THREE.BoxGeometry(2.1, 0.04, 0.45);
+    const fwMain = new THREE.Mesh(fwMainGeo, carbonMat);
+    fwMain.position.set(0, 0.12, 2.65);
+
+    const fwUpperGeo = new THREE.BoxGeometry(1.95, 0.03, 0.32);
+    const fwUpper = new THREE.Mesh(fwUpperGeo, bodyMat);
+    fwUpper.position.set(0, 0.20, 2.62);
+    fwUpper.rotation.x = 0.12;
+
+    // Front Wing Vertical Endplates
+    const fwEpGeo = new THREE.BoxGeometry(0.04, 0.28, 0.65);
+    const fwEpL = new THREE.Mesh(fwEpGeo, carbonMat);
+    fwEpL.position.set(-1.06, 0.20, 2.65);
+    const fwEpR = fwEpL.clone();
+    fwEpR.position.x = 1.06;
+
+    chassis.add(fwMain, fwUpper, fwEpL, fwEpR);
+
+    // 5. Radiator Sidepods with Sculpted Undercuts
+    const podGeo = new THREE.BoxGeometry(0.44, 0.32, 1.9);
+    const podL = new THREE.Mesh(podGeo, bodyMat);
+    podL.position.set(-0.58, 0.30, -0.05);
+    const podR = podL.clone();
+    podR.position.x = 0.58;
+
+    // Radiator Intake Inlets
+    const intakeGeo = new THREE.BoxGeometry(0.38, 0.24, 0.08);
+    const inL = new THREE.Mesh(intakeGeo, carbonMat);
+    inL.position.set(-0.58, 0.30, 0.92);
+    const inR = inL.clone();
+    inR.position.x = 0.58;
+
+    chassis.add(podL, podR, inL, inR);
+
+    // 6. Cockpit & Driver Helmet
+    const cockpitCutGeo = new THREE.BoxGeometry(0.48, 0.25, 0.85);
+    const cockpitCut = new THREE.Mesh(cockpitCutGeo, interiorMat);
+    cockpitCut.position.set(0, 0.40, 0.35);
+    chassis.add(cockpitCut);
+
+    // Driver Helmet (Visible in Photo 2)
+    const helmetGeo = new THREE.SphereGeometry(0.14, 16, 12);
+    const helmetMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.3 });
+    const helmet = new THREE.Mesh(helmetGeo, helmetMat);
+    helmet.position.set(0, 0.58, 0.32);
+
+    const visorGeo = new THREE.BoxGeometry(0.18, 0.07, 0.12);
+    const visorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1, metalness: 0.9 });
+    const visor = new THREE.Mesh(visorGeo, visorMat);
+    visor.position.set(0, 0.59, 0.40);
+    chassis.add(helmet, visor);
+
+    // 7. Titanium Halo Safety Structure (Arching over cockpit)
+    const haloTriGeo = new THREE.BoxGeometry(0.04, 0.22, 0.04);
+    const haloPillar = new THREE.Mesh(haloTriGeo, carbonMat);
+    haloPillar.position.set(0, 0.62, 0.55);
+    haloPillar.rotation.x = -0.25;
+
+    const haloHoopGeo = new THREE.TorusGeometry(0.24, 0.025, 8, 16, Math.PI);
+    haloHoopGeo.rotateX(Math.PI / 2);
+    const haloHoop = new THREE.Mesh(haloHoopGeo, carbonMat);
+    haloHoop.position.set(0, 0.72, 0.32);
+    chassis.add(haloPillar, haloHoop);
+
+    // 8. Engine Airbox / Induction Scoop (Above driver helmet)
+    const airboxGeo = new THREE.BoxGeometry(0.28, 0.32, 1.4);
+    const airbox = new THREE.Mesh(airboxGeo, bodyMat);
+    airbox.position.set(0, 0.68, -0.45);
+    airbox.rotation.x = -0.15;
+
+    const scoopHoleGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.08, 16);
+    scoopHoleGeo.rotateX(Math.PI / 2);
+    const scoopHole = new THREE.Mesh(scoopHoleGeo, carbonMat);
+    scoopHole.position.set(0, 0.82, 0.05);
+
+    // Dorsal shark fin along engine cowl
+    const finGeo = new THREE.BoxGeometry(0.02, 0.35, 1.2);
+    const fin = new THREE.Mesh(finGeo, carbonMat);
+    fin.position.set(0, 0.74, -1.0);
+    chassis.add(airbox, scoopHole, fin);
+
+    // 9. Massive High-Downforce Rear Wing (Matching Photo 2)
+    const rwMainGeo = new THREE.BoxGeometry(1.68, 0.04, 0.42);
+    const rwMain = new THREE.Mesh(rwMainGeo, carbonMat);
+    rwMain.position.set(0, 0.88, -1.82);
+
+    const rwFlapGeo = new THREE.BoxGeometry(1.68, 0.03, 0.24);
+    const rwFlap = new THREE.Mesh(rwFlapGeo, bodyMat);
+    rwFlap.position.set(0, 0.94, -1.78);
+    rwFlap.rotation.x = -0.22;
+
+    const rwPylonGeo = new THREE.BoxGeometry(0.04, 0.55, 0.16);
+    const rwPylL = new THREE.Mesh(rwPylonGeo, carbonMat);
+    rwPylL.position.set(-0.24, 0.62, -1.75);
+    const rwPylR = rwPylL.clone();
+    rwPylR.position.x = 0.24;
+
+    // Large Vertical Rear Endplates
+    const rwEpGeo = new THREE.BoxGeometry(0.04, 0.62, 0.68);
+    const rwEpL = new THREE.Mesh(rwEpGeo, carbonMat);
+    rwEpL.position.set(-0.85, 0.75, -1.82);
+    const rwEpR = rwEpL.clone();
+    rwEpR.position.x = 0.85;
+
+    chassis.add(rwMain, rwFlap, rwPylL, rwPylR, rwEpL, rwEpR);
+
+    // 10. Center Flashing Red LED Rain Light (Photo 2 Feature)
+    const rainLightGeo = new THREE.BoxGeometry(0.12, 0.08, 0.05);
+    const rainLight = new THREE.Mesh(rainLightGeo, taillightMat);
+    rainLight.position.set(0, 0.32, -1.86);
+    chassis.add(rainLight);
+    root.taillightMeshes = [rainLight];
+
+    // 11. Rear Ground Diffuser & Center F1 Exhaust
+    const diffGeo = new THREE.BoxGeometry(1.4, 0.18, 0.65);
+    const diff = new THREE.Mesh(diffGeo, carbonMat);
+    diff.position.set(0, 0.18, -1.90);
+    diff.rotation.x = -0.22;
+    chassis.add(diff);
+
+    // Diffuser vertical fins
+    for (let f = -2; f <= 2; f++) {
+      const vFinGeo = new THREE.BoxGeometry(0.02, 0.18, 0.55);
+      const vFin = new THREE.Mesh(vFinGeo, carbonMat);
+      vFin.position.set(f * 0.28, 0.18, -1.90);
+      chassis.add(vFin);
+    }
+
+    // F1 Turbo Exhaust Exit
+    const exGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.25, 16);
+    exGeo.rotateX(Math.PI / 2);
+    const ex = new THREE.Mesh(exGeo, titaniumMat);
+    ex.position.set(0, 0.48, -1.82);
+
+    const flameGeo = new THREE.ConeGeometry(0.07, 0.60, 12);
+    flameGeo.rotateX(-Math.PI / 2);
+    const flameMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
+    const flame = new THREE.Mesh(flameGeo, flameMat);
+    flame.position.set(0, 0.48, -2.15);
+    chassis.add(ex, flame);
+    root.exhaustFires = [flame];
+
+    // 12. Carbon Suspension Wishbone Rods
+    const armGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.48, 8);
+    armGeo.rotateZ(Math.PI / 2);
+
+    const fArmL1 = new THREE.Mesh(armGeo, carbonMat);
+    fArmL1.position.set(-0.62, 0.38, 1.45);
+    const fArmL2 = new THREE.Mesh(armGeo, carbonMat);
+    fArmL2.position.set(-0.62, 0.24, 1.45);
+    const fArmR1 = fArmL1.clone();
+    fArmR1.position.x = 0.62;
+    const fArmR2 = fArmL2.clone();
+    fArmR2.position.x = 0.62;
+
+    const rArmL1 = new THREE.Mesh(armGeo, carbonMat);
+    rArmL1.position.set(-0.65, 0.38, -1.35);
+    const rArmL2 = new THREE.Mesh(armGeo, carbonMat);
+    rArmL2.position.set(-0.65, 0.24, -1.35);
+    const rArmR1 = rArmL1.clone();
+    rArmR1.position.x = 0.65;
+    const rArmR2 = rArmL2.clone();
+    rArmR2.position.x = 0.65;
+
+    chassis.add(fArmL1, fArmL2, fArmR1, fArmR2, rArmL1, rArmL2, rArmR1, rArmR2);
+
+    // 13. Ground Contact Shadow
+    const shadowGeo = new THREE.PlaneGeometry(2.4, 5.0);
+    shadowGeo.rotateX(-Math.PI / 2);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: getShadowTexture(),
+      transparent: true,
+      opacity: 0.85,
+      depthWrite: false
+    });
+    const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+    shadowMesh.position.y = 0.01;
+    root.add(shadowMesh);
+    root.shadowMesh = shadowMesh;
+
+    // 14. Four Exposed Slick Tires (With Wide Rear Slicks matching Photo 2)
+    root.frontSteerNodes = [];
+
+    // Front Left Wheel with Steering Pivot
+    const frontLWheel = this.createHighDetailWheel(tireMat, rimMat, rotorMat, caliperMat, false, false);
+    const steerL = new THREE.Group();
+    steerL.position.set(-0.98, 0.35, 1.45);
+    steerL.add(frontLWheel);
+    root.add(steerL);
+    root.frontSteerNodes.push(steerL);
+    root.wheels.push(frontLWheel);
+
+    // Front Right Wheel with Steering Pivot
+    const frontRWheel = this.createHighDetailWheel(tireMat, rimMat, rotorMat, caliperMat, true, false);
+    const steerR = new THREE.Group();
+    steerR.position.set(0.98, 0.35, 1.45);
+    steerR.add(frontRWheel);
+    root.add(steerR);
+    root.frontSteerNodes.push(steerR);
+    root.wheels.push(frontRWheel);
+
+    // Massive Wide Rear Left Slick (Photo 2)
+    const rearLWheel = this.createHighDetailWheel(tireMat, rimMat, rotorMat, caliperMat, false, true);
+    rearLWheel.position.set(-1.02, 0.36, -1.35);
+    root.add(rearLWheel);
+    root.wheels.push(rearLWheel);
+
+    // Massive Wide Rear Right Slick (Photo 2)
+    const rearRWheel = this.createHighDetailWheel(tireMat, rimMat, rotorMat, caliperMat, true, true);
+    rearRWheel.position.set(1.02, 0.36, -1.35);
+    root.add(rearRWheel);
+    root.wheels.push(rearRWheel);
   }
 
   // ==========================================

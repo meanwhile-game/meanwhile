@@ -4,7 +4,8 @@ import { VEHICLES, TRACKS } from '../../three/types.js';
 import {
   Play, Users, Bot, Wrench, Trophy, MapPin, Volume2, VolumeX,
   Settings, ArrowRight, ShieldCheck, Gauge, Zap,
-  Compass, Sparkles, Activity, Plus, CheckCircle2, ChevronRight
+  Compass, Plus, CheckCircle2, ChevronRight, Flame,
+  Share2, Sparkles, MessageCircle, Globe, HelpCircle, Star, ExternalLink
 } from 'lucide-react';
 import { sound } from '../../sound/soundEngine.js';
 import { AdBanner } from '../common/AdBanner.js';
@@ -47,6 +48,8 @@ export const MainLobby: React.FC<MainLobbyProps> = ({
   onSelectTrack
 }) => {
   const [trackIdInput, setTrackIdInput] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [instantDeath, setInstantDeath] = useState(false);
   const [isMuted, setIsMuted] = useState(sound.getMuted());
 
   const currentVehicle = VEHICLES.find(v => v.id === selectedVehicleId) || VEHICLES[0];
@@ -55,421 +58,417 @@ export const MainLobby: React.FC<MainLobbyProps> = ({
   const handleToggleSound = () => {
     const muted = sound.toggleMute();
     setIsMuted(muted);
-    if (!muted) sound.playCountdownTick(0);
+    if (!muted) sound.playClick();
   };
 
   const handleJoinTrack = (e: React.FormEvent) => {
     e.preventDefault();
     if (trackIdInput.trim()) {
-      sound.playCountdownTick(1);
+      sound.playClick();
       onJoinPrivate(trackIdInput.trim().toUpperCase());
     }
   };
 
-  const handleColorSelect = (c: string) => {
-    sound.playKeystroke(70, true);
-    if (onUpdateColor) {
-      onUpdateColor(c);
-    }
-  };
-
-  const handleTrackSwitch = (tId: string) => {
-    sound.playKeystroke(60, true);
-    if (onSelectTrack) {
-      onSelectTrack(tId);
-    }
-  };
-
-  const winRate = profile.totalRaces > 0
-    ? Math.round((profile.wins / profile.totalRaces) * 100)
-    : 0;
-
-  // XP progress
-  const currentLevelXp = profile.xp % 200;
-  const xpPercent = Math.min(100, Math.round((currentLevelXp / 200) * 100));
-
   return (
-    <div className="relative min-h-screen w-full flex flex-col justify-between select-none bg-gradient-to-b from-[#0b0f17] via-[#101726] to-[#0d121c] text-slate-100">
+    <div className="relative min-h-screen w-full flex flex-col justify-between bg-[#194269] text-slate-100 select-none overflow-x-hidden font-sans">
       
-      {/* 1. Global Status Bar */}
-      <div className="w-full px-4 sm:px-8 py-2 flex items-center justify-between text-[11px] font-mono border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md z-20">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 font-bold text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            LIVE MULTIPLAYER ENGINE
-          </span>
-          <span className="hidden sm:inline text-slate-600">|</span>
-          <span className="hidden sm:flex items-center gap-1.5 text-slate-400">
-            <Activity className="w-3.5 h-3.5 text-sky-400" />
-            60 FPS AUTHORITATIVE
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4 text-slate-300">
-          <span className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-sky-400" />
-            <strong className="text-white font-num">{onlineCount || 14}</strong> Racers Online
-          </span>
-          <button
-            onClick={handleToggleSound}
-            className="p-1 rounded hover:bg-white/10 transition-colors cursor-pointer text-slate-400 hover:text-white"
-            title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
-          >
-            {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Top Header Navigation */}
-      <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl z-20">
-        {/* Brand */}
+      {/* 1. TypeRacer Style Classic Top Navigation Bar */}
+      <nav className="w-full bg-[#10304f] border-b border-[#1b4b7a] px-4 sm:px-8 py-2.5 flex items-center justify-between z-30 shadow-md">
+        {/* Brand & Left Links */}
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm bg-gradient-to-tr from-orange-500 to-amber-400 text-black shadow-lg shadow-orange-500/20">
-              M
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => sound.playClick()}>
+            {/* Typewriter / Racing Logo Icon */}
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-slate-950 font-black text-lg shadow-md group-hover:scale-105 transition-transform">
+              <svg className="w-5 h-5 fill-slate-950" viewBox="0 0 24 24">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+              </svg>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-black text-lg tracking-tight text-white uppercase">
-                  Meanwhile
-                </span>
-                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                  GP MOTORSPORT
-                </span>
+            <span className="text-2xl font-black tracking-tight text-white lowercase">
+              meanwhile
+            </span>
+          </div>
+
+          {/* Nav Links */}
+          <div className="hidden lg:flex items-center gap-5 text-sm font-medium text-slate-200">
+            <button 
+              onClick={() => { sound.playClick(); onOpenGarage(); }}
+              className="hover:text-white hover:underline cursor-pointer flex items-center gap-1"
+            >
+              Pit Stop / Garage
+            </button>
+            <button 
+              onClick={() => { sound.playClick(); onOpenTracks(); }}
+              className="hover:text-white hover:underline cursor-pointer flex items-center gap-1"
+            >
+              Circuits ({TRACKS.length})
+            </button>
+            <button 
+              onClick={() => { sound.playClick(); onOpenLeaderboard(); }}
+              className="hover:text-white hover:underline cursor-pointer flex items-center gap-1"
+            >
+              Standings
+            </button>
+            <a 
+              href="https://discord.gg" 
+              target="_blank" 
+              rel="noreferrer"
+              className="hover:text-white hover:underline cursor-pointer flex items-center gap-1"
+            >
+              Discord
+            </a>
+            <button 
+              onClick={() => { sound.playClick(); onOpenSettings(); }}
+              className="hover:text-white hover:underline cursor-pointer"
+            >
+              About
+            </button>
+          </div>
+        </div>
+
+        {/* Right User Bar (Exact TypeRacer user pill) */}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => { sound.playClick(); }}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#f6c344] hover:bg-[#ffcf55] text-slate-950 font-bold text-xs uppercase cursor-pointer shadow transition-all"
+          >
+            <Star className="w-3.5 h-3.5 fill-slate-950" />
+            ★ Subscribe
+          </button>
+
+          {/* User Pill */}
+          <div className="flex items-center rounded-md bg-[#0b2239] border border-[#1b4b7a] overflow-hidden text-xs">
+            <div className="px-2.5 py-1.5 flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-cyan-400 flex items-center justify-center text-slate-950 font-black text-[10px]">
+                {profile.username ? profile.username[0].toUpperCase() : 'P'}
               </div>
-              <span className="text-[10px] font-mono tracking-widest text-slate-400 block -mt-0.5 uppercase">
-                3D Typing Racing
+              <span className="font-bold text-white truncate max-w-[120px]">
+                {profile.username || 'nicefingers'}
               </span>
+            </div>
+
+            <div className="px-2 py-1.5 bg-[#00a8cc] text-slate-950 font-black text-[10px] uppercase">
+              PRO
+            </div>
+
+            <div className="px-2.5 py-1.5 bg-[#081a2c] text-cyan-300 font-mono font-bold">
+              {profile.bestWpm || 78} WPM
+            </div>
+
+            <div className="px-2.5 py-1.5 bg-[#061422] text-slate-400 font-mono hidden md:inline">
+              {profile.totalRaces || 12} Races
             </div>
           </div>
 
-          {/* Quick Nav Links */}
-          <nav className="hidden md:flex items-center gap-1 text-xs font-semibold">
-            <button
-              onClick={onOpenTracks}
-              className="px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/70 transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <Compass className="w-3.5 h-3.5 text-sky-400" />
-              Circuits ({TRACKS.length})
-            </button>
-            <button
-              onClick={onOpenGarage}
-              className="px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/70 transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <Wrench className="w-3.5 h-3.5 text-amber-400" />
-              Garage
-            </button>
-            <button
-              onClick={onOpenLeaderboard}
-              className="px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/70 transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-              Standings
-            </button>
-          </nav>
-        </div>
-
-        {/* Right Pilot Identity & Settings */}
-        <div className="flex items-center gap-3">
+          {/* Settings & Audio Controls */}
           <button
-            onClick={onOpenSettings}
-            className="w-9 h-9 rounded-xl border border-slate-700/80 bg-slate-800/80 flex items-center justify-center hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer shadow-md"
-            title="Settings & Audio"
+            onClick={() => { sound.playClick(); onOpenSettings(); }}
+            className="w-8 h-8 rounded-md bg-[#0b2239] hover:bg-[#153a5e] border border-[#1b4b7a] flex items-center justify-center text-slate-300 hover:text-white transition-colors cursor-pointer"
+            title="Settings"
           >
             <Settings className="w-4 h-4" />
           </button>
 
-          {/* Pilot Badge */}
-          <div 
-            onClick={onOpenSettings}
-            className="flex items-center gap-2.5 pl-2 pr-3.5 py-1.5 rounded-xl border border-slate-700/80 bg-slate-800/80 cursor-pointer hover:border-slate-500 hover:bg-slate-700/70 transition-all shadow-md group"
+          <button
+            onClick={handleToggleSound}
+            className="w-8 h-8 rounded-md bg-[#0b2239] hover:bg-[#153a5e] border border-[#1b4b7a] flex items-center justify-center text-slate-300 hover:text-white transition-colors cursor-pointer"
+            title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
           >
-            <div className="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center text-sm border border-slate-700">
-              {profile.avatar}
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-xs font-bold leading-none text-white group-hover:text-orange-300 transition-colors">
-                {profile.username}
-              </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold">
-                  LVL {profile.level}
-                </span>
-                <span className="text-[9px] font-mono text-slate-400 uppercase">
-                  {profile.rankTier}
-                </span>
+            {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+          </button>
+        </div>
+      </nav>
+
+      {/* 2. Main Content Container (TypeRacer Layout) */}
+      <main className="w-full max-w-5xl mx-auto px-4 py-6 md:py-8 flex-1 flex flex-col gap-5 z-10">
+        
+        {/* CARD 1: PRIMARY HERO CARD - "Enter a Typing Race" */}
+        <div className="w-full rounded-2xl bg-white text-slate-900 p-6 md:p-8 shadow-xl border border-slate-200 relative overflow-hidden flex flex-col justify-between">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            
+            {/* Left Content */}
+            <div className="md:col-span-7 flex flex-col gap-3">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#16426a]">
+                Meanwhile - The Global Typing Competition
+              </h1>
+              <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                Increase your typing speed while racing in 3D against drivers worldwide!
+              </p>
+
+              {/* Big Green Action Button */}
+              <div className="mt-2">
+                <button
+                  onClick={() => {
+                    sound.playCountdownTick(2);
+                    onRaceNow();
+                  }}
+                  className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#2ea44f] hover:bg-[#2c974b] active:scale-95 text-white font-extrabold text-lg flex items-center justify-center gap-3 cursor-pointer shadow-lg shadow-green-900/20 transition-all uppercase tracking-wide"
+                >
+                  <Play className="w-5 h-5 fill-white text-white" />
+                  Enter a Typing Race
+                </button>
               </div>
+
+              {/* Sub-bar options */}
+              <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500">Language:</span>
+                  <span className="font-bold text-slate-800">English</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">Instant Death Mode:</span>
+                  <button
+                    type="button"
+                    onClick={() => setInstantDeath(!instantDeath)}
+                    className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${instantDeath ? 'bg-rose-500' : 'bg-slate-300'}`}
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${instantDeath ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5 cursor-pointer hover:text-slate-900" onClick={onOpenTracks}>
+                  <span className="text-slate-500">Circuit:</span>
+                  <span className="font-bold text-[#16426a] underline">{currentTrack.name}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Illustration: Classic High-Speed Racing Truck / Machine (Matching Photo 1) */}
+            <div className="md:col-span-5 flex items-center justify-center relative">
+              <svg viewBox="0 0 380 200" className="w-full max-w-[340px] drop-shadow-md">
+                {/* Checkered flag backdrop */}
+                <g opacity="0.12">
+                  <rect x="220" y="20" width="30" height="30" fill="#000" />
+                  <rect x="250" y="20" width="30" height="30" fill="#fff" />
+                  <rect x="280" y="20" width="30" height="30" fill="#000" />
+                  <rect x="220" y="50" width="30" height="30" fill="#fff" />
+                  <rect x="250" y="50" width="30" height="30" fill="#000" />
+                  <rect x="280" y="50" width="30" height="30" fill="#fff" />
+                </g>
+
+                {/* Road surface */}
+                <rect x="10" y="150" width="360" height="12" rx="4" fill="#334155" />
+                <rect x="30" y="154" width="40" height="4" fill="#fff" />
+                <rect x="90" y="154" width="40" height="4" fill="#fff" />
+                <rect x="150" y="154" width="40" height="4" fill="#fff" />
+                <rect x="210" y="154" width="40" height="4" fill="#fff" />
+                <rect x="270" y="154" width="40" height="4" fill="#fff" />
+
+                {/* Classic Red Racing Truck Body (matching reference image) */}
+                <g>
+                  {/* Bed cargo (Golden Hay/Engine Block) */}
+                  <ellipse cx="270" cy="95" rx="50" ry="38" fill="#eab308" />
+                  <ellipse cx="270" cy="95" rx="35" ry="25" fill="#ca8a04" />
+                  {/* Wood slats */}
+                  <rect x="210" y="105" width="115" height="8" rx="2" fill="#78350f" />
+                  <rect x="210" y="120" width="115" height="8" rx="2" fill="#78350f" />
+                  <rect x="210" y="95" width="8" height="35" rx="1" fill="#451a03" />
+                  <rect x="260" y="95" width="8" height="35" rx="1" fill="#451a03" />
+                  <rect x="315" y="95" width="8" height="35" rx="1" fill="#451a03" />
+
+                  {/* Cab */}
+                  <path d="M120 145 L215 145 L215 85 L165 85 L135 115 L120 120 Z" fill="#dc2626" />
+                  {/* Cab roof highlight */}
+                  <path d="M165 85 L215 85 L215 90 L163 90 Z" fill="#ef4444" />
+                  {/* Window */}
+                  <path d="M168 92 L205 92 L205 118 L148 118 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2" />
+                  {/* Hood */}
+                  <path d="M80 145 L120 145 L120 120 L75 125 Z" fill="#b91c1c" />
+                  {/* Chrome bumper */}
+                  <rect x="70" y="138" width="14" height="8" rx="3" fill="#cbd5e1" stroke="#64748b" />
+                  {/* Chrome grill */}
+                  <rect x="74" y="125" width="6" height="15" rx="1" fill="#e2e8f0" />
+                  {/* Headlight */}
+                  <circle cx="82" cy="126" r="4" fill="#fef08a" stroke="#ca8a04" />
+
+                  {/* Wide Wheels (matching Photo 1 & Photo 2) */}
+                  {/* Front Wheel */}
+                  <circle cx="115" cy="148" r="24" fill="#1e293b" />
+                  <circle cx="115" cy="148" r="16" fill="#94a3b8" />
+                  <circle cx="115" cy="148" r="8" fill="#475569" />
+
+                  {/* Rear Wheel */}
+                  <circle cx="280" cy="148" r="26" fill="#1e293b" />
+                  <circle cx="280" cy="148" r="18" fill="#94a3b8" />
+                  <circle cx="280" cy="148" r="9" fill="#475569" />
+                </g>
+              </svg>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* 3. Main Command Dashboard */}
-      <main className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-6 md:py-8 flex-1 flex flex-col justify-center gap-6 z-10">
-        
-        {/* TOP ROW: 3 DEDICATED GAME MODES (Interesting, Easy, 1-Click Launch!) */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-          
-          {/* Card 1: ONLINE GRAND PRIX MATCHMAKING (5 Cols) */}
-          <div className="md:col-span-5 p-6 rounded-3xl border border-orange-500/30 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col justify-between group hover:border-orange-500/50 transition-all">
-            <div className="absolute top-0 right-0 w-44 h-44 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div>
-              <div className="flex items-center justify-between text-xs font-mono text-orange-400 uppercase font-bold mb-2">
-                <span className="flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5" /> COMPETITIVE MULTIPLAYER
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-[10px] text-orange-300 border border-orange-500/30">
-                  RANKED
-                </span>
-              </div>
-
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">
-                Global Grand Prix
+        {/* CARD 2: "Quote of the Day" (Matching Photo 1 Card 2) */}
+        <div className="w-full rounded-2xl bg-white text-slate-900 p-6 md:p-7 shadow-xl border border-slate-200 relative overflow-hidden flex flex-col justify-between">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            
+            {/* Left Content */}
+            <div className="md:col-span-7 flex flex-col gap-2.5">
+              <h2 className="text-2xl font-extrabold tracking-tight text-[#16426a]">
+                Quote of the Day
               </h2>
-              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                Match with live drivers worldwide. If no rivals are found within 5 seconds, AI bots backfill automatically.
+              <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                The daily typing speed race from classic books and iconic songs!
               </p>
+
+              <div className="mt-2">
+                <button
+                  onClick={() => {
+                    sound.playCountdownTick(2);
+                    onStartSolo('medium');
+                  }}
+                  className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-[#2ea44f] hover:bg-[#2c974b] active:scale-95 text-white font-extrabold text-base flex items-center justify-center gap-2.5 cursor-pointer shadow-md shadow-green-900/20 transition-all uppercase tracking-wide"
+                >
+                  <Play className="w-4 h-4 fill-white text-white" />
+                  Play the Quote of the Day
+                </button>
+              </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-2.5">
+            {/* Right Illustration: Yellow Sports Coupe (Matching Photo 1) */}
+            <div className="md:col-span-5 flex items-center justify-center">
+              <svg viewBox="0 0 360 160" className="w-full max-w-[320px] drop-shadow-md">
+                {/* Road */}
+                <rect x="10" y="130" width="340" height="10" rx="3" fill="#334155" />
+                <rect x="40" y="133" width="50" height="4" fill="#fff" />
+                <rect x="130" y="133" width="50" height="4" fill="#fff" />
+                <rect x="220" y="133" width="50" height="4" fill="#fff" />
+
+                {/* Yellow Sports Car (Matching reference image) */}
+                <g>
+                  {/* Car body */}
+                  <path d="M50 120 L75 88 L140 68 L240 68 L290 92 L320 100 L320 120 Z" fill="#eab308" />
+                  {/* Roof & Pillars */}
+                  <path d="M125 70 L160 52 L225 52 L255 70 Z" fill="#ca8a04" />
+                  {/* Windows */}
+                  <path d="M135 68 L163 56 L220 56 L245 68 Z" fill="#38bdf8" opacity="0.8" />
+                  {/* Window divider */}
+                  <line x1="185" y1="56" x2="185" y2="68" stroke="#1e293b" strokeWidth="2" />
+                  {/* Side black stripe */}
+                  <rect x="60" y="105" width="250" height="6" fill="#1e293b" />
+                  {/* Wheels */}
+                  <circle cx="105" cy="125" r="22" fill="#0f172a" />
+                  <circle cx="105" cy="125" r="14" fill="#cbd5e1" />
+                  <circle cx="105" cy="125" r="6" fill="#475569" />
+
+                  <circle cx="270" cy="125" r="22" fill="#0f172a" />
+                  <circle cx="270" cy="125" r="14" fill="#cbd5e1" />
+                  <circle cx="270" cy="125" r="6" fill="#475569" />
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM ROW: 2 SPLIT CARDS (Side-by-Side 50/50 Grid - Matching Photo 1) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          {/* Card Left: "Typing Test / Practice Yourself" */}
+          <div className="rounded-2xl bg-white text-slate-900 p-6 shadow-xl border border-slate-200 flex flex-col justify-between relative overflow-hidden">
+            <div>
+              <h3 className="text-xl font-extrabold tracking-tight text-[#16426a]">
+                Typing Test
+              </h3>
+              <p className="text-xs text-slate-600 mt-1 font-medium">
+                Improve your typing skills on your own vs pacing bots
+              </p>
+
+              {/* Difficulty Dropdown / Selector */}
+              <div className="mt-4 flex items-center gap-2">
+                <select
+                  value={selectedDifficulty}
+                  onChange={(e) => setSelectedDifficulty(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-100 border border-slate-300 text-xs font-semibold text-slate-800 cursor-pointer focus:outline-none focus:border-[#16426a]"
+                >
+                  <option value="medium">Default (Pro ~70 WPM)</option>
+                  <option value="easy">Rookie (~45 WPM)</option>
+                  <option value="hard">Legend (~95 WPM)</option>
+                </select>
+                <div 
+                  className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-500 cursor-pointer"
+                  title="Select AI Bot target pacing"
+                >
+                  ?
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between gap-3">
               <button
                 onClick={() => {
                   sound.playCountdownTick(2);
-                  onRaceNow();
+                  onStartSolo(selectedDifficulty);
                 }}
-                className="w-full py-4 rounded-xl btn-arcade-play text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 cursor-pointer"
+                className="px-6 py-3 rounded-xl bg-[#0969da] hover:bg-[#085ac2] active:scale-95 text-white font-extrabold text-sm flex items-center gap-2 cursor-pointer shadow-md shadow-blue-900/20 transition-all uppercase"
               >
-                <Play className="w-4 h-4 fill-white" />
-                Find Contenders (Race Now)
+                Practice Yourself
               </button>
 
-              <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 px-1">
-                <span>⚡ 4 RACERS PER GRID</span>
-                <span>⏱️ 5S FAST RADAR</span>
-              </div>
+              {/* Red Car Graphic */}
+              <svg viewBox="0 0 160 80" className="w-24 drop-shadow-sm">
+                <path d="M20 60 L35 45 L65 35 L115 35 L140 50 L150 60 Z" fill="#ef4444" />
+                <path d="M60 36 L75 25 L105 25 L118 36 Z" fill="#b91c1c" />
+                <circle cx="45" cy="62" r="12" fill="#1e293b" />
+                <circle cx="45" cy="62" r="6" fill="#cbd5e1" />
+                <circle cx="125" cy="62" r="12" fill="#1e293b" />
+                <circle cx="125" cy="62" r="6" fill="#cbd5e1" />
+              </svg>
             </div>
           </div>
 
-          {/* Card 2: INSTANT SOLO TIME TRIAL (4 Cols) */}
-          <div className="md:col-span-4 p-6 rounded-3xl border border-sky-500/30 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col justify-between group hover:border-sky-500/50 transition-all">
-            <div className="absolute top-0 right-0 w-44 h-44 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-
+          {/* Card Right: "Race your friends" */}
+          <div className="rounded-2xl bg-white text-slate-900 p-6 shadow-xl border border-slate-200 flex flex-col justify-between relative overflow-hidden">
             <div>
-              <div className="flex items-center justify-between text-xs font-mono text-sky-400 uppercase font-bold mb-2">
-                <span className="flex items-center gap-1.5">
-                  <Bot className="w-3.5 h-3.5" /> INSTANT SOLO PRACTICE
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-[10px] text-sky-300 border border-sky-500/30 font-bold">
-                  0ms START
-                </span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
-                Time Trial vs AI
-              </h2>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Instant singleplayer test against calibrated pacing bots. 1-click to launch immediately!
+              <h3 className="text-xl font-extrabold tracking-tight text-[#16426a]">
+                Race your friends
+              </h3>
+              <p className="text-xs text-slate-600 mt-1 font-medium">
+                Create your own racetrack and play with friends
               </p>
-            </div>
 
-            {/* Direct 3-Button Difficulty Matrix (No dropdowns!) */}
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              <button
-                onClick={() => onStartSolo('easy')}
-                className="py-3 px-2 rounded-xl bg-emerald-950/50 hover:bg-emerald-900/70 border border-emerald-600/50 btn-arcade-pill text-white transition-all flex flex-col items-center justify-center cursor-pointer group shadow-md"
-              >
-                <span className="text-[11px] font-mono font-black text-emerald-400">ROOKIE</span>
-                <span className="text-[9px] font-mono text-emerald-300/80 mt-0.5 font-bold">~45 WPM</span>
-              </button>
-
-              <button
-                onClick={() => onStartSolo('medium')}
-                className="py-3 px-2 rounded-xl bg-sky-950/60 hover:bg-sky-900/80 border border-sky-500/60 btn-arcade-pill text-white transition-all flex flex-col items-center justify-center cursor-pointer group shadow-md ring-1 ring-sky-400/40"
-              >
-                <span className="text-[11px] font-mono font-black text-sky-300">PRO</span>
-                <span className="text-[9px] font-mono text-sky-200 mt-0.5 font-bold">~70 WPM</span>
-              </button>
-
-              <button
-                onClick={() => onStartSolo('hard')}
-                className="py-3 px-2 rounded-xl bg-rose-950/50 hover:bg-rose-900/70 border border-rose-600/50 btn-arcade-pill text-white transition-all flex flex-col items-center justify-center cursor-pointer group shadow-md"
-              >
-                <span className="text-[11px] font-mono font-black text-rose-400">LEGEND</span>
-                <span className="text-[9px] font-mono text-rose-300/80 mt-0.5 font-bold">~95 WPM</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Card 3: PRIVATE TRACK BY ID (3 Cols) */}
-          <div className="md:col-span-3 p-6 rounded-3xl border border-purple-500/30 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col justify-between group hover:border-purple-500/50 transition-all">
-            <div className="absolute top-0 right-0 w-36 h-36 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div>
-              <div className="text-xs font-mono text-purple-400 uppercase font-bold mb-2 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" /> PRIVATE TRACK
-              </div>
-
-              <h2 className="text-lg font-black text-white tracking-tight uppercase">
-                Custom Grid ID
-              </h2>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Join a friend's private track or generate a custom Track ID.
-              </p>
-            </div>
-
-            <div className="mt-4 flex flex-col gap-2">
-              <form onSubmit={handleJoinTrack} className="flex gap-1.5">
+              {/* Track Code Input */}
+              <form onSubmit={handleJoinTrack} className="mt-4 flex gap-2">
                 <input
                   type="text"
-                  placeholder="TRACK ID (e.g. CHN-882)"
+                  placeholder="CODE (e.g. CHN-882)"
                   value={trackIdInput}
                   onChange={(e) => setTrackIdInput(e.target.value.toUpperCase())}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 text-white font-mono font-bold text-center tracking-wider text-xs placeholder:text-slate-500 focus:outline-none focus:border-purple-400"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-100 border border-slate-300 text-xs font-mono font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 uppercase"
                   maxLength={16}
                 />
                 <button
                   type="submit"
                   disabled={!trackIdInput.trim()}
-                  className="px-3.5 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 disabled:opacity-40 text-black font-extrabold text-xs font-mono uppercase cursor-pointer transition-all whitespace-nowrap active:scale-95"
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 disabled:opacity-40 text-white font-bold text-xs uppercase cursor-pointer whitespace-nowrap"
                 >
                   Join
                 </button>
               </form>
+            </div>
 
+            <div className="mt-6 flex items-center justify-between gap-3">
               <button
                 onClick={() => {
                   sound.playClick();
                   onCreatePrivate();
                 }}
-                className="w-full py-2 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 font-bold text-[11px] font-mono uppercase flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                className="px-6 py-3 rounded-xl bg-[#e36209] hover:bg-[#cc5507] active:scale-95 text-white font-extrabold text-sm flex items-center gap-2 cursor-pointer shadow-md shadow-orange-900/20 transition-all uppercase"
               >
-                <Plus className="w-3.5 h-3.5" /> Create Track ID
+                Create Racetrack
               </button>
-            </div>
-          </div>
-        </div>
 
-        {/* MIDDLE ROW: CIRCUIT SELECTOR & MACHINE GARAGE */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-          
-          {/* Selected Circuit Card & Quick Switcher (7 Cols) */}
-          <div className="md:col-span-7 p-6 rounded-3xl border border-slate-800 bg-slate-900/70 backdrop-blur-xl shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-xs font-mono text-slate-400 uppercase mb-2">
-                <span className="flex items-center gap-1.5 text-amber-400 font-bold">
-                  <Compass className="w-3.5 h-3.5" /> ACTIVE CIRCUIT
-                </span>
-                <span className="text-slate-400">{currentTrack.difficulty.toUpperCase()} // HIGH GRIP</span>
-              </div>
-
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                    {currentTrack.name}
-                  </h3>
-                  <div className="text-xs font-mono text-slate-400 mt-1 flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-orange-400" />
-                    <span>{currentTrack.location}</span>
-                    <span>•</span>
-                    <span className="text-white font-bold">{currentTrack.lengthMeters}m Course</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={onOpenTracks}
-                  className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-mono text-slate-300 hover:text-white cursor-pointer transition-colors whitespace-nowrap"
-                >
-                  View All Venues →
-                </button>
-              </div>
-
-              <p className="text-xs text-slate-400 mt-2.5 leading-relaxed max-w-2xl">
-                {currentTrack.description}
-              </p>
-            </div>
-
-            {/* Quick 1-Click Track Switcher Tabs (No dropdowns!) */}
-            <div className="mt-5 pt-4 border-t border-slate-800/80">
-              <span className="text-[10px] font-mono text-slate-400 uppercase block mb-2 font-bold">
-                Quick Switch Circuit:
-              </span>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {TRACKS.slice(0, 5).map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => handleTrackSwitch(t.id)}
-                    className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
-                      selectedTrackId === t.id
-                        ? 'border-orange-500 bg-orange-500/15 text-white shadow-md'
-                        : 'border-slate-800 bg-slate-950/50 hover:border-slate-700 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <span className="text-xs font-bold truncate max-w-full">{t.name.split(' ')[0]}</span>
-                    <span className="text-[8.5px] font-mono uppercase text-slate-400 mt-0.5">{t.difficulty}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Machine Tuning & Livery (5 Cols) */}
-          <div className="md:col-span-5 p-6 rounded-3xl border border-slate-800 bg-slate-900/70 backdrop-blur-xl shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-xs font-mono text-slate-400 uppercase mb-2">
-                <span className="flex items-center gap-1.5 text-sky-400 font-bold">
-                  <Gauge className="w-3.5 h-3.5" /> RACING MACHINE
-                </span>
-                <span className="text-slate-400">{currentVehicle.type.toUpperCase()} CLASS</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-black text-white tracking-tight">
-                    {currentVehicle.name}
-                  </h3>
-                  <span className="text-xs font-mono text-slate-400">Custom Tuned Aerodynamics</span>
-                </div>
-
-                <button
-                  onClick={onOpenGarage}
-                  className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-mono text-slate-300 hover:text-white cursor-pointer transition-colors"
-                >
-                  Garage 360° →
-                </button>
-              </div>
-
-              {/* Specs bars */}
-              <div className="grid grid-cols-2 gap-2 mt-4 text-xs font-mono">
-                <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">TOP SPEED</span>
-                  <span className="font-bold text-white font-num">{currentVehicle.topSpeedKmh} KM/H</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">ACCELERATION</span>
-                  <span className="font-bold text-white font-num">{currentVehicle.accelerationRating} / 10</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Livery Paint Swatches */}
-            <div className="mt-4 pt-3 border-t border-slate-800/80">
-              <div className="flex items-center justify-between mb-2 text-[10px] font-mono text-slate-400 uppercase font-bold">
-                <span>LIVERY PAINT</span>
-                <span className="text-white">{selectedVehicleColor}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {currentVehicle.colors.map(color => (
-                  <button
-                    key={color}
-                    onClick={() => handleColorSelect(color)}
-                    className={`w-7 h-7 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
-                      selectedVehicleColor === color ? 'scale-115 ring-2 ring-white shadow-lg' : 'hover:scale-105 opacity-80'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
+              {/* Dual Racing Cars Graphic */}
+              <svg viewBox="0 0 160 80" className="w-24 drop-shadow-sm">
+                {/* Back car */}
+                <path d="M10 50 L25 38 L55 30 L95 30 L115 42 L125 50 Z" fill="#3b82f6" opacity="0.75" />
+                <circle cx="35" cy="52" r="10" fill="#1e293b" />
+                <circle cx="100" cy="52" r="10" fill="#1e293b" />
+                {/* Front car */}
+                <path d="M30 65 L45 50 L75 42 L125 42 L145 55 L155 65 Z" fill="#f97316" />
+                <circle cx="55" cy="67" r="11" fill="#0f172a" />
+                <circle cx="55" cy="67" r="5" fill="#cbd5e1" />
+                <circle cx="130" cy="67" r="11" fill="#0f172a" />
+                <circle cx="130" cy="67" r="5" fill="#cbd5e1" />
+              </svg>
             </div>
           </div>
         </div>
@@ -478,45 +477,40 @@ export const MainLobby: React.FC<MainLobbyProps> = ({
         <AdBanner 
           slotId="ad-lobby-mid-leaderboard" 
           format="leaderboard" 
-          className="my-3"
+          className="my-1"
         />
 
-        {/* BOTTOM ROW: DRIVER CAREER TELEMETRY */}
-        <div className="p-5 rounded-3xl border border-slate-800/80 bg-slate-900/50 backdrop-blur-md grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div>
-            <span className="text-[10px] font-mono uppercase text-slate-400 block">Peak Pace</span>
-            <div className="text-2xl font-black font-mono text-emerald-400 mt-0.5">
-              {profile.bestWpm || 0} <span className="text-xs font-normal text-slate-400">WPM</span>
-            </div>
+        {/* Active Circuit & Machine Telemetry Strip */}
+        <div className="w-full rounded-xl bg-[#10304f] border border-[#1b4b7a] p-3 sm:p-4 flex flex-wrap items-center justify-between text-xs text-slate-300 gap-3">
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-white flex items-center gap-1.5">
+              <Compass className="w-4 h-4 text-cyan-400" />
+              Active Circuit: {currentTrack.name}
+            </span>
+            <span className="text-slate-400 hidden sm:inline">({currentTrack.location})</span>
           </div>
 
-          <div>
-            <span className="text-[10px] font-mono uppercase text-slate-400 block">Precision</span>
-            <div className="text-2xl font-black font-mono text-sky-400 mt-0.5">
-              {profile.averageAccuracy || 100}%
-            </div>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-mono uppercase text-slate-400 block">Victories</span>
-            <div className="text-2xl font-black font-mono text-amber-400 mt-0.5">
-              {profile.wins || 0} <span className="text-xs font-normal text-slate-400">/ {profile.totalRaces || 0}</span>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-mono uppercase text-slate-400 block">Win Rate</span>
-            <div className="text-2xl font-black font-mono text-purple-400 mt-0.5">
-              {winRate}%
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onOpenTracks}
+              className="px-3 py-1 rounded bg-[#153a5e] hover:bg-[#1c4b78] text-white font-medium cursor-pointer"
+            >
+              Switch Circuit
+            </button>
+            <button
+              onClick={onOpenGarage}
+              className="px-3 py-1 rounded bg-[#153a5e] hover:bg-[#1c4b78] text-white font-medium cursor-pointer"
+            >
+              Tuning & Livery
+            </button>
           </div>
         </div>
       </main>
 
-      {/* 4. Footer */}
-      <footer className="w-full px-4 sm:px-8 py-3 flex items-center justify-between text-xs font-mono text-slate-500 border-t border-slate-800/80 bg-slate-950/60 z-10">
-        <span>MEANWHILE GP ENGINE • AUTHORITATIVE WEBSOCKETS</span>
-        <span>LOW LATENCY TICK PROTOCOL</span>
+      {/* 3. Footer */}
+      <footer className="w-full bg-[#10304f] border-t border-[#1b4b7a] px-4 sm:px-8 py-3 flex items-center justify-between text-xs text-slate-400">
+        <span>© 2026 MEANWHILE • THE 3D MULTIPLAYER TYPING COMPETITION</span>
+        <span className="hidden sm:inline">AUTHORITATIVE 60FPS TICK PROTOCOL</span>
       </footer>
     </div>
   );

@@ -113,7 +113,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({
         id={slotId}
         data-ad-slot={slotId}
         data-ad-format={format}
-        data-ad-client="ca-pub-veloce-monetization"
+        data-ad-client="ca-pub-meanwhile-monetization"
         className={`relative ${current.containerClass} rounded-2xl border border-dashed border-cyan-500/30 bg-gradient-to-br from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-3 text-center transition-all duration-300 hover:border-cyan-400/50 hover:bg-slate-900/70 shadow-lg shadow-black/40 overflow-hidden group`}
       >
         {/* Subtle grid pattern background */}

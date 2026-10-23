@@ -230,40 +230,46 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
         {/* 4. Text Provenance & Attribution Card */}
         {passage && (
-          <div className="relative z-10 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 flex flex-col gap-3 shadow-lg">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  {passage.sourceType === 'book' && <BookOpen className="w-3 h-3" />}
-                  {passage.sourceType === 'song' && <Music className="w-3 h-3" />}
-                  {passage.sourceType === 'speech' && <Mic className="w-3 h-3" />}
-                  {passage.sourceType === 'essay' && <FileText className="w-3 h-3" />}
-                  {passage.sourceType === 'article' && <Newspaper className="w-3 h-3" />}
-                  {passage.sourceType ? `From the ${passage.sourceType}` : 'Literature Source'}
-                </span>
-                <h4 className="text-sm font-black tracking-tight text-white">
-                  "{passage.title}"
-                </h4>
-              </div>
-
-              <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300">
+          <div className="relative z-10 rounded-2xl border border-amber-500/30 bg-[#0d121c]/95 p-5 flex flex-col gap-3.5 shadow-xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                OFFICIAL RACE PASSAGE CITATION & ARCHIVE
+              </span>
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full border border-white/10 bg-black/40 text-slate-300">
                 {passage.category}
               </span>
             </div>
 
-            <div className="text-xs text-slate-300">
-              Written / Composed by <strong className="text-white">{passage.author}</strong> {passage.year ? `(${passage.year})` : ''}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <span className="inline-flex items-center gap-1.5 text-[10.5px] font-mono uppercase px-3 py-1 rounded-lg font-black bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                  {passage.sourceType === 'book' && <BookOpen className="w-3.5 h-3.5" />}
+                  {passage.sourceType === 'song' && <Music className="w-3.5 h-3.5" />}
+                  {passage.sourceType === 'speech' && <Mic className="w-3.5 h-3.5" />}
+                  {passage.sourceType === 'essay' && <FileText className="w-3.5 h-3.5" />}
+                  {passage.sourceType === 'article' && <Newspaper className="w-3.5 h-3.5" />}
+                  {passage.sourceType === 'book' ? 'BOOK EXCERPT' : passage.sourceType === 'song' ? 'SONG LYRICS' : passage.sourceType === 'speech' ? 'HISTORIC SPEECH' : 'ESSAY / ARTICLE'}
+                </span>
+                <h4 className="text-base font-black tracking-tight text-white font-mono">
+                  "{passage.title}" {passage.year ? `(${passage.year})` : ''}
+                </h4>
+              </div>
+
+              <span className="text-xs font-mono text-slate-300">
+                Author: <strong className="text-white font-bold">{passage.author}</strong>
+              </span>
             </div>
 
             {/* Quoted passage excerpt */}
-            <div className="text-xs italic leading-relaxed pl-3.5 border-l-2 border-emerald-400 py-1 rounded-r bg-slate-950/80 text-slate-300 font-serif">
+            <div className="text-xs italic leading-relaxed pl-4 border-l-2 border-amber-400 py-1.5 rounded-r bg-black/60 text-slate-200 font-serif">
               "{passage.text}"
             </div>
 
             {/* Context trivia note */}
             {passage.context && (
-              <div className="text-[11px] leading-normal flex items-start gap-1.5 text-slate-400 font-mono">
-                <span className="font-bold text-emerald-400">Provenance:</span>
+              <div className="text-[11px] leading-relaxed flex items-start gap-1.5 text-slate-400 font-mono bg-white/5 p-2.5 rounded-xl border border-white/5">
+                <span className="font-bold text-amber-400 shrink-0">Context:</span>
                 <span>{passage.context}</span>
               </div>
             )}

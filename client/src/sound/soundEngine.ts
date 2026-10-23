@@ -41,6 +41,28 @@ class SoundEngine {
 
   // --- SOUND EFFECTS ---
 
+  public playClick(): void {
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(640, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.035);
+
+    gain.gain.setValueAtTime(0.14 * this.masterVolume * this.sfxVolume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.035);
+  }
+
   public playKeyClick(isSpace: boolean = false): void {
     if (this.isMuted) return;
     const ctx = this.initContext();
@@ -88,6 +110,29 @@ class SoundEngine {
 
     osc.start();
     osc.stop(ctx.currentTime + 0.12);
+  }
+
+  public playBrakeScreech(): void {
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    // High-pitched tire rubber skid & brake clamp sound
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(1250, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(620, ctx.currentTime + 0.24);
+
+    gain.gain.setValueAtTime(0.22 * this.masterVolume * this.sfxVolume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.24);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.24);
   }
 
   public playCountdownTick(count: number): void {

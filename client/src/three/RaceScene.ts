@@ -24,6 +24,7 @@ export interface RacerPhysicsState {
   brakeDive: number;
   brakeFlareTimer: number;
   accelG: number;
+  throttleTimer: number;
 }
 
 export class RaceSceneManager {
@@ -271,9 +272,32 @@ export class RaceSceneManager {
     if (!id) return;
     const p = this.racerPhysics.get(id);
     if (p) {
-      p.brakeDive = -0.055;
-      p.brakeFlareTimer = 0.65;
+      // Aggressive front nose dive on wrong typing (puts on the brakes!)
+      p.brakeDive = -0.11;
+      p.brakeFlareTimer = 1.2;
+      p.accelG = -2.2;
+      p.throttleTimer = 0; // Cut throttle immediately
+      // Cut forward speed sharply (putting on the brakes!)
+      p.velocity = Math.max(0, p.velocity * 0.28);
+    }
+  }
+
+  public triggerBackspace(racerId?: string): void {
+    const id = racerId || this.localPlayerId;
+    if (!id) return;
+    const p = this.racerPhysics.get(id);
+    const racer = this.racerMeshes.get(id);
+    if (p) {
+      // On backspace, car physically moves slightly behind along the road!
+      const stepBack = 0.0035; // ~4.9 meters backwards along spline
+      p.actualProgress = Math.max(0, p.actualProgress - stepBack);
+      if (racer) {
+        racer.data.targetProgress = Math.max(0, (racer.data.targetProgress || p.actualProgress) - stepBack);
+        racer.data.currentProgress = p.actualProgress;
+      }
+      p.pitch = 0.045; // rear reverse pitch
       p.accelG = -0.75;
+      p.velocity = -0.008; // brief reverse twitch
     }
   }
 
@@ -282,7 +306,10 @@ export class RaceSceneManager {
     if (!id) return;
     const p = this.racerPhysics.get(id);
     if (p) {
-      p.accelG = Math.min(1.0, p.accelG + 0.45);
+      p.throttleTimer = 0.65; // Sustain throttle window across normal typing intervals
+      p.accelG = Math.min(1.4, p.accelG + 0.45);
+      p.velocity = Math.min(0.055, Math.max(p.velocity, 0.012) + 0.0045);
+      p.pitch = Math.max(-0.048, p.pitch - 0.020);
     }
   }
 
@@ -361,35 +388,51 @@ export class RaceSceneManager {
           brakeDive: 0,
           brakeFlareTimer: 0,
           accelG: 0,
+          throttleTimer: 0,
         };
         this.racerPhysics.set(id, p);
       }
 
-      // Physics momentum towards target
+      // True Continuous Automotive Powertrain & Momentum Model
       const targetP = Math.max(0, Math.min(1, data.targetProgress));
-      const distToTarget = targetP - p.actualProgress;
+      const error = targetP - p.actualProgress;
 
-      if (distToTarget > 0.0001) {
-        // Accelerate smoothly to close gap
-        const desiredSpeed = Math.max(distToTarget * 4.8, (data.wpm / 60) * 0.015);
-        p.velocity = THREE.MathUtils.lerp(p.velocity, desiredSpeed, dt * 7.5);
-      } else {
-        // Coasting with smooth aerodynamic and mechanical drag
-        p.velocity = THREE.MathUtils.lerp(p.velocity, 0, dt * 2.2);
+      if (p.throttleTimer > 0) {
+        p.throttleTimer -= dt;
       }
 
-      // Recover suspension dive & timers
+      const isThrottling = p.throttleTimer > 0 || error > 0.0003;
+
+      if (isThrottling) {
+        // Player has typed ahead or throttle is active: maintain full racing speed
+        const speedFromWpm = Math.max(0.018, (Math.max(28, data.wpm) / 85) * 0.038);
+        const speedFromDist = Math.min(0.065, Math.max(0, error) * 6.5);
+        const targetSpeed = Math.max(speedFromWpm, speedFromDist);
+        p.velocity = THREE.MathUtils.lerp(p.velocity, targetSpeed, dt * 7.5);
+      } else {
+        // Car has caught up and user paused typing: smooth deceleration (coast)
+        p.velocity = THREE.MathUtils.lerp(p.velocity, 0, dt * 2.5);
+      }
+
+      // Suspension restoration & G-force dissipation
       if (p.brakeDive < 0) {
-        p.brakeDive = THREE.MathUtils.lerp(p.brakeDive, 0, dt * 6.0);
+        p.brakeDive = THREE.MathUtils.lerp(p.brakeDive, 0, dt * 4.5);
       }
       if (p.brakeFlareTimer > 0) {
         p.brakeFlareTimer -= dt;
       }
-      p.accelG = THREE.MathUtils.lerp(p.accelG, 0, dt * 4.0);
+      p.accelG = THREE.MathUtils.lerp(p.accelG, 0, dt * 3.5);
 
-      // Advance actual progress
-      const deltaProgress = Math.min(distToTarget, Math.max(0, p.velocity * dt));
+      // Advance actual progress along spline (allows subtle backward twitch on backspace, smooth forward on typing)
+      const deltaProgress = p.velocity * dt;
       p.actualProgress += deltaProgress;
+
+      // Soft progressive boundary cushion: never abruptly jerk/snap to a dead stop!
+      if (p.velocity > 0 && p.actualProgress > targetP + 0.0035) {
+        p.actualProgress = targetP + 0.0035;
+        p.velocity = THREE.MathUtils.lerp(p.velocity, 0.008, dt * 5.0);
+      }
+
       p.actualProgress = Math.max(0, Math.min(0.999, p.actualProgress));
       data.currentProgress = p.actualProgress;
 
@@ -431,7 +474,7 @@ export class RaceSceneManager {
 
       // 5. Chassis Articulation (Squat, Dive, Centrifugal Roll, Rumble)
       const speedFactor = Math.min(1.0, data.wpm / 115);
-      const isAccelerating = distToTarget > 0.001 && data.wpm > 8;
+      const isAccelerating = error > 0.0005 && data.wpm > 8;
       const targetSquat = isAccelerating ? 0.022 * speedFactor : 0.0;
       const totalPitch = targetSquat + p.brakeDive;
       p.pitch = THREE.MathUtils.lerp(p.pitch, totalPitch, dt * 8.5);
@@ -533,24 +576,24 @@ export class RaceSceneManager {
         this.camera.up.lerp(localVehicleNormal, dt * 6.0);
         this.camera.lookAt(camLookTarget);
       } else {
-        // Immersive 3D Chase Camera with G-Force Acceleration Pushback & Road Banking
-        const gPushback = localPhysics.accelG * 0.45;
-        const camDist = 5.6 + speedFactor * 1.3 + gPushback;
-        const camHeight = 2.2 + speedFactor * 0.25;
+        // Immersive Arcade Chase Camera (Matching Crazy Grand Prix)
+        const gPushback = localPhysics.accelG * 0.20;
+        const camDist = 4.3 + speedFactor * 0.7 + gPushback;
+        const camHeight = 1.80 + speedFactor * 0.18;
 
         const targetCamPos = localVehiclePos.clone()
           .sub(localVehicleTangent.clone().multiplyScalar(camDist))
           .add(localVehicleNormal.clone().multiplyScalar(camHeight));
 
         // High-speed cockpit rumble
-        if (localWpm > 75) {
-          const rumble = (speedFactor - 0.6) * 0.025;
+        if (localWpm > 60) {
+          const rumble = (speedFactor - 0.4) * 0.016;
           targetCamPos.addScaledVector(localVehicleBinormal, (Math.random() - 0.5) * rumble);
           targetCamPos.addScaledVector(localVehicleNormal, (Math.random() - 0.5) * rumble * 0.5);
         }
 
         // Dynamic speed tunnel vision FOV
-        const targetFov = 54 + speedFactor * 9;
+        const targetFov = 60 + speedFactor * 9;
         if (Math.abs(this.camera.fov - targetFov) > 0.1) {
           this.camera.fov += (targetFov - this.camera.fov) * dt * 4;
           this.camera.updateProjectionMatrix();
@@ -561,15 +604,15 @@ export class RaceSceneManager {
           this.camera.up.copy(localVehicleNormal);
           this.cameraSnapped = true;
         } else {
-          this.camera.position.lerp(targetCamPos, dt * 9.0);
-          this.camera.up.lerp(localVehicleNormal, dt * 7.0);
+          this.camera.position.lerp(targetCamPos, dt * 8.0);
+          this.camera.up.lerp(localVehicleNormal, dt * 6.5);
         }
 
-        // Forward eye-level lookahead along the track toward the horizon
-        const lookAhead = 26.0 + speedFactor * 6.0;
+        // Forward eye-level lookahead along the track toward the horizon (Matching Crazy Grand Prix)
+        const lookAhead = 32.0 + speedFactor * 6.0;
         const camLookTarget = localVehiclePos.clone()
           .addScaledVector(localVehicleTangent, lookAhead)
-          .addScaledVector(localVehicleNormal, 0.95);
+          .addScaledVector(localVehicleNormal, 1.05);
 
         this.camera.lookAt(camLookTarget);
       }

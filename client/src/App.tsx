@@ -16,6 +16,7 @@ import { LeaderboardScreen } from './components/leaderboard/LeaderboardScreen.js
 import { SettingsModal } from './components/settings/SettingsModal.js';
 import { RaceHud, RacerHudData } from './components/race/RaceHud.js';
 import { ResultsScreen } from './components/race/ResultsScreen.js';
+import { getRandomPassage } from './data/passages.js';
 
 type ViewMode = 'landing' | 'lobby' | 'private_lobby' | 'racing' | 'garage' | 'tracks' | 'leaderboard';
 
@@ -57,10 +58,12 @@ export const App: React.FC = () => {
 
   // Selected Machine & Track
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(() => {
-    return localStorage.getItem('meanwhile_vehicle_id') || localStorage.getItem('veloce_vehicle_id') || 'cyber-gt';
+    const saved = localStorage.getItem('meanwhile_vehicle_id');
+    if (saved && saved !== 'cyber-gt') return saved;
+    return 'f1-apex';
   });
   const [selectedVehicleColor, setSelectedVehicleColor] = useState<string>(() => {
-    return localStorage.getItem('meanwhile_vehicle_color') || localStorage.getItem('veloce_vehicle_color') || '#00ff87';
+    return localStorage.getItem('meanwhile_vehicle_color') || '#f8fafc';
   });
   const [selectedTrackId, setSelectedTrackId] = useState<string>(() => {
     const saved = localStorage.getItem('meanwhile_track_id');
@@ -183,12 +186,19 @@ export const App: React.FC = () => {
 
     socket.on('race_started', (data: { raceStartTime: number; passage: any; room: any }) => {
       setCurrentRoom(data.room);
-      setPassage(data.passage);
-      setCountdown(0);
-      setIsRacing(true);
-      sound.startEngine();
+      if (data.passage) setPassage(data.passage);
       setShowResults(false);
       setLocalStats({ wpm: 0, accuracy: 100, progress: 0, currentTypedIndex: 0 });
+
+      // If we are currently in an active starting grid countdown (3, 2, 1), allow the 3-second lights sequence to complete!
+      setCountdown(current => {
+        if (current <= 0) {
+          setIsRacing(true);
+          sound.startEngine();
+          return 0;
+        }
+        return current;
+      });
     });
 
     socket.on('race_progress', (data: Array<{ id: string; progress: number; wpm: number; accuracy: number; placement: number | null }>) => {
@@ -252,6 +262,30 @@ export const App: React.FC = () => {
       socket.off('rematch_initiated');
     };
   }, [userId]);
+
+  // Solo Race Starting Sequence Countdown (Matching Photo 2 starting gantry)
+  useEffect(() => {
+    if (view !== 'racing' || isRacing || countdown <= 0) return;
+
+    sound.playCountdownTick(countdown);
+    raceSceneRef.current?.setCountdown(countdown);
+
+    if (currentRoom?.id?.startsWith('solo_')) {
+      const timer = setTimeout(() => {
+        const nextCount = countdown - 1;
+        setCountdown(nextCount);
+        raceSceneRef.current?.setCountdown(nextCount);
+
+        if (nextCount === 0) {
+          sound.playCountdownTick(0);
+          setIsRacing(true);
+          sound.startEngine();
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [view, isRacing, countdown, currentRoom?.id]);
 
   // Mount/Unmount 3D Race Scene Canvas
   useEffect(() => {
@@ -396,6 +430,8 @@ export const App: React.FC = () => {
 
     const targetWpm = difficulty === 'hard' ? 95 : difficulty === 'easy' ? 45 : 70;
     const localId = socketService.getSocketId() || `player_${Math.random().toString(36).substring(2, 7)}`;
+    const randomPassage = getRandomPassage(difficulty);
+    setPassage(randomPassage);
 
     // Instant optimistic solo room so user enters the track in 0ms flat
     const instantRoom = {
@@ -405,7 +441,7 @@ export const App: React.FC = () => {
       isPrivate: true,
       state: 'starting',
       countdown: 3,
-      passage: passage,
+      passage: randomPassage,
       players: {
         [localId]: {
           id: localId,
@@ -424,10 +460,10 @@ export const App: React.FC = () => {
         'ai_1': {
           id: 'ai_1',
           socketId: 'ai_1',
-          username: 'Chennai Turbo [AI]',
+          username: 'Apex_Ghost',
           avatar: '🏎️',
           vehicleId: 'cyber-gt',
-          vehicleColor: '#f97316',
+          vehicleColor: '#f59e0b',
           isReady: true,
           isHost: false,
           isAi: true,
@@ -439,10 +475,10 @@ export const App: React.FC = () => {
         'ai_2': {
           id: 'ai_2',
           socketId: 'ai_2',
-          username: 'Marina Racer [AI]',
-          avatar: '🌊',
+          username: 'Viper_99',
+          avatar: '⚡',
           vehicleId: 'phantom-blade',
-          vehicleColor: '#38bdf8',
+          vehicleColor: '#00f0ff',
           isReady: true,
           isHost: false,
           isAi: true,
@@ -454,14 +490,14 @@ export const App: React.FC = () => {
         'ai_3': {
           id: 'ai_3',
           socketId: 'ai_3',
-          username: 'Deccan Drift [AI]',
-          avatar: '🔥',
+          username: 'CyberStig',
+          avatar: '🤖',
           vehicleId: 'ronin-specv',
-          vehicleColor: '#eab308',
+          vehicleColor: '#ffffff',
           isReady: true,
           isHost: false,
           isAi: true,
-          targetWpm: targetWpm + 7,
+          targetWpm: targetWpm + 6,
           progress: 0,
           wpm: 0,
           accuracy: 99
@@ -579,6 +615,10 @@ export const App: React.FC = () => {
     } else {
       raceSceneRef.current?.triggerThrottleSurge();
     }
+  };
+
+  const handleBackspace = () => {
+    raceSceneRef.current?.triggerBackspace();
   };
 
   const handleStatsUpdate = (stats: { wpm: number; accuracy: number; progress: number; currentTypedIndex: number }) => {
@@ -756,6 +796,7 @@ export const App: React.FC = () => {
             cameraMode={cameraMode}
             onToggleCamera={handleToggleCamera}
             onKeystroke={handleKeystroke}
+            onBackspace={handleBackspace}
             onStatsUpdate={handleStatsUpdate}
             onExitRace={handleExitRace}
           />
@@ -819,7 +860,12 @@ export const App: React.FC = () => {
           onCancel={handleCancelMatchmaking}
           onInstantBotMatch={() => {
             sound.playClick();
-            socketService.instantBotMatch(selectedTrackId);
+            setShowMatchmaking(false);
+            if (socketService.isConnected()) {
+              socketService.instantBotMatch(selectedTrackId);
+            } else {
+              handleStartSolo('medium');
+            }
           }}
         />
       )}

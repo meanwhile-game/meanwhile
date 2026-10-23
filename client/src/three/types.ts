@@ -17,6 +17,17 @@ export interface VehicleCustomization {
 }
 
 export const DEFAULT_VEHICLE_CUSTOMIZATIONS: Record<string, VehicleCustomization> = {
+  'f1-apex': {
+    color: '#f8fafc',
+    paintFinish: 'metallic',
+    livery: 'clean',
+    spoilerStyle: 'gt-wing',
+    windowTint: 'clear',
+    rimColor: '#0f172a',
+    caliperColor: '#ef4444',
+    underglowColor: 'none',
+    underglowMode: 'none'
+  },
   'cyber-gt': {
     color: '#00ff87',
     paintFinish: 'gloss',
@@ -91,7 +102,7 @@ export interface TrackConfig {
   lengthMeters: number;
   difficulty: 'easy' | 'medium' | 'hard';
   description: string;
-  theme: 'tokyo' | 'swiss' | 'dubai' | 'chennai' | 'hyderabad' | 'buddh' | 'monaco' | 'silverstone';
+  theme: 'tokyo' | 'swiss' | 'dubai' | 'chennai' | 'mumbai' | 'hyderabad' | 'buddh' | 'monaco' | 'silverstone';
   skyColor: string;
   fogColor: string;
   fogNear: number;
@@ -105,6 +116,18 @@ export interface TrackConfig {
 }
 
 export const VEHICLES: VehicleConfig[] = [
+  {
+    id: 'f1-apex',
+    name: 'Apex Grand Prix F1',
+    type: 'hypercar',
+    description: 'Authentic high-downforce Formula 1 single-seater with exposed slick tires and hybrid V6 turbo.',
+    topSpeedKmh: 380,
+    accelerationRating: 9.9,
+    unlockedByDefault: true,
+    unlockLevel: 1,
+    defaultColor: '#f8fafc',
+    colors: ['#f8fafc', '#ef4444', '#00ff87', '#00e5ff', '#eab308', '#0f172a']
+  },
   {
     id: 'cyber-gt',
     name: 'Cyber GT-R',
@@ -175,6 +198,25 @@ export const TRACKS: TrackConfig[] = [
     roadColor: '#1a2230',
     curbColor: '#f59e0b',
     neonColor: '#38bdf8'
+  },
+  {
+    id: 'mumbai',
+    name: 'Mumbai Sea Link Sprint',
+    location: 'Bandra-Worli Sea Link & Marine Drive, Mumbai, India',
+    lengthMeters: 1450,
+    difficulty: 'medium',
+    description: 'High-speed coastal ocean sprint across the iconic Bandra-Worli Sea Link cable-stayed bridge, sweeping through Bandra West, Worli Sea Face, and Marine Drive.',
+    theme: 'mumbai',
+    skyColor: '#070f1e',
+    fogColor: '#0b192e',
+    fogNear: 55,
+    fogFar: 350,
+    ambientLightColor: '#1e293b',
+    sunColor: '#38bdf8',
+    sunPosition: [70, 90, -80],
+    roadColor: '#182130',
+    curbColor: '#f59e0b',
+    neonColor: '#06b6d4'
   },
   {
     id: 'hyderabad',

@@ -65,11 +65,9 @@ export class TrackBuilder {
     const streetLights = this.generateStreetLightsWithLightPools(curve, roadWidth, config);
     trackGroup.add(streetLights);
 
-    // 9. Indian Roadside Distance Placards & Landmark Badges (Only on Indian Circuits)
-    if (config.theme === 'chennai' || config.theme === 'hyderabad' || config.theme === 'buddh') {
-      const indianLandmarks = this.generateIndianRoadsideLandmarks(curve, roadWidth, config);
-      trackGroup.add(indianLandmarks);
-    }
+    // 9. Local Area Roadside Directional Signboards & Overhead Highway Gantries
+    const localSigns = this.generateLocalAreaSignboardsAndGantries(curve, roadWidth, config);
+    trackGroup.add(localSigns);
 
     return {
       curve,
@@ -101,6 +99,26 @@ export class TrackBuilder {
         new THREE.Vector3(-160, 0.2, -150),   // Coastal return lane
         new THREE.Vector3(-70, 0, -140),      // Final corner entry onto main straight
         new THREE.Vector3(0, 0, -100),        // Start straightaway alignment
+      ];
+    } else if (theme === 'mumbai') {
+      // Mumbai Sea Link Sprint: Ocean viaduct over Arabian sea, Bandra toll gate straight, Worli curve
+      return [
+        new THREE.Vector3(0, 4, 0),           // Start / Finish Line along Bandra reclamation
+        new THREE.Vector3(0, 4, 180),         // High-speed sprint toward Sea Link toll plaza
+        new THREE.Vector3(45, 6, 360),        // Ramp ascent onto Bandra-Worli Sea Link main deck
+        new THREE.Vector3(130, 8.5, 490),     // Sweeping cable bridge span over Arabian Sea
+        new THREE.Vector3(250, 9.0, 460),     // Ocean pylon turnaround
+        new THREE.Vector3(300, 7.5, 320),     // Worli sea face descent
+        new THREE.Vector3(260, 5.0, 180),     // Coastal promenade chicane
+        new THREE.Vector3(280, 3.5, 40),      // Fast ocean sweep
+        new THREE.Vector3(240, 2.0, -100),    // Approach to Marine Drive esses
+        new THREE.Vector3(160, 1.5, -220),    // Marine Drive curve
+        new THREE.Vector3(50, 1.5, -290),     // Queens Necklace return loop
+        new THREE.Vector3(-60, 2.0, -300),    // Nariman Point turnaround
+        new THREE.Vector3(-160, 2.5, -220),   // Harbor sweep back north
+        new THREE.Vector3(-150, 3.0, -130),   // Bandra link road sweeper
+        new THREE.Vector3(-60, 3.5, -120),    // Final right into start straight
+        new THREE.Vector3(0, 4, -90),         // Main straight run-in
       ];
     } else if (theme === 'hyderabad') {
       // Hyderabad Cyber Pearl: High-speed highway through HITEC City, over Durgam Cheruvu Cable Bridge
@@ -415,15 +433,21 @@ export class TrackBuilder {
     roadGeo.setIndex(indices);
     roadGeo.computeVertexNormals();
 
-    const roadTexture = this.createRealisticRoadTexture(config);
-    roadTexture.wrapS = THREE.RepeatWrapping;
-    roadTexture.wrapT = THREE.RepeatWrapping;
-    roadTexture.repeat.set(1, 110);
+    const roadTextures = this.createRealisticRoadTexture(config);
+    roadTextures.map.wrapS = THREE.RepeatWrapping;
+    roadTextures.map.wrapT = THREE.RepeatWrapping;
+    roadTextures.map.repeat.set(1, 110);
+
+    roadTextures.bumpMap.wrapS = THREE.RepeatWrapping;
+    roadTextures.bumpMap.wrapT = THREE.RepeatWrapping;
+    roadTextures.bumpMap.repeat.set(1, 110);
 
     const roadMaterial = new THREE.MeshStandardMaterial({
-      map: roadTexture,
-      roughness: 0.52,
-      metalness: 0.12,
+      map: roadTextures.map,
+      bumpMap: roadTextures.bumpMap,
+      bumpScale: 0.042,
+      roughness: 0.58,
+      metalness: 0.10,
       side: THREE.DoubleSide
     });
 
@@ -614,93 +638,227 @@ export class TrackBuilder {
     return group;
   }
 
-  // --- PROCEDURAL REALISTIC ASPHALT & RACING ROAD TEXTURE ---
-  private static createRealisticRoadTexture(config: TrackConfig): THREE.CanvasTexture {
+  // --- PROCEDURAL PUBG / FREE FIRE REALISTIC ROAD TEXTURE & BUMP SYSTEM ---
+  private static createRealisticRoadTexture(config: TrackConfig): { map: THREE.CanvasTexture; bumpMap: THREE.CanvasTexture } {
+    const W = 2048;
+    const H = 1024;
+
+    // 1. Color Map Canvas
     const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
+    canvas.width = W;
+    canvas.height = H;
     const ctx = canvas.getContext('2d')!;
 
-    // 1. Asphalt Base
-    ctx.fillStyle = config.roadColor;
-    ctx.fillRect(0, 0, 1024, 1024);
+    // 2. Bump Map Canvas
+    const bumpCanvas = document.createElement('canvas');
+    bumpCanvas.width = W;
+    bumpCanvas.height = H;
+    const bCtx = bumpCanvas.getContext('2d')!;
 
-    // 2. Fine Aggregate Grain Noise
-    const grainCount = 6000;
-    for (let i = 0; i < grainCount; i++) {
-      const rx = Math.random() * 1024;
-      const ry = Math.random() * 1024;
-      const brightness = Math.random() > 0.5 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.08)';
-      ctx.fillStyle = brightness;
-      ctx.fillRect(rx, ry, Math.random() * 2 + 1, Math.random() * 2 + 1);
+    // Base asphalt tone - weathered tactical dark tarmac (PUBG / Free Fire battleground asphalt)
+    const baseColor = config.roadColor || '#151821';
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, W, H);
+
+    bCtx.fillStyle = '#808080'; // Neutral 50% grey for bump map
+    bCtx.fillRect(0, 0, W, H);
+
+    // Weathered Asphalt Tonal Gradient / Road Crown (slight crowning curve in center)
+    const crownGrad = ctx.createLinearGradient(0, 0, W, 0);
+    crownGrad.addColorStop(0, 'rgba(30, 24, 18, 0.45)'); // dusty shoulder
+    crownGrad.addColorStop(0.04, 'rgba(0, 0, 0, 0.15)');
+    crownGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.03)'); // slight center crown highlight
+    crownGrad.addColorStop(0.96, 'rgba(0, 0, 0, 0.15)');
+    crownGrad.addColorStop(1, 'rgba(30, 24, 18, 0.45)');
+    ctx.fillStyle = crownGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // High-Density Crushed Aggregate Stone Noise (18,000 multi-tone gravel particles)
+    for (let i = 0; i < 18000; i++) {
+      const rx = Math.random() * W;
+      const ry = Math.random() * H;
+      const size = Math.random() * 2.2 + 0.8;
+      const rnd = Math.random();
+
+      // Diffuse color noise
+      if (rnd > 0.65) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+        bCtx.fillStyle = 'rgba(255, 255, 255, 0.22)'; // bump highlight
+      } else if (rnd > 0.3) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+        bCtx.fillStyle = 'rgba(0, 0, 0, 0.25)'; // bump depression
+      } else {
+        ctx.fillStyle = 'rgba(180, 160, 130, 0.05)'; // gravel stone tint
+        bCtx.fillStyle = 'rgba(200, 200, 200, 0.15)';
+      }
+      ctx.fillRect(rx, ry, size, size);
+      bCtx.fillRect(rx, ry, size, size);
     }
 
-    // 3. Racing Line Darkening (Rubber groove where cars repeatedly drive)
-    const rubberLanes = [230, 410, 614, 794];
-    rubberLanes.forEach(rx => {
-      const grad = ctx.createLinearGradient(rx - 45, 0, rx + 45, 0);
-      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.25)');
-      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(rx - 45, 0, 90, 1024);
+    // PUBG / Free Fire Signature: Dual Tire Wear Grooves for all 4 lanes
+    // Center positions for the 4 lanes across width W (2048):
+    // Lane 0: ~340, Lane 1: ~790, Lane 2: ~1250, Lane 3: ~1700
+    const laneCenters = [340, 790, 1250, 1700];
+    const wheelHalfWidth = 110; // distance from lane center to each tire track
+
+    laneCenters.forEach(cx => {
+      const leftTire = cx - wheelHalfWidth;
+      const rightTire = cx + wheelHalfWidth;
+
+      [leftTire, rightTire].forEach(tx => {
+        // Dark polished rubber rut
+        const rutGrad = ctx.createLinearGradient(tx - 45, 0, tx + 45, 0);
+        rutGrad.addColorStop(0, 'rgba(5, 7, 10, 0)');
+        rutGrad.addColorStop(0.3, 'rgba(5, 7, 10, 0.42)');
+        rutGrad.addColorStop(0.5, 'rgba(5, 7, 10, 0.55)');
+        rutGrad.addColorStop(0.7, 'rgba(5, 7, 10, 0.42)');
+        rutGrad.addColorStop(1, 'rgba(5, 7, 10, 0)');
+        ctx.fillStyle = rutGrad;
+        ctx.fillRect(tx - 45, 0, 90, H);
+
+        // Smooth polished rut in bump map
+        const bRut = bCtx.createLinearGradient(tx - 45, 0, tx + 45, 0);
+        bRut.addColorStop(0, 'rgba(128, 128, 128, 0)');
+        bRut.addColorStop(0.5, 'rgba(100, 100, 100, 0.25)'); // slightly lower depression
+        bRut.addColorStop(1, 'rgba(128, 128, 128, 0)');
+        bCtx.fillStyle = bRut;
+        bCtx.fillRect(tx - 45, 0, 90, H);
+      });
+
+      // Subtle center oil drip / grime streak between tires
+      const oilGrad = ctx.createLinearGradient(cx - 30, 0, cx + 30, 0);
+      oilGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      oilGrad.addColorStop(0.5, 'rgba(8, 10, 14, 0.22)');
+      oilGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = oilGrad;
+      ctx.fillRect(cx - 30, 0, 60, H);
     });
 
-    // 4. Heavy Braking Skid Marks (Feathered rubber trails)
-    ctx.fillStyle = 'rgba(10, 10, 12, 0.35)';
-    for (let i = 0; i < 4; i++) {
-      const sy = Math.random() * 700;
-      const sx = rubberLanes[i % 4];
-      ctx.fillRect(sx - 14, sy, 8, 160 + Math.random() * 80);
-      ctx.fillRect(sx + 14, sy, 8, 160 + Math.random() * 80);
+    // Realistic Battleground Asphalt Hairline Fracture Cracks
+    ctx.strokeStyle = 'rgba(6, 8, 12, 0.65)';
+    ctx.lineWidth = 1.6;
+    bCtx.strokeStyle = 'rgba(20, 20, 20, 0.8)';
+    bCtx.lineWidth = 2.0;
+
+    const crackCount = 7;
+    for (let c = 0; c < crackCount; c++) {
+      let x = Math.random() * (W - 200) + 100;
+      let y = Math.random() * (H - 200) + 100;
+      ctx.beginPath();
+      bCtx.beginPath();
+      ctx.moveTo(x, y);
+      bCtx.moveTo(x, y);
+
+      const segments = Math.floor(Math.random() * 5 + 4);
+      for (let s = 0; s < segments; s++) {
+        x += (Math.random() - 0.5) * 60;
+        y += Math.random() * 45 + 15;
+        ctx.lineTo(x, y);
+        bCtx.lineTo(x, y);
+      }
+      ctx.stroke();
+      bCtx.stroke();
     }
 
-    // 5. Outer Solid White Edge Boundaries
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(35, 0, 12, 1024);
-    ctx.fillRect(1024 - 47, 0, 12, 1024);
+    // Heavy High-Speed Vehicle Skid Marks (Battlefield tire locks & drift marks)
+    ctx.fillStyle = 'rgba(8, 10, 14, 0.55)';
+    for (let k = 0; k < 6; k++) {
+      const laneIdx = k % 4;
+      const baseCenter = laneCenters[laneIdx];
+      const isLeft = Math.random() > 0.5;
+      const sx = baseCenter + (isLeft ? -wheelHalfWidth : wheelHalfWidth);
+      const sy = Math.random() * 600;
+      const len = 140 + Math.random() * 180;
+      const width = 16 + Math.random() * 8;
 
-    // 6. Realistic Dashed Lane Lines (4 Lanes, 3 Dividers)
-    // Lane 1 divider (x ~ 285)
-    // 6. Realistic Dashed Lane Lines & Center Double Yellow (Indian City & GP Expressway Style)
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate((Math.random() - 0.5) * 0.08); // subtle drift curve
+      ctx.fillRect(-width / 2, 0, width, len);
+      ctx.restore();
+    }
+
+    // Weathered Painted Markings (Chipped, stippled edges, asphalt bleed)
     const isIndianTrack = config.theme === 'chennai' || config.theme === 'hyderabad' || config.theme === 'buddh';
-    const centerColor = isIndianTrack ? '#f59e0b' : (config.theme === 'swiss' ? '#eab308' : '#ffffff');
-    const laneDashColor = 'rgba(255, 255, 255, 0.92)';
+    const centerColor = isIndianTrack ? '#f59e0b' : '#f8fafc';
+    const dashColor = 'rgba(240, 244, 250, 0.90)';
 
-    // Outer Shoulder Solid White Lines (Heavy visibility)
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(40, 0, 14, 1024);
-    ctx.fillRect(1024 - 54, 0, 14, 1024);
+    // Solid Outer Road Boundary Stripes (with weathered edge erosion)
+    const edgeOffset = 80;
+    const edgeWidth = 22;
 
-    // Continuous or Heavy Dashed Double Center Line (Signature Indian Road feature)
+    [edgeOffset, W - edgeOffset - edgeWidth].forEach(x => {
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(x, 0, edgeWidth, H);
+
+      // Chipped paint wear along edges
+      for (let y = 0; y < H; y += 4) {
+        if (Math.random() > 0.6) {
+          ctx.fillStyle = baseColor;
+          ctx.fillRect(x + (Math.random() > 0.5 ? 0 : edgeWidth - 4), y, 4, 3);
+        }
+      }
+    });
+
+    // Center Double Line (Separating Lane 1 and 2)
+    const centerX = W / 2; // 1024
+    const doubleWidth = 10;
+    const doubleGap = 16;
+
     if (isIndianTrack) {
-      // Solid Double Yellow Center Divider
+      // Continuous double yellow with subtle battle wear
       ctx.fillStyle = centerColor;
-      ctx.fillRect(506, 0, 5, 1024);
-      ctx.fillRect(515, 0, 5, 1024);
+      ctx.fillRect(centerX - doubleGap / 2 - doubleWidth, 0, doubleWidth, H);
+      ctx.fillRect(centerX + doubleGap / 2, 0, doubleWidth, H);
     } else {
-      const dashLength = 96;
-      const gapLength = 64;
-      const totalCycle = dashLength + gapLength;
+      // Heavy double dash
+      const cDash = 110;
+      const cGap = 65;
+      const cCycle = cDash + cGap;
       ctx.fillStyle = centerColor;
-      for (let y = 0; y < 1024; y += totalCycle) {
-        ctx.fillRect(507, y, 5, dashLength);
-        ctx.fillRect(516, y, 5, dashLength);
+      for (let y = 0; y < H; y += cCycle) {
+        ctx.fillRect(centerX - doubleGap / 2 - doubleWidth, y, doubleWidth, cDash);
+        ctx.fillRect(centerX + doubleGap / 2, y, doubleWidth, cDash);
       }
     }
 
-    // Lane 1/2 and Lane 3/4 White Dashed Dividers
-    const dashLength = 96;
-    const gapLength = 64;
-    const totalCycle = dashLength + gapLength;
-    ctx.fillStyle = laneDashColor;
-    for (let y = 0; y < 1024; y += totalCycle) {
-      ctx.fillRect(284, y, 8, dashLength);
-      ctx.fillRect(734, y, 8, dashLength);
-    }
+    // Lane Dividers (Dashed stripes between 0-1 and 2-3)
+    // Divider 0-1 at x ~ 565, Divider 2-3 at x ~ 1475
+    const laneDividers = [565, 1475];
+    const lDash = 105;
+    const lGap = 75;
+    const lCycle = lDash + lGap;
+    ctx.fillStyle = dashColor;
 
-    const texture = new THREE.CanvasTexture(canvas);
-    return texture;
+    laneDividers.forEach(divX => {
+      for (let y = 0; y < H; y += lCycle) {
+        ctx.fillRect(divX - 6, y, 12, lDash);
+        // Paint weathering micro-scuffs
+        if (Math.random() > 0.5) {
+          ctx.fillStyle = baseColor;
+          ctx.fillRect(divX - 6, y + Math.random() * lDash, 4, 3);
+          ctx.fillStyle = dashColor;
+        }
+      }
+    });
+
+    // Outer Dust / Shoulder Bleed
+    const leftDust = ctx.createLinearGradient(0, 0, 70, 0);
+    leftDust.addColorStop(0, 'rgba(55, 45, 30, 0.45)');
+    leftDust.addColorStop(1, 'rgba(55, 45, 30, 0)');
+    ctx.fillStyle = leftDust;
+    ctx.fillRect(0, 0, 70, H);
+
+    const rightDust = ctx.createLinearGradient(W, 0, W - 70, 0);
+    rightDust.addColorStop(0, 'rgba(55, 45, 30, 0.45)');
+    rightDust.addColorStop(1, 'rgba(55, 45, 30, 0)');
+    ctx.fillStyle = rightDust;
+    ctx.fillRect(W - 70, 0, 70, H);
+
+    const map = new THREE.CanvasTexture(canvas);
+    const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+
+    return { map, bumpMap };
   }
 
   // --- 3D RAISED BEVELED RUMBLE STRIPS (FIA KERBS) ---
@@ -1091,8 +1249,8 @@ export class TrackBuilder {
     const scenery = new THREE.Group();
     const up = new THREE.Vector3(0, 1, 0);
 
-    if (config.theme === 'chennai') {
-      // CHENNAI MARINA COAST: Bay of Bengal coast, Marina Lighthouse, Napier Bridge & Tamil signage
+    if (config.theme === 'chennai' || config.theme === 'mumbai') {
+      // CHENNAI & MUMBAI COASTAL CIRCUITS: Bay of Bengal & Arabian Sea coast, promenades, bridges, lighthouses
       // 1. Bay of Bengal Ocean Water Surface (Specular Water Reflection)
       const waterGeo = new THREE.PlaneGeometry(1200, 1200, 48, 48);
       waterGeo.rotateX(-Math.PI / 2);
@@ -2110,8 +2268,8 @@ export class TrackBuilder {
     return lightGroup;
   }
 
-  // --- 10. INDIAN ROADSIDE LANDMARK PLACARDS & DISTANCE SIGNS (MATCHING REFERENCE PHOTO) ---
-  private static generateIndianRoadsideLandmarks(
+  // --- 10. AUTHENTIC LOCAL AREA ROADSIDE SIGNBOARDS & OVERHEAD HIGHWAY GANTRIES ---
+  private static generateLocalAreaSignboardsAndGantries(
     curve: THREE.CatmullRomCurve3,
     roadWidth: number,
     config: TrackConfig
@@ -2119,122 +2277,181 @@ export class TrackBuilder {
     const landmarkGroup = new THREE.Group();
     const up = new THREE.Vector3(0, 1, 0);
 
-    interface IndianLandmarkSpec {
+    interface RoadsideSpec {
       t: number;
       side: number; // -1 for left, 1 for right
-      badgeText: string;
-      title: string;
+      badge: string;
+      mainText: string;
+      distance: string;
       subText: string;
-      bgColor: string;
-      borderColor: string;
-      iconEmoji: string;
+      isIndian?: boolean;
     }
 
-    const landmarks: IndianLandmarkSpec[] = [
-      {
-        t: 0.06,
-        side: -1,
-        iconEmoji: '🏥',
-        badgeText: 'TAMIL NADU HEALTHCARE',
-        title: 'Chennai General Hospital',
-        subText: 'Emergency Ward • 212m Ahead',
-        bgColor: '#1e293b',
-        borderColor: '#ef4444',
-      },
-      {
-        t: 0.16,
-        side: 1,
-        iconEmoji: '🚕',
-        badgeText: 'TN TRANSPORT HUB',
-        title: 'Central Taxi & Auto Stand',
-        subText: 'Prepaid Fast Auto Bay • 350m',
-        bgColor: '#1e293b',
-        borderColor: '#f59e0b',
-      },
-      {
-        t: 0.32,
-        side: -1,
-        iconEmoji: '🏖️',
-        badgeText: 'COASTAL PROMENADE',
-        title: 'Marina Beach Bayview',
-        subText: 'Bay of Bengal Shoreline • 120m',
-        bgColor: '#0f172a',
-        borderColor: '#06b6d4',
-      },
-      {
-        t: 0.50,
-        side: 1,
-        iconEmoji: '🌉',
-        badgeText: 'HERITAGE TRANSIT',
-        title: 'Napier Bridge Arches',
-        subText: 'Cooum River Crossing • 650m',
-        bgColor: '#1e293b',
-        borderColor: '#10b981',
-      },
-      {
-        t: 0.68,
-        side: -1,
-        iconEmoji: '🗼',
-        badgeText: 'MARITIME BEACON',
-        title: 'Marina Lighthouse',
-        subText: 'Radar Tower • 900m',
-        bgColor: '#1e293b',
-        borderColor: '#8b5cf6',
-      },
-      {
-        t: 0.82,
-        side: 1,
-        iconEmoji: '☕',
-        badgeText: 'CHAI & REFRESHMENTS',
-        title: 'Madras Chai & Tiffin',
-        subText: 'Filter Coffee & Snacks • 400m',
-        bgColor: '#1e293b',
-        borderColor: '#f97316',
-      },
-    ];
+    interface GantrySpec {
+      t: number;
+      code: string;
+      leftText: string;
+      rightText: string;
+    }
 
-    landmarks.forEach((spec) => {
+    let roadsideList: RoadsideSpec[] = [];
+    let gantryList: GantrySpec[] = [];
+
+    if (config.theme === 'chennai') {
+      roadsideList = [
+        { t: 0.05, side: -1, badge: 'TAMIL NADU HIGHWAYS • NH 48', mainText: '↑ VELACHERY', distance: '3.2 KM', subText: 'VIA 100 FT VELACHERY BYPASS', isIndian: true },
+        { t: 0.16, side: 1,  badge: 'GREATER CHENNAI ARTERIAL', mainText: '↑ ALWARPET', distance: '2.4 KM', subText: 'TTK ROAD / ELDAMS ROAD', isIndian: true },
+        { t: 0.28, side: -1, badge: 'HIGHWAYS DEPARTMENT • NH 45', mainText: '↗ GUINDY KATHIPARA', distance: '4.5 KM', subText: 'MULTI-LEVEL FLYOVER INTERCHANGE', isIndian: true },
+        { t: 0.42, side: 1,  badge: 'SMART CITY COMMERCIAL HUB', mainText: '↑ T. NAGAR', distance: '3.8 KM', subText: 'PONDY BAZAAR PEDESTRIAN PLAZA', isIndian: true },
+        { t: 0.55, side: -1, badge: 'COASTAL PROMENADE DRIVE', mainText: '↑ MARINA BEACH', distance: '500 M', subText: 'KAMARAJAR SALAI BAYVIEW', isIndian: true },
+        { t: 0.68, side: 1,  badge: 'HISTORIC METRO TRANSIT', mainText: '↑ NAPIER BRIDGE', distance: '400 M', subText: 'COOUM ESTUARY CROSSING', isIndian: true },
+        { t: 0.80, side: -1, badge: 'SOUTH CHENNAI ARTERIAL', mainText: '↗ ADYAR SIGNAL', distance: '1.8 KM', subText: 'LATTICE BRIDGE ROAD JUNCTION', isIndian: true },
+        { t: 0.92, side: 1,  badge: 'IT EXPRESSWAY CORRIDOR', mainText: '↑ OMR IT CORRIDOR', distance: '5.2 KM', subText: 'TIDEL PARK / VELACHERY MAIN RD', isIndian: true },
+      ];
+      gantryList = [
+        { t: 0.10, code: 'NH 48 • GRAND SOUTHERN TRUNK', leftText: '↑ VELACHERY 3.2 KM', rightText: '↗ ALWARPET 2.4 KM' },
+        { t: 0.36, code: 'CHENNAI INNER RING ROAD', leftText: '↑ GUINDY 4.5 KM', rightText: '↗ T. NAGAR 3.8 KM' },
+        { t: 0.62, code: 'EAST COAST HIGHWAY', leftText: '↑ MARINA BEACH 500M', rightText: '↗ ADYAR 1.8 KM' },
+        { t: 0.85, code: 'RAJIV GANDHI EXPRESSWAY', leftText: '↑ OMR IT CORRIDOR', rightText: '↗ VELACHERY BYPASS' },
+      ];
+    } else if (config.theme === 'mumbai') {
+      roadsideList = [
+        { t: 0.06, side: -1, badge: 'MUMBAI METROPOLIS', mainText: '↑ BANDRA (WEST)', distance: '1.5 KM', subText: 'LINKING ROAD / HILL ROAD', isIndian: true },
+        { t: 0.18, side: 1,  badge: 'MSRDC FREEWAY TOLLWAY', mainText: '↑ BANDRA-WORLI SEA LINK', distance: '2.2 KM', subText: 'CABLE STAYED ARABIAN SEA BRIDGE', isIndian: true },
+        { t: 0.30, side: -1, badge: 'FINANCIAL DISTRICT', mainText: '↗ BKC (BANDRA KURLA)', distance: '3.0 KM', subText: 'COMMERCIAL BUSINESS COMPLEX', isIndian: true },
+        { t: 0.44, side: 1,  badge: 'MUMBAI SOUTH PROMENADE', mainText: '↑ WORLI SEA FACE', distance: '3.5 KM', subText: 'COASTAL PROMENADE DRIVE', isIndian: true },
+        { t: 0.58, side: -1, badge: 'QUEENS NECKLACE BOULEVARD', mainText: '↑ MARINE DRIVE', distance: '5.8 KM', subText: 'SEASIDE HERITAGE PROMENADE', isIndian: true },
+        { t: 0.72, side: 1,  badge: 'CENTRAL ARTERIAL TRANSIT', mainText: '↑ DADAR TT CIRCLE', distance: '4.0 KM', subText: 'DR. AMBEDKAR ROAD', isIndian: true },
+        { t: 0.84, side: -1, badge: 'BUSINESS CENTRAL', mainText: '↑ NARIMAN POINT', distance: '7.2 KM', subText: 'EXPRESS TOWERS / AIR INDIA BLDG', isIndian: true },
+        { t: 0.94, side: 1,  badge: 'WESTERN SUBURBS', mainText: '↗ ANDHERI LINK ROAD', distance: '5.5 KM', subText: 'JUHU CIRCLE ARTERIAL', isIndian: true },
+      ];
+      gantryList = [
+        { t: 0.12, code: 'WESTERN EXPRESS HIGHWAY', leftText: '↑ BANDRA (WEST) 1.5 KM', rightText: '↗ SEA LINK 2.2 KM' },
+        { t: 0.38, code: 'BANDRA KURLA FREEWAY', leftText: '↑ BKC 3.0 KM', rightText: '↗ WORLI SEA FACE 3.5 KM' },
+        { t: 0.65, code: 'MUMBAI COASTAL FREEWAY', leftText: '↑ MARINE DRIVE', rightText: '↗ NARIMAN POINT' },
+      ];
+    } else if (config.theme === 'hyderabad') {
+      roadsideList = [
+        { t: 0.06, side: -1, badge: 'CYBERABAD IT CORRIDOR', mainText: '↑ HITEC CITY', distance: '1.2 KM', subText: 'CYBER TOWERS / MINDSPACE', isIndian: true },
+        { t: 0.20, side: 1,  badge: 'ORR EXPRESSWAY', mainText: '↗ GACHIBOWLI', distance: '3.4 KM', subText: 'FINANCIAL DISTRICT & STADIUM', isIndian: true },
+        { t: 0.35, side: -1, badge: 'HYDERABAD METRO', mainText: '↑ MADHAPUR', distance: '2.0 KM', subText: '100 FEET MAIN ROAD', isIndian: true },
+        { t: 0.50, side: 1,  badge: 'URBAN FREEWAY', mainText: '↑ JUBILEE HILLS', distance: '4.1 KM', subText: 'ROAD NO. 36 & CHECK POST', isIndian: true },
+        { t: 0.65, side: -1, badge: 'CABLE SUSPENSION', mainText: '↑ DURGAM CHERUVU', distance: '800 M', subText: 'CABLE-STAYED LAKE BRIDGE', isIndian: true },
+        { t: 0.80, side: 1,  badge: 'CENTRAL ARTERIAL', mainText: '↑ BANJARA HILLS', distance: '5.2 KM', subText: 'ROAD NO. 1 & TAJ KRISHNA', isIndian: true },
+        { t: 0.92, side: -1, badge: 'KNOWLEDGE HUB', mainText: '↗ KNOWLEDGE CITY', distance: '1.5 KM', subText: 'INORBIT MALL FLYOVER', isIndian: true },
+      ];
+      gantryList = [
+        { t: 0.12, code: 'CYBERABAD EXPRESSWAY', leftText: '↑ HITEC CITY 1.2 KM', rightText: '↗ GACHIBOWLI 3.4 KM' },
+        { t: 0.42, code: 'HYDERABAD INNER RING ROAD', leftText: '↑ MADHAPUR 2.0 KM', rightText: '↗ JUBILEE HILLS' },
+        { t: 0.72, code: 'DURGAM CHERUVU CORRIDOR', leftText: '↑ CABLE BRIDGE', rightText: '↗ BANJARA HILLS' },
+      ];
+    } else if (config.theme === 'buddh') {
+      roadsideList = [
+        { t: 0.08, side: -1, badge: 'EXPRESSWAY AUTHORITY', mainText: '↑ YAMUNA EXPRESSWAY', distance: '2.0 KM', subText: 'NOIDA-AGRA HIGH SPEED TOLLWAY', isIndian: true },
+        { t: 0.25, side: 1,  badge: 'GREATER NOIDA TRANSIT', mainText: '↗ PARI CHOWK', distance: '3.8 KM', subText: 'EXPRESSWAY ROUNDABOUT', isIndian: true },
+        { t: 0.45, side: -1, badge: 'NOIDA ARTERIAL', mainText: '↑ NOIDA SECTOR 18', distance: '8.2 KM', subText: 'ATTA MARKET / MALL OF INDIA', isIndian: true },
+        { t: 0.65, side: 1,  badge: 'INTERSTATE TOLLWAY', mainText: '↑ DND FLYWAY / DELHI', distance: '14 KM', subText: 'DIRECT FLYWAY TO ASHRAM', isIndian: true },
+        { t: 0.85, side: -1, badge: 'CONVENTION HUB', mainText: '↗ INDIA EXPO MART', distance: '4.5 KM', subText: 'GREATER NOIDA EXPO CENTRE', isIndian: true },
+      ];
+      gantryList = [
+        { t: 0.15, code: 'TAJ EXPRESSWAY • 6 LANES', leftText: '↑ YAMUNA EXP 2.0 KM', rightText: '↗ PARI CHOWK 3.8 KM' },
+        { t: 0.55, code: 'NCR ARTERIAL FREEWAY', leftText: '↑ NOIDA SECTOR 18', rightText: '↗ DND FLYWAY / DELHI' },
+      ];
+    } else if (config.theme === 'tokyo') {
+      roadsideList = [
+        { t: 0.08, side: -1, badge: 'SHUTO EXPRESSWAY • C1', mainText: '↑ SHIBUYA CROSSING', distance: '800 M', subText: 'HACHIKO SQUARE • ROUTE 3' },
+        { t: 0.26, side: 1,  badge: 'METROPOLITAN TOKYO', mainText: '↑ SHINJUKU', distance: '2.5 KM', subText: 'KABUKICHO / SKYSCRAPERS' },
+        { t: 0.45, side: -1, badge: 'TOKYO EXPRESS', mainText: '↑ ROPPONGI HILLS', distance: '3.1 KM', subText: 'MORI TOWER • AZABU' },
+        { t: 0.65, side: 1,  badge: 'PREMIER BOULEVARD', mainText: '↑ GINZA 4-CHOME', distance: '4.2 KM', subText: 'CHUO-DORI AVENUE' },
+        { t: 0.85, side: -1, badge: 'ELECTRIC CITY', mainText: '↑ AKIHABARA', distance: '5.0 KM', subText: 'CHUO STREET TECH HUB' },
+      ];
+      gantryList = [
+        { t: 0.15, code: 'SHUTO C1 INNER CIRCULAR', leftText: '↑ SHIBUYA 800 M', rightText: '↗ ROPPONGI 2.4 KM' },
+        { t: 0.52, code: 'WANGAN BAYSIDE EXPRESS', leftText: '↑ SHINJUKU 2.5 KM', rightText: '↗ RAINBOW BRIDGE' },
+      ];
+    } else {
+      roadsideList = [
+        { t: 0.08, side: -1, badge: 'CIRCUIT SECTOR 1', mainText: '↑ GRAND PRIX STRAIGHT', distance: '1.2 KM', subText: 'PIT STRAIGHT ACCELERATION' },
+        { t: 0.30, side: 1,  badge: 'TECHNICAL APEX', mainText: '↑ CHICANE APEX', distance: '600 M', subText: 'HEAVY BRAKING ZONE' },
+        { t: 0.55, side: -1, badge: 'SPEED TRAP CORRIDOR', mainText: '↑ BACK STRAIGHTAWAY', distance: '1.5 KM', subText: 'MAX VELOCITY SECTOR' },
+        { t: 0.80, side: 1,  badge: 'FINAL TURN', mainText: '↑ PARABOLICA SWEEPER', distance: '400 M', subText: 'RUN-IN TO START LINE' },
+      ];
+      gantryList = [
+        { t: 0.15, code: 'FIA INTERNATIONAL CIRCUIT', leftText: '↑ MAIN TRACK SECTOR 1', rightText: '↗ PIT LANE ENTRY' },
+        { t: 0.55, code: 'HIGH SPEED TRAP 300+ KM/H', leftText: '↑ BACK STRAIGHTAWAY', rightText: '↗ ESCAPE ROAD' },
+      ];
+    }
+
+    // --- 1. BUILD ROADSIDE MILESTONE & DIRECTIONAL BOARDS ---
+    roadsideList.forEach((spec) => {
       const pt = curve.getPointAt(spec.t);
       const tangent = curve.getTangentAt(spec.t).normalize();
       const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
 
       const offsetDist = spec.side * (roadWidth / 2 + 3.8);
       const signPos = new THREE.Vector3().copy(pt).addScaledVector(binormal, offsetDist);
-      signPos.y += 2.6;
+      signPos.y += 2.8;
 
-      // Draw crisp 2D Canvas for Placard Board (Identical format to user's photo!)
+      // Draw high-resolution 1024x480 highway signboard canvas
       const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 200;
+      canvas.width = 1024;
+      canvas.height = 480;
       const ctx = canvas.getContext('2d')!;
 
-      // Rounded container background
-      ctx.fillStyle = spec.bgColor;
-      ctx.roundRect(10, 10, 492, 180, 20);
+      // Background: Deep Highway Green
+      ctx.fillStyle = '#064e3b';
+      ctx.roundRect(12, 12, 1000, 456, 32);
       ctx.fill();
 
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = spec.borderColor;
-      ctx.roundRect(10, 10, 492, 180, 20);
+      // Bold reflective white border
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = '#f8fafc';
+      ctx.roundRect(12, 12, 1000, 456, 32);
       ctx.stroke();
 
-      // Top pill tag
-      ctx.fillStyle = `${spec.borderColor}33`;
-      ctx.roundRect(28, 24, 280, 32, 8);
+      // Inner subtle border
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#34d399';
+      ctx.roundRect(24, 24, 976, 432, 24);
+      ctx.stroke();
+
+      // Top route pill badge
+      ctx.fillStyle = '#022c22';
+      ctx.roundRect(40, 42, 540, 56, 16);
       ctx.fill();
-      ctx.font = 'bold 16px "JetBrains Mono", monospace';
-      ctx.fillStyle = spec.borderColor;
-      ctx.fillText(spec.badgeText, 40, 46);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#10b981';
+      ctx.stroke();
 
-      // Icon + Title
-      ctx.font = 'bold 28px "Inter", sans-serif';
+      ctx.font = 'bold 26px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#34d399';
+      ctx.fillText(`📍 ${spec.badge}`, 58, 80);
+
+      // Huge Bold Destination Name
+      ctx.font = '900 64px "Inter", sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`${spec.iconEmoji} ${spec.title}`, 28, 108);
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 10;
+      ctx.fillText(spec.mainText, 44, 200);
+      ctx.shadowBlur = 0;
 
-      // Subtitle
-      ctx.font = '18px "JetBrains Mono", monospace';
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText(spec.subText, 28, 150);
+      // Distance Badge in Glowing Gold/Amber
+      ctx.font = '900 52px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#facc15';
+      ctx.fillText(spec.distance, 44, 285);
+
+      // Dividing Line
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(44, 325);
+      ctx.lineTo(960, 325);
+      ctx.stroke();
+
+      // Subtext / Secondary route
+      ctx.font = 'bold 30px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#a7f3d0';
+      ctx.fillText(spec.subText, 44, 385);
 
       const signTex = new THREE.CanvasTexture(canvas);
       const signMat = new THREE.MeshBasicMaterial({
@@ -2242,39 +2459,136 @@ export class TrackBuilder {
         transparent: true,
       });
 
-      const signBoard = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 1.8), signMat);
+      const signBoard = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 2.3), signMat);
       signBoard.position.copy(signPos);
 
-      // Look slightly toward road/camera
-      const lookTarget = new THREE.Vector3().copy(pt).add(tangent.clone().multiplyScalar(12));
+      // Angled toward oncoming cars on the spline
+      const lookTarget = new THREE.Vector3().copy(pt).add(tangent.clone().multiplyScalar(14));
       signBoard.lookAt(lookTarget);
 
-      // Support Posts
-      const postMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8 });
-      const post1 = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 3.2, 8), postMat);
-      post1.position.set(signPos.x, signPos.y - 1.2, signPos.z);
+      // Support Dual Steel Posts
+      const postMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.85, roughness: 0.2 });
+      const post1 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.10, 4.2, 8), postMat);
+      post1.position.set(signPos.x, signPos.y - 1.5, signPos.z);
       landmarkGroup.add(signBoard, post1);
 
-      // Add 3D Auto-Rickshaw model near taxi stands
-      if (spec.iconEmoji === '🚕') {
+      // Add 3D Auto-Rickshaw model near Indian transit stops
+      if (spec.isIndian && (spec.side > 0 ? spec.t > 0.4 : spec.t < 0.4)) {
         const rickshaw = new THREE.Group();
         const rickBody = new THREE.Mesh(
           new THREE.BoxGeometry(1.4, 1.2, 2.2),
-          new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.4 }) // Indian green auto body
+          new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.4 })
         );
         rickBody.position.y = 0.8;
         const rickTop = new THREE.Mesh(
           new THREE.BoxGeometry(1.3, 0.4, 2.0),
-          new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.5 }) // Yellow auto hood
+          new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.5 })
         );
         rickTop.position.y = 1.5;
         rickshaw.add(rickBody, rickTop);
-        rickshaw.position.set(signPos.x + 2.5 * spec.side, signPos.y - 2.4, signPos.z + 4);
+        rickshaw.position.set(signPos.x + 2.8 * spec.side, signPos.y - 2.4, signPos.z + 4);
         landmarkGroup.add(rickshaw);
       }
+    });
+
+    // --- 2. BUILD OVERHEAD HIGHWAY TRUSS GANTRIES ---
+    gantryList.forEach((spec) => {
+      const pt = curve.getPointAt(spec.t);
+      const tangent = curve.getTangentAt(spec.t).normalize();
+      const binormal = new THREE.Vector3().crossVectors(up, tangent).normalize();
+
+      const gantryGroup = new THREE.Group();
+      gantryGroup.position.copy(pt);
+
+      const trussMat = new THREE.MeshStandardMaterial({
+        color: 0x334155,
+        metalness: 0.85,
+        roughness: 0.25
+      });
+
+      // Dual side vertical steel pillars outside the road width
+      const pillarDist = roadWidth / 2 + 2.8;
+      const pillarHeight = 8.5;
+      const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, pillarHeight, 8), trussMat);
+      leftPillar.position.set(-binormal.x * pillarDist, pillarHeight / 2, -binormal.z * pillarDist);
+
+      const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, pillarHeight, 8), trussMat);
+      rightPillar.position.set(binormal.x * pillarDist, pillarHeight / 2, binormal.z * pillarDist);
+
+      // Horizontal Spanning Steel Truss Beam
+      const spanLength = roadWidth + 6.0;
+      const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(spanLength, 0.7, 0.7), trussMat);
+      crossBeam.position.set(0, 7.6, 0);
+
+      // Orientation matching track tangent
+      const rotMatrix = new THREE.Matrix4().makeBasis(binormal, up, tangent);
+      gantryGroup.quaternion.setFromRotationMatrix(rotMatrix);
+
+      // Large Overhead Highway Green Directional Signboard
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d')!;
+
+      // Highway green background
+      ctx.fillStyle = '#065f46';
+      ctx.roundRect(8, 8, 1008, 240, 20);
+      ctx.fill();
+
+      // Crisp white reflective border
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = '#ffffff';
+      ctx.roundRect(8, 8, 1008, 240, 20);
+      ctx.stroke();
+
+      // Top route banner
+      ctx.font = 'bold 22px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#34d399';
+      ctx.fillText(`🛣️ ${spec.code}`, 36, 42);
+
+      // Center Divider line
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(512, 55);
+      ctx.lineTo(512, 230);
+      ctx.stroke();
+
+      // Left Lane Box
+      ctx.font = '900 42px "Inter", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(spec.leftText, 40, 140);
+
+      // Right Lane Box
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(spec.rightText, 540, 140);
+
+      // Subtext lane tags
+      ctx.font = 'bold 22px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#facc15';
+      ctx.fillText('THROUGH TRAFFIC', 40, 195);
+      ctx.fillText('EXIT LANE ONLY ↗', 540, 195);
+
+      const boardTex = new THREE.CanvasTexture(canvas);
+      const boardMat = new THREE.MeshBasicMaterial({
+        map: boardTex,
+        transparent: true
+      });
+
+      const boardMesh = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth * 0.75, 2.5), boardMat);
+      boardMesh.position.set(0, 7.6, 0.4);
+
+      // Downward floodlight spot illuminating the road underneath
+      const gantrySpot = new THREE.SpotLight(0x38bdf8, 2.0, 24, Math.PI / 4, 0.5, 1.2);
+      gantrySpot.position.set(0, 7.5, 0);
+      gantrySpot.target.position.set(0, 0, 0);
+
+      gantryGroup.add(leftPillar, rightPillar, crossBeam, boardMesh, gantrySpot, gantrySpot.target);
+      landmarkGroup.add(gantryGroup);
     });
 
     return landmarkGroup;
   }
 }
+
 
