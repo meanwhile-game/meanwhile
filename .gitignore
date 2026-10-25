@@ -33,3 +33,5 @@ Thumbs.db
 .tempmediaStorage/
 .system_generated/
 *.log
+
+.vercel
