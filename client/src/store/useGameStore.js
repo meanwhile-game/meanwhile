@@ -7,13 +7,13 @@ import { api } from '../services/supabase.js';
 
 // Default 7 AI bot racers matching the reference UI leaderboard!
 const BOT_DRIVERS = [
-  { id: 'bot-1', name: 'kero', avatar: '⚡', targetWpm: 128, lane: -1 },
-  { id: 'bot-2', name: 'aryan', avatar: '🏎️', targetWpm: 112, lane: 1 },
-  { id: 'bot-3', name: 'nova', avatar: '🏁', targetWpm: 98, lane: -1 },
-  { id: 'bot-4', name: 'zen', avatar: '🎌', targetWpm: 96, lane: 1 },
-  { id: 'bot-5', name: 'rhea', avatar: '🌟', targetWpm: 92, lane: -0.5 },
-  { id: 'bot-6', name: 'blank', avatar: '✨', targetWpm: 86, lane: 0.5 },
-  { id: 'bot-7', name: 'arlo', avatar: '🔥', targetWpm: 80, lane: -1 }
+  { id: 'bot-1', name: 'kero', avatar: '⚡', targetWpm: 128, lane: 1 },
+  { id: 'bot-2', name: 'aryan', avatar: '🏎️', targetWpm: 116, lane: 0 },
+  { id: 'bot-3', name: 'nova', avatar: '🏁', targetWpm: 112, lane: -1 },
+  { id: 'bot-4', name: 'zenyx', avatar: '🎌', targetWpm: 98, lane: 0.5 },
+  { id: 'bot-5', name: 'rhea', avatar: '🌟', targetWpm: 94, lane: -0.5 },
+  { id: 'bot-6', name: 'blank', avatar: '✨', targetWpm: 91, lane: 1 },
+  { id: 'bot-7', name: 'arlo', avatar: '🔥', targetWpm: 86, lane: -1 }
 ];
 
 export const useGameStore = create((set, get) => ({
@@ -92,7 +92,7 @@ export const useGameStore = create((set, get) => ({
   elapsedSeconds: 0,
   startTime: null,
   isFinished: false,
-  finalRank: 3,
+  finalRank: 4,
   results: null,
 
   // Racers array (Player + 7 opponents)
@@ -100,7 +100,14 @@ export const useGameStore = create((set, get) => ({
 
   // Start new race
   initRace: (customPassage = null) => {
-    const passage = customPassage || getRandomPassage();
+    let passage = customPassage;
+    if (!passage) {
+      if (get().selectedTrackId === 'coastal-drive') {
+        passage = PASSAGES[0]; // Exact coastal run passage from reference screenshot
+      } else {
+        passage = getRandomPassage();
+      }
+    }
     const track = getTrackById(get().selectedTrackId);
     const userProfile = get().profile;
 
@@ -113,7 +120,7 @@ export const useGameStore = create((set, get) => ({
       isPlayer: true,
       progress: 0,
       wpm: 0,
-      position: 3,
+      position: 4,
       lane: 0,
       speed: 0
     };
@@ -123,17 +130,19 @@ export const useGameStore = create((set, get) => ({
       username: b.name,
       isPlayer: false,
       progress: 0,
-      wpm: b.targetWpm - Math.floor(Math.random() * 8),
-      position: idx < 2 ? idx + 1 : idx + 2,
+      wpm: b.targetWpm - Math.floor(Math.random() * 4),
+      position: idx < 3 ? idx + 1 : idx + 2,
       lane: b.lane,
       speed: 0
     }));
 
+    // Player in 4th position matching screenshot (kero 1, aryan 2, nova 3, You 4, zenyx 5...)
     const allRacers = [
       botRacers[0],
       botRacers[1],
+      botRacers[2],
       playerRacer,
-      ...botRacers.slice(2)
+      ...botRacers.slice(3)
     ];
 
     set({
