@@ -38,26 +38,47 @@ const DEFAULT_RECENT_RACES = [
 
 // Helper to get local storage profile
 const getLocalProfile = () => {
+  let profile = null;
   try {
     const data = localStorage.getItem('meanwhile_profile');
-    if (data) return JSON.parse(data);
+    if (data) profile = JSON.parse(data);
   } catch (e) {}
 
-  return {
-    id: 'guest_' + Math.random().toString(36).substring(2, 9),
-    username: 'rishi',
-    avatar_url: '👤',
-    bio: 'Typing today. Racing meanwhile.',
-    coins: 2450,
-    equipped_vehicle_id: 'vortex',
-    equipped_vehicle_paint: '#f8fafc',
-    best_wpm: 134,
-    average_wpm: 118,
-    average_accuracy: 96,
-    total_races: 310,
-    wins: 211,
-    global_rank: 4
-  };
+  if (!profile) {
+    profile = {
+      id: 'user_rishi',
+      username: 'rishi',
+      avatar_url: '👤',
+      avatar: '👤',
+      bio: 'Typing today. Racing meanwhile.',
+      coins: 2450,
+      equipped_vehicle_id: 'vortex',
+      equipped_vehicle_paint: '#f8fafc',
+      best_wpm: 134,
+      bestWpm: 134,
+      average_wpm: 118,
+      averageWpm: 118,
+      average_accuracy: 96,
+      accuracy: 96,
+      total_races: 310,
+      totalRaces: 310,
+      wins: 211,
+      global_rank: 4,
+      globalRank: 4
+    };
+  }
+
+  // Ensure both camelCase and snake_case are present
+  profile.averageWpm = profile.averageWpm || profile.average_wpm || 118;
+  profile.average_wpm = profile.averageWpm;
+  profile.bestWpm = profile.bestWpm || profile.best_wpm || 134;
+  profile.best_wpm = profile.bestWpm;
+  profile.totalRaces = profile.totalRaces || profile.total_races || 310;
+  profile.total_races = profile.totalRaces;
+  profile.accuracy = profile.accuracy || profile.average_accuracy || 96;
+  profile.globalRank = profile.globalRank || profile.global_rank || 4;
+
+  return profile;
 };
 
 const saveLocalProfile = (profile) => {
@@ -155,40 +176,63 @@ export const api = {
     return updated;
   },
 
-  // --- RACE RESULTS ---
+  // --- RACE RESULTS & OVERALL AVERAGE WPM ---
   async saveRaceResult(raceData) {
     const profile = getLocalProfile();
     const isWin = raceData.position === 1;
 
-    // Update local profile stats
-    profile.total_races += 1;
-    if (isWin) profile.wins += 1;
-    profile.best_wpm = Math.max(profile.best_wpm || 0, raceData.wpm);
-    profile.average_wpm = Math.round(((profile.average_wpm || 100) * (profile.total_races - 1) + raceData.wpm) / profile.total_races);
-    profile.coins += isWin ? 150 : 50;
-
-    // Save recent race item
-    let recents = DEFAULT_RECENT_RACES;
+    // Load full race history to compute true all-race ending average WPM
+    let raceHistory = [];
     try {
-      const stored = localStorage.getItem('meanwhile_recent_races');
-      if (stored) recents = JSON.parse(stored);
+      const stored = localStorage.getItem('meanwhile_race_history');
+      if (stored) raceHistory = JSON.parse(stored);
     } catch (e) {}
+
+    if (raceHistory.length === 0) {
+      raceHistory = [
+        { id: 'h-1', wpm: 128, accuracy: 98, track: 'Coastal Circuit', position: 1, date: 'Earlier today' },
+        { id: 'h-2', wpm: 112, accuracy: 96, track: 'City Circuit', position: 2, date: 'Yesterday' },
+        { id: 'h-3', wpm: 118, accuracy: 95, track: 'Mountain Circuit', position: 3, date: '2 days ago' },
+        { id: 'h-4', wpm: 114, accuracy: 97, track: 'Snow Circuit', position: 1, date: '3 days ago' }
+      ];
+    }
 
     const newRecord = {
       id: 'race_' + Date.now(),
-      track: raceData.trackName || 'Coastal Drive',
+      track: raceData.trackName || 'Coastal Circuit',
       position: `${raceData.position}${raceData.position === 1 ? 'st' : raceData.position === 2 ? 'nd' : raceData.position === 3 ? 'rd' : 'th'}`,
       wpm: raceData.wpm,
+      accuracy: raceData.accuracy,
       time: raceData.timeFormatted || '01:45',
       date: 'Just now'
     };
 
-    recents = [newRecord, ...recents.slice(0, 7)];
+    raceHistory = [newRecord, ...raceHistory];
     try {
-      localStorage.setItem('meanwhile_recent_races', JSON.stringify(recents));
+      localStorage.setItem('meanwhile_race_history', JSON.stringify(raceHistory));
     } catch (e) {}
 
+    // Calculate mathematically exact overall average WPM across all race finishes
+    const totalWpmSum = raceHistory.reduce((acc, r) => acc + (Number(r.wpm) || 0), 0);
+    const overallAverageWpm = Math.round(totalWpmSum / raceHistory.length);
+
+    // Update profile
+    profile.total_races = (profile.total_races || 0) + 1;
+    profile.totalRaces = profile.total_races;
+    if (isWin) profile.wins = (profile.wins || 0) + 1;
+    profile.best_wpm = Math.max(profile.best_wpm || 0, raceData.wpm);
+    profile.bestWpm = profile.best_wpm;
+    profile.average_wpm = overallAverageWpm;
+    profile.averageWpm = overallAverageWpm;
+    profile.accuracy = raceData.accuracy || profile.accuracy || 96;
+    profile.coins = (profile.coins || 0) + (isWin ? 150 : 50);
+
     saveLocalProfile(profile);
+
+    // Update recent races for UI
+    try {
+      localStorage.setItem('meanwhile_recent_races', JSON.stringify(raceHistory.slice(0, 8)));
+    } catch (e) {}
 
     if (isConfigured && supabase) {
       try {
@@ -209,7 +253,29 @@ export const api = {
       }
     }
 
-    return { profile, recents };
+    return { profile, recents: raceHistory.slice(0, 8), overallAverageWpm };
+  },
+
+  // Get all race history
+  getRaceHistory() {
+    try {
+      const stored = localStorage.getItem('meanwhile_race_history');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      { id: 'h-1', wpm: 128, accuracy: 98, track: 'Coastal Circuit', position: 1, date: 'Earlier today' },
+      { id: 'h-2', wpm: 112, accuracy: 96, track: 'City Circuit', position: 2, date: 'Yesterday' },
+      { id: 'h-3', wpm: 118, accuracy: 95, track: 'Mountain Circuit', position: 3, date: '2 days ago' },
+      { id: 'h-4', wpm: 114, accuracy: 97, track: 'Snow Circuit', position: 1, date: '3 days ago' }
+    ];
+  },
+
+  // Get overall average WPM across all recorded race endings
+  getOverallAverageWpm() {
+    const history = this.getRaceHistory();
+    if (!history || history.length === 0) return 118;
+    const sum = history.reduce((acc, r) => acc + (Number(r.wpm) || 0), 0);
+    return Math.round(sum / history.length);
   },
 
   // --- LEADERBOARDS ---

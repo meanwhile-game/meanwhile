@@ -257,6 +257,8 @@ export const useGameStore = create((set, get) => ({
       totalLaps: track.laps || 2,
       elapsedSeconds: 0,
       startTime: null,
+      firstKeystrokeTime: null,
+      lastKeystrokeTime: null,
       isFinished: false,
       finalRank: 4,
       results: null,
@@ -286,7 +288,7 @@ export const useGameStore = create((set, get) => ({
     }, 1000);
   },
 
-  // Process typed character input
+  // Process typed character input with accurate typing cadence
   handleKeyInput: (char) => {
     const state = get();
     if (!state.isRacing || state.isFinished) return;
@@ -299,29 +301,37 @@ export const useGameStore = create((set, get) => ({
 
     const expectedChar = targetText[nextIndex];
     const isCorrect = char === expectedChar;
+    const now = Date.now();
+
+    // Track active typing start on first keystroke
+    const firstKeyTime = state.firstKeystrokeTime || now;
 
     if (isCorrect) {
       soundEngine.playKeypress(char === ' ');
       const newTyped = currentTyped + char;
       const newProgress = Math.min(1, newTyped.length / targetText.length);
 
-      // Calculate WPM: (characters / 5) / minutes
-      const now = Date.now();
-      const elapsedMin = Math.max(0.015, (now - state.startTime) / 60000);
-      const totalChars = newTyped.length;
-      const calculatedWpm = Math.round((totalChars / 5) / elapsedMin);
-      const accuracy = Math.max(0, Math.round(((totalChars - state.errorsCount) / totalChars) * 100));
+      // Standard WPM formula: (characters typed / 5) / active typing minutes
+      // Floor duration at 2.0s (0.033 min) to avoid initial division spike
+      const activeMinutes = Math.max(0.033, (now - firstKeyTime) / 60000);
+      const wordsTyped = (newTyped.length / 5);
+      const grossWpm = Math.round(wordsTyped / activeMinutes);
+      const errorDeduction = (state.errorsCount * 0.4) / activeMinutes;
+      const calculatedWpm = Math.max(0, Math.min(260, Math.round(grossWpm - errorDeduction)));
 
-      // Calculate speed and gear
-      const targetSpeed = Math.min(310, Math.max(30, calculatedWpm * 1.85 * (accuracy / 100)));
-      const gear = targetSpeed < 45 ? 1 : targetSpeed < 85 ? 2 : targetSpeed < 130 ? 3 : targetSpeed < 180 ? 4 : targetSpeed < 240 ? 5 : 6;
+      const totalChars = newTyped.length;
+      const accuracy = Math.max(0, Math.min(100, Math.round(((totalChars - state.errorsCount) / totalChars) * 100)));
+
+      // Smooth vehicle speed and gear mapping based on cadence and accuracy
+      const targetSpeed = Math.min(320, Math.max(35, calculatedWpm * 1.85 * (accuracy / 100)));
+      const gear = targetSpeed < 50 ? 1 : targetSpeed < 90 ? 2 : targetSpeed < 140 ? 3 : targetSpeed < 190 ? 4 : targetSpeed < 250 ? 5 : 6;
 
       soundEngine.updateEngineSpeed(targetSpeed);
 
       // Update player in racers list
+      const isDone = newTyped.length === targetText.length;
       const updatedRacers = state.racers.map(r => {
         if (r.isPlayer) {
-          const isDone = newTyped.length === targetText.length;
           return {
             ...r,
             progress: newProgress,
@@ -345,12 +355,14 @@ export const useGameStore = create((set, get) => ({
         speedKmh: Math.round(targetSpeed),
         gear,
         progress: newProgress,
+        firstKeystrokeTime: firstKeyTime,
+        lastKeystrokeTime: now,
         racers: rankedRacers,
         finalRank: playerRank
       });
 
       // Check race finish
-      if (newTyped.length === targetText.length) {
+      if (isDone) {
         get().finishRace();
       }
     } else {
@@ -358,6 +370,7 @@ export const useGameStore = create((set, get) => ({
       soundEngine.playError();
       set(s => ({
         errorsCount: s.errorsCount + 1,
+        lastKeystrokeTime: now,
         speedKmh: Math.max(25, s.speedKmh * 0.88)
       }));
     }
@@ -373,11 +386,12 @@ export const useGameStore = create((set, get) => ({
 
     set({
       typedText: newTyped,
-      progress: newProgress
+      progress: newProgress,
+      lastKeystrokeTime: Date.now()
     });
   },
 
-  // Finish race & persist result
+  // Finish race & persist result with exact ending WPM & updated all-race average
   finishRace: () => {
     const state = get();
     if (state.isFinished) return;
@@ -385,16 +399,24 @@ export const useGameStore = create((set, get) => ({
     soundEngine.stopEngine();
     soundEngine.playFinishFanfare();
 
-    const elapsed = state.startTime ? (Date.now() - state.startTime) / 1000 : 42;
+    const now = Date.now();
+    const elapsed = state.startTime ? (now - state.startTime) / 1000 : 42;
     const mins = Math.floor(elapsed / 60);
     const secs = (elapsed % 60).toFixed(2);
     const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(5, '0')}`;
 
+    // Compute mathematically exact ending WPM based on active typing time
+    const activeStart = state.firstKeystrokeTime || state.startTime || now;
+    const activeElapsedMin = Math.max(0.04, (now - activeStart) / 60000);
+    const targetWords = (state.passage?.text?.length || 100) / 5;
+    const finalEndingWpm = Math.max(1, Math.round(targetWords / activeElapsedMin));
+    const finalAccuracy = Math.max(0, Math.round(((state.passage.text.length - state.errorsCount) / state.passage.text.length) * 100));
+
     const track = getTrackById(state.selectedTrackId);
 
     const raceResults = {
-      wpm: state.wpm,
-      accuracy: state.accuracy,
+      wpm: finalEndingWpm,
+      accuracy: finalAccuracy,
       timeSeconds: elapsed,
       timeFormatted: formattedTime,
       position: state.finalRank,
@@ -406,16 +428,23 @@ export const useGameStore = create((set, get) => ({
       date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    // Save to Supabase & local storage
+    // Save to Supabase & local storage, updating all-race ending average WPM
     api.saveRaceResult(raceResults).then(({ profile }) => {
       if (profile) {
-        set({ profile });
+        set({
+          profile: {
+            ...get().profile,
+            ...profile,
+            averageWpm: profile.averageWpm || profile.average_wpm
+          }
+        });
       }
     });
 
     set({
       isRacing: false,
       isFinished: true,
+      wpm: finalEndingWpm,
       results: raceResults,
       view: 'results'
     });
@@ -454,18 +483,46 @@ export const useGameStore = create((set, get) => ({
     });
   },
 
-  // Opponent bot progress simulation tick (called at stable 10Hz)
+  // Opponent bot progress simulation tick & continuous live WPM/speed decay during hesitation
   tickRaceBots: (deltaTime = 0.1) => {
     const state = get();
     if (!state.isRacing || state.isFinished) return;
 
-    const currentElapsed = state.startTime ? (Date.now() - state.startTime) / 1000 : 0;
+    const now = Date.now();
+    const currentElapsed = state.startTime ? (now - state.startTime) / 1000 : 0;
     const targetLength = state.passage?.text?.length || 100;
 
-    const updatedRacers = state.racers.map(r => {
-      if (r.isPlayer || r.isHuman) return r;
+    // Check if player is hesitating/idle (> 450ms without keypress) to smoothly decay live speed
+    let playerLiveWpm = state.wpm;
+    let playerLiveSpeed = state.speedKmh;
+    let playerLiveGear = state.gear;
 
-      if (r.isFinished) return r;
+    if (state.firstKeystrokeTime && state.lastKeystrokeTime) {
+      const idleMs = now - state.lastKeystrokeTime;
+      if (idleMs > 450) {
+        // Continuous clock tracking
+        const activeMinutes = (now - state.firstKeystrokeTime) / 60000;
+        const realTimePace = Math.max(0, Math.round((state.typedText.length / 5) / activeMinutes));
+        
+        // Smoothly decay WPM and speed towards real-time pace rather than freezing
+        playerLiveWpm = Math.max(realTimePace, Math.round(state.wpm * 0.96));
+        playerLiveSpeed = Math.max(25, Math.round(state.speedKmh * 0.95));
+        playerLiveGear = playerLiveSpeed < 50 ? 1 : playerLiveSpeed < 90 ? 2 : playerLiveSpeed < 140 ? 3 : playerLiveSpeed < 190 ? 4 : 5;
+        
+        soundEngine.updateEngineSpeed(playerLiveSpeed);
+      }
+    }
+
+    const updatedRacers = state.racers.map(r => {
+      if (r.isPlayer) {
+        return {
+          ...r,
+          wpm: playerLiveWpm,
+          speed: playerLiveSpeed
+        };
+      }
+
+      if (r.isHuman || r.isFinished) return r;
 
       // Characters per second for target WPM: (WPM * 5) / 60
       const charsPerSec = ((r.targetWpm || 100) * 5) / 60;
@@ -493,6 +550,9 @@ export const useGameStore = create((set, get) => ({
     const playerRank = rankedRacers.find(r => r.isPlayer)?.position || state.finalRank;
 
     set({
+      wpm: playerLiveWpm,
+      speedKmh: playerLiveSpeed,
+      gear: playerLiveGear,
       racers: rankedRacers,
       finalRank: playerRank,
       elapsedSeconds: currentElapsed

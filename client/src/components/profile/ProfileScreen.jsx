@@ -115,51 +115,88 @@ export const ProfileScreen = () => {
           </div>
         )}
 
-        {/* 4 Metric Cards matching Reference UI */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {/* 5 Metric Cards featuring Overall All-Race Ending Average WPM */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 sm:gap-4">
+          {/* 1. OVERALL ALL-RACE ENDING AVERAGE WPM (HIGHLIGHTED HERO CARD) */}
+          <div className="p-5 rounded-2xl bg-[#0c1222] border-2 border-amber-400/40 relative overflow-hidden shadow-[0_0_25px_-5px_rgba(245,158,11,0.25)] text-center group">
+            <div className="absolute top-0 right-0 bg-amber-400 text-slate-950 text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg tracking-wider">
+              All-Time
+            </div>
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-amber-400">
+              Overall Avg WPM
+            </span>
+            <div className="text-3xl sm:text-4xl font-black font-mono-num text-white mt-1">
+              {profile?.averageWpm || api.getOverallAverageWpm()}
+            </div>
+            <span className="text-[10px] text-amber-300/80 mt-0.5 block font-medium">
+              Race Ending Mean
+            </span>
+          </div>
+
+          {/* 2. BEST WPM */}
           <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
               Best WPM
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-[#f8fafc] mt-1">
               {profile?.bestWpm || 134}
             </div>
+            <span className="text-[10px] text-emerald-400 mt-0.5 block font-medium">
+              Peak Record
+            </span>
           </div>
 
+          {/* 3. ACCURACY */}
           <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
               Accuracy
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-[#f8fafc] mt-1">
-              {profile?.accuracy || 68}%
+              {profile?.accuracy || 96}%
             </div>
+            <span className="text-[10px] text-[#94a3b8] mt-0.5 block">
+              Precision Rate
+            </span>
           </div>
 
+          {/* 4. TOTAL RACES */}
           <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
-              Races
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
+              Total Races
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-[#f8fafc] mt-1">
               {profile?.totalRaces || 310}
             </div>
+            <span className="text-[10px] text-sky-400 mt-0.5 block font-medium">
+              Finishes
+            </span>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
+          {/* 5. GLOBAL RANK */}
+          <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg col-span-2 sm:col-span-1">
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
               Global Rank
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-amber-400 mt-1">
               #{profile?.globalRank || 4}
             </div>
+            <span className="text-[10px] text-amber-300/80 mt-0.5 block font-medium">
+              Top Tier
+            </span>
           </div>
         </div>
 
         {/* Recent Races List matching Reference UI */}
         <div className="p-6 sm:p-8 rounded-2xl bg-[#0c1222] border border-white/[0.08] shadow-2xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-            <h3 className="text-base font-bold text-[#f8fafc]">Recent Races</h3>
-            <span className="text-xs text-[#94a3b8] hover:text-[#f8fafc] cursor-pointer">
-              View All →
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/[0.06] gap-2">
+            <div>
+              <h3 className="text-base font-bold text-[#f8fafc]">Recent Race Finishes</h3>
+              <p className="text-xs text-[#94a3b8] mt-0.5">
+                Overall ending average: <span className="text-amber-400 font-bold font-mono-num">{profile?.averageWpm || api.getOverallAverageWpm()} WPM</span> across all completed tracks.
+              </p>
+            </div>
+            <span className="text-xs text-amber-400/90 hover:text-amber-300 cursor-pointer font-semibold">
+              Live Synced
             </span>
           </div>
 
@@ -175,7 +212,7 @@ export const ProfileScreen = () => {
                   <span className={`font-bold ${race.position === '1st' ? 'text-amber-400' : 'text-slate-300'}`}>
                     {race.position}
                   </span>
-                  <span className="text-slate-300">{race.wpm} WPM</span>
+                  <span className="text-amber-300 font-bold">{race.wpm} WPM</span>
                   <span className="text-[#64748b]">{race.time}</span>
                 </div>
               </div>
