@@ -10,13 +10,18 @@ export const RaceView = () => {
     handleKeyInput, 
     handleBackspace, 
     tickRaceBots, 
+    updateRemoteRacer,
     gameMode,
     progress,
     wpm,
-    speedKmh 
+    speedKmh,
+    isFinished,
+    elapsedSeconds
   } = useGameStore();
 
   const lastBroadcastRef = useRef(0);
+  const isRacingRef = useRef(isRacing);
+  isRacingRef.current = isRacing;
 
   // 1. Keyboard Typing Event Listener
   useEffect(() => {
@@ -47,26 +52,61 @@ export const RaceView = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleKeyInput, handleBackspace]);
 
-  // 2. Opponent Simulation & Multiplayer Tick Loop
+  // 2. Multiplayer Remote Racer Events (Broadcast & Realtime Listeners)
+  useEffect(() => {
+    const unsubs = [
+      multiplayer.on('remote_progress', (data) => {
+        updateRemoteRacer({
+          racerId: data.racerId,
+          progress: data.progress,
+          wpm: data.wpm,
+          speed: data.speed,
+          lane: data.lane
+        });
+      }),
+      multiplayer.on('remote_finished', (data) => {
+        updateRemoteRacer({
+          racerId: data.playerId,
+          wpm: data.finalWpm,
+          isFinished: true,
+          finishTime: data.finishTime
+        });
+      })
+    ];
+
+    return () => {
+      unsubs.forEach(un => un());
+    };
+  }, [updateRemoteRacer]);
+
+  // 3. Broadcast local player finish
+  useEffect(() => {
+    if (isFinished && (gameMode === 'multiplayer' || gameMode === 'private_room')) {
+      multiplayer.sendFinished(wpm, elapsedSeconds);
+    }
+  }, [isFinished, gameMode, wpm, elapsedSeconds]);
+
+  // 4. Stable 10Hz Opponent Simulation & Multiplayer Progress Broadcast
   useEffect(() => {
     if (!isRacing) return;
 
     const interval = setInterval(() => {
-      // Advance AI bots
+      // Advance AI bots smoothly
       tickRaceBots(0.1);
 
-      // In multiplayer, broadcast throttled progress (~10Hz)
-      if (gameMode === 'multiplayer' || gameMode === 'private_room') {
+      // In multiplayer, broadcast progress at steady 10Hz
+      const state = useGameStore.getState();
+      if (state.gameMode === 'multiplayer' || state.gameMode === 'private_room') {
         const now = Date.now();
-        if (now - lastBroadcastRef.current > 100) {
-          multiplayer.sendProgress(progress, wpm, speedKmh, 0);
+        if (now - lastBroadcastRef.current >= 95) {
+          multiplayer.sendProgress(state.progress, state.wpm, state.speedKmh, 0);
           lastBroadcastRef.current = now;
         }
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isRacing, tickRaceBots, gameMode, progress, wpm, speedKmh]);
+  }, [isRacing, tickRaceBots]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#070a13]">

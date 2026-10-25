@@ -5,9 +5,9 @@ class SoundEngine {
   constructor() {
     this.ctx = null;
     this.isMuted = false;
-    this.masterVolume = 0.7;
-    this.engineVolume = 0.45;
-    this.sfxVolume = 0.8;
+    this.masterVolume = 0.9;
+    this.engineVolume = 0.65;
+    this.sfxVolume = 1.0;
 
     // Engine oscillator graph
     this.engineOsc = null;
@@ -67,7 +67,7 @@ class SoundEngine {
     }
   }
 
-  // Tactile mechanical keypress sound
+  // Tactile mechanical keypress sound (+4 dB punch)
   playKeypress(isSpace = false) {
     if (this.isMuted) return;
     const ctx = this.initContext();
@@ -80,20 +80,20 @@ class SoundEngine {
       const baseFreq = isSpace ? 280 : (420 + Math.random() * 80);
       osc.type = isSpace ? 'triangle' : 'sine';
       osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.03);
+      osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.035);
 
-      gain.gain.setValueAtTime(0.08 * this.masterVolume * this.sfxVolume, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+      gain.gain.setValueAtTime(0.14 * this.masterVolume * this.sfxVolume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
       osc.start();
-      osc.stop(ctx.currentTime + 0.035);
+      osc.stop(ctx.currentTime + 0.04);
     } catch (e) {}
   }
 
-  // Mistyped character error blip
+  // Mistyped character error blip (+4 dB)
   playError() {
     if (this.isMuted) return;
     const ctx = this.initContext();
@@ -104,21 +104,21 @@ class SoundEngine {
       const gain = ctx.createGain();
 
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(120, ctx.currentTime);
-      osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.06);
+      osc.frequency.setValueAtTime(125, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.07);
 
-      gain.gain.setValueAtTime(0.12 * this.masterVolume * this.sfxVolume, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.20 * this.masterVolume * this.sfxVolume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
       osc.start();
-      osc.stop(ctx.currentTime + 0.065);
+      osc.stop(ctx.currentTime + 0.075);
     } catch (e) {}
   }
 
-  // Countdown Beeps (3, 2, 1, GO)
+  // Countdown Beeps (3, 2, 1, GO) (+4 dB)
   playCountdownBeep(isGo = false) {
     if (this.isMuted) return;
     const ctx = this.initContext();
@@ -129,12 +129,12 @@ class SoundEngine {
       const gain = ctx.createGain();
 
       const freq = isGo ? 880 : 440;
-      const duration = isGo ? 0.35 : 0.15;
+      const duration = isGo ? 0.38 : 0.18;
 
       osc.type = isGo ? 'triangle' : 'sine';
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-      gain.gain.setValueAtTime(0.25 * this.masterVolume * this.sfxVolume, ctx.currentTime);
+      gain.gain.setValueAtTime(0.38 * this.masterVolume * this.sfxVolume, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
       osc.connect(gain);
@@ -145,7 +145,7 @@ class SoundEngine {
     } catch (e) {}
   }
 
-  // Finish Line Victory Chime
+  // Finish Line Victory Chime (+4 dB)
   playFinishFanfare() {
     if (this.isMuted) return;
     const ctx = this.initContext();
@@ -160,19 +160,19 @@ class SoundEngine {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
 
-        gain.gain.setValueAtTime(0.18 * this.masterVolume, ctx.currentTime + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.6);
+        gain.gain.setValueAtTime(0.30 * this.masterVolume, ctx.currentTime + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.65);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
 
         osc.start(ctx.currentTime + idx * 0.08);
-        osc.stop(ctx.currentTime + idx * 0.08 + 0.65);
+        osc.stop(ctx.currentTime + idx * 0.08 + 0.7);
       });
     } catch (e) {}
   }
 
-  // Continuous Procedural Engine Hum
+  // Continuous Procedural Engine Hum (+4 dB presence)
   startEngine() {
     if (this.isMuted || this.isEngineRunning) return;
     const ctx = this.initContext();
@@ -184,12 +184,12 @@ class SoundEngine {
       this.engineFilter = ctx.createBiquadFilter();
 
       this.engineOsc.type = 'sawtooth';
-      this.engineOsc.frequency.setValueAtTime(55, ctx.currentTime);
+      this.engineOsc.frequency.setValueAtTime(58, ctx.currentTime);
 
       this.engineFilter.type = 'lowpass';
-      this.engineFilter.frequency.setValueAtTime(260, ctx.currentTime);
+      this.engineFilter.frequency.setValueAtTime(280, ctx.currentTime);
 
-      this.engineGain.gain.setValueAtTime(0.05 * this.masterVolume, ctx.currentTime);
+      this.engineGain.gain.setValueAtTime(0.08 * this.masterVolume, ctx.currentTime);
 
       this.engineOsc.connect(this.engineFilter);
       this.engineFilter.connect(this.engineGain);
@@ -209,12 +209,12 @@ class SoundEngine {
       // Multi-gear RPM curve simulation
       const gear = Math.floor(ratio * 5) + 1;
       const gearRatio = (ratio * 5) % 1;
-      const targetFreq = 45 + gearRatio * 90 + gear * 12;
+      const targetFreq = 48 + gearRatio * 95 + gear * 14;
 
       this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
-      this.engineFilter.frequency.setTargetAtTime(200 + ratio * 600, this.ctx.currentTime, 0.1);
+      this.engineFilter.frequency.setTargetAtTime(220 + ratio * 650, this.ctx.currentTime, 0.1);
 
-      const targetGain = (0.05 + ratio * 0.15) * this.masterVolume * this.engineVolume;
+      const targetGain = (0.08 + ratio * 0.22) * this.masterVolume * this.engineVolume;
       this.engineGain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.1);
     } catch (e) {}
   }
@@ -238,7 +238,7 @@ class SoundEngine {
     }
   }
 
-  // UI Button Click
+  // UI Button Click (+4 dB)
   playButtonClick() {
     if (this.isMuted) return;
     const ctx = this.initContext();
@@ -249,17 +249,17 @@ class SoundEngine {
       const gain = ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.04);
+      osc.frequency.setValueAtTime(620, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.045);
 
-      gain.gain.setValueAtTime(0.09 * this.masterVolume, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.15 * this.masterVolume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.045);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
       osc.start();
-      osc.stop(ctx.currentTime + 0.045);
+      osc.stop(ctx.currentTime + 0.05);
     } catch (e) {}
   }
 }

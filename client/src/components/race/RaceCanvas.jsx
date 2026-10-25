@@ -310,25 +310,24 @@ export const RaceCanvas = () => {
     const playerRacer = racers.find(r => r.isPlayer);
     const playerProg = playerRacer?.progress || progress;
 
-    const opponentConfigs = [
-      { name: 'kero', rank: 1, laneX: 3.2, baseOffsetZ: 14, color: '#090d16' },
-      { name: 'aryan', rank: 2, laneX: 0.0, baseOffsetZ: 28, color: '#1e293b' },
-      { name: 'nova', rank: 3, laneX: -3.2, baseOffsetZ: 38, color: '#7c2d12' }
-    ];
+    // Render opponent cars (bots and multiplayer challengers)
+    const opponents = racers.filter(r => !r.isPlayer);
+    const colors = ['#090d16', '#1e293b', '#7c2d12', '#14532d', '#1e1b4b', '#4c1d95', '#831843'];
 
-    return opponentConfigs.map((cfg) => {
-      const racerData = racers.find(r => (r.name || r.username)?.toLowerCase() === cfg.name) || {};
-      const botProg = racerData.progress || 0;
-      const deltaProg = botProg - playerProg;
-      const zPos = Math.max(-10, Math.min(85, cfg.baseOffsetZ + deltaProg * 350));
+    return opponents.slice(0, 6).map((racer, idx) => {
+      const racerProg = racer.progress || 0;
+      const deltaProg = racerProg - playerProg;
+      const laneX = racer.lane !== undefined ? racer.lane * 3.2 : (idx % 2 === 0 ? 3.1 : -3.1);
+      const baseZ = (8 - (racer.gridPosition || (idx < 3 ? idx + 1 : idx + 2))) * 4 + 10;
+      const zPos = Math.max(-15, Math.min(90, baseZ + deltaProg * 320));
 
       return {
-        id: `opp-${cfg.name}`,
-        name: cfg.name,
-        rank: cfg.rank,
-        position: [cfg.laneX, 0, zPos],
-        color: cfg.color,
-        speed: racerData.speed || 116
+        id: racer.id || `opp-${idx}`,
+        name: racer.name || racer.username,
+        rank: racer.position || (idx + 1),
+        position: [laneX, 0, zPos],
+        color: colors[idx % colors.length],
+        speed: racer.speed || 110
       };
     });
   }, [racers, progress]);

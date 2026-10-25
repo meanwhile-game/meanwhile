@@ -33,5 +33,7 @@ Thumbs.db
 .tempmediaStorage/
 .system_generated/
 *.log
+*.exe
+*.mp4
 
 .vercel

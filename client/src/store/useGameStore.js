@@ -99,7 +99,32 @@ export const useGameStore = create((set, get) => ({
   racers: [],
 
   // Start new race
-  initRace: (customPassage = null) => {
+  // Compute live racing rankings with starting grid preservation and smooth overtaking
+  computeRankings: (racersList) => {
+    return [...racersList].sort((a, b) => {
+      // 1. Finished racers always rank ahead, sorted by finish time
+      if (a.isFinished && !b.isFinished) return -1;
+      if (!a.isFinished && b.isFinished) return 1;
+      if (a.isFinished && b.isFinished) {
+        return (a.finishTime || 0) - (b.finishTime || 0);
+      }
+
+      // 2. Active racers sorted by effective distance along the track
+      // Grid bonus starts at realistic car lengths and fades smoothly over the first 30% of progress
+      const aGridWeight = Math.max(0, 1 - (a.progress / 0.30));
+      const bGridWeight = Math.max(0, 1 - (b.progress / 0.30));
+      const aDist = (a.progress * 1000) + (8 - (a.gridPosition || 4)) * 14 * aGridWeight;
+      const bDist = (b.progress * 1000) + (8 - (b.gridPosition || 4)) * 14 * bGridWeight;
+
+      if (Math.abs(aDist - bDist) > 0.05) {
+        return bDist - aDist;
+      }
+      return (a.gridPosition || 4) - (b.gridPosition || 4);
+    }).map((r, idx) => ({ ...r, position: idx + 1 }));
+  },
+
+  // Start new race
+  initRace: (customPassage = null, multiplayerPlayers = null) => {
     let passage = customPassage;
     if (!passage) {
       if (get().selectedTrackId === 'coastal-circuit') {
@@ -111,39 +136,108 @@ export const useGameStore = create((set, get) => ({
     const track = getTrackById(get().selectedTrackId);
     const userProfile = get().profile;
 
-    // Build 8 racers
-    const playerRacer = {
-      id: userProfile.id || 'player',
-      name: 'You',
-      username: userProfile.username || 'You',
-      avatar: userProfile.avatar || '👤',
-      isPlayer: true,
-      progress: 0,
-      wpm: 0,
-      position: 4,
-      lane: 0,
-      speed: 0
-    };
+    // Build 8 racers matching reference screenshot starting grid
+    // Grid: 1 kero (125 WPM), 2 aryan (117 WPM), 3 nova (116 WPM), 4 You, 5 zenyx (97 WPM), 6 rhea (97 WPM), 7 blank (88 WPM), 8 arlo (90 WPM)
+    let allRacers = [];
 
-    const botRacers = BOT_DRIVERS.map((b, idx) => ({
-      ...b,
-      username: b.name,
-      isPlayer: false,
-      progress: 0,
-      wpm: b.targetWpm - Math.floor(Math.random() * 4),
-      position: idx < 3 ? idx + 1 : idx + 2,
-      lane: b.lane,
-      speed: 0
-    }));
+    if (multiplayerPlayers && multiplayerPlayers.length > 0) {
+      // Multiplayer Room Grid Setup
+      const otherPlayers = multiplayerPlayers.filter(p => p.id !== userProfile.id);
+      
+      const playerRacer = {
+        id: userProfile.id || 'player',
+        name: userProfile.username || 'You',
+        username: userProfile.username || 'You',
+        avatar: userProfile.avatar || '👤',
+        isPlayer: true,
+        isHuman: true,
+        progress: 0,
+        wpm: 0,
+        gridPosition: 4,
+        position: 4,
+        lane: 0,
+        speed: 0
+      };
 
-    // Player in 4th position matching screenshot (kero 1, aryan 2, nova 3, You 4, zenyx 5...)
-    const allRacers = [
-      botRacers[0],
-      botRacers[1],
-      botRacers[2],
-      playerRacer,
-      ...botRacers.slice(3)
-    ];
+      const humanRacers = otherPlayers.slice(0, 7).map((p, idx) => ({
+        id: p.id,
+        name: p.name || p.username || `Racer ${idx + 1}`,
+        username: p.name || p.username || `Racer ${idx + 1}`,
+        avatar: p.avatar || '🏎️',
+        isPlayer: false,
+        isHuman: true,
+        progress: 0,
+        wpm: 0,
+        gridPosition: idx < 3 ? idx + 1 : idx + 2,
+        position: idx < 3 ? idx + 1 : idx + 2,
+        lane: (idx % 2 === 0 ? 1 : -1),
+        speed: 0
+      }));
+
+      // Fill remaining slots with AI bot drivers
+      const remainingCount = 8 - (1 + humanRacers.length);
+      const fillerBots = BOT_DRIVERS.slice(humanRacers.length, humanRacers.length + remainingCount).map((b, idx) => {
+        const gridPos = humanRacers.length + idx + (humanRacers.length + idx >= 3 ? 2 : 1);
+        return {
+          ...b,
+          username: b.name,
+          isPlayer: false,
+          isHuman: false,
+          progress: 0,
+          wpm: b.targetWpm,
+          gridPosition: gridPos,
+          position: gridPos,
+          lane: b.lane,
+          speed: 0
+        };
+      });
+
+      const combined = [playerRacer, ...humanRacers, ...fillerBots];
+      allRacers = combined.sort((a, b) => a.gridPosition - b.gridPosition);
+    } else {
+      // Single Player / Quick Race default grid
+      const playerRacer = {
+        id: userProfile.id || 'player',
+        name: 'You',
+        username: userProfile.username || 'You',
+        avatar: userProfile.avatar || '👤',
+        isPlayer: true,
+        isHuman: true,
+        progress: 0,
+        wpm: 0,
+        gridPosition: 4,
+        position: 4,
+        lane: 0,
+        speed: 0
+      };
+
+      const botRacers = BOT_DRIVERS.map((b, idx) => {
+        const gridPos = idx < 3 ? idx + 1 : idx + 2;
+        return {
+          ...b,
+          username: b.name,
+          isPlayer: false,
+          isHuman: false,
+          progress: 0,
+          wpm: b.targetWpm,
+          gridPosition: gridPos,
+          position: gridPos,
+          lane: b.lane,
+          speed: 0
+        };
+      });
+
+      allRacers = [
+        botRacers[0], // 1 kero
+        botRacers[1], // 2 aryan
+        botRacers[2], // 3 nova
+        playerRacer,  // 4 You
+        botRacers[3], // 5 zenyx
+        botRacers[4], // 6 rhea
+        botRacers[5], // 7 blank
+        botRacers[6]  // 8 arlo
+      ];
+    }
 
     set({
       view: 'racing',
@@ -164,6 +258,7 @@ export const useGameStore = create((set, get) => ({
       elapsedSeconds: 0,
       startTime: null,
       isFinished: false,
+      finalRank: 4,
       results: null,
       racers: allRacers
     });
@@ -212,7 +307,7 @@ export const useGameStore = create((set, get) => ({
 
       // Calculate WPM: (characters / 5) / minutes
       const now = Date.now();
-      const elapsedMin = Math.max(0.01, (now - state.startTime) / 60000);
+      const elapsedMin = Math.max(0.015, (now - state.startTime) / 60000);
       const totalChars = newTyped.length;
       const calculatedWpm = Math.round((totalChars / 5) / elapsedMin);
       const accuracy = Math.max(0, Math.round(((totalChars - state.errorsCount) / totalChars) * 100));
@@ -223,18 +318,25 @@ export const useGameStore = create((set, get) => ({
 
       soundEngine.updateEngineSpeed(targetSpeed);
 
-      // Update player racer in racers list
+      // Update player in racers list
       const updatedRacers = state.racers.map(r => {
         if (r.isPlayer) {
-          return { ...r, progress: newProgress, wpm: calculatedWpm, speed: targetSpeed };
+          const isDone = newTyped.length === targetText.length;
+          return {
+            ...r,
+            progress: newProgress,
+            wpm: calculatedWpm,
+            speed: targetSpeed,
+            isFinished: isDone,
+            finishTime: isDone ? (now - state.startTime) / 1000 : null
+          };
         }
         return r;
       });
 
-      // Sort rankings by progress descending
-      const sorted = [...updatedRacers].sort((a, b) => b.progress - a.progress);
-      const rankedRacers = sorted.map((r, i) => ({ ...r, position: i + 1 }));
-      const playerRank = rankedRacers.find(r => r.isPlayer)?.position || 3;
+      // Compute smooth live rankings
+      const rankedRacers = state.computeRankings(updatedRacers);
+      const playerRank = rankedRacers.find(r => r.isPlayer)?.position || 4;
 
       set({
         typedText: newTyped,
@@ -319,37 +421,76 @@ export const useGameStore = create((set, get) => ({
     });
   },
 
-  // Opponent bot progress simulation tick
+  // Update remote multiplayer human racer
+  updateRemoteRacer: ({ racerId, progress, wpm, speed, lane, isFinished, finishTime }) => {
+    const state = get();
+    if (!state.isRacing && !state.isCountdown) return;
+
+    let racerFound = false;
+    const updatedRacers = state.racers.map(r => {
+      if (r.id === racerId) {
+        racerFound = true;
+        return {
+          ...r,
+          progress: progress !== undefined ? progress : r.progress,
+          wpm: wpm !== undefined ? wpm : r.wpm,
+          speed: speed !== undefined ? speed : r.speed,
+          lane: lane !== undefined ? lane : r.lane,
+          isFinished: isFinished !== undefined ? isFinished : r.isFinished,
+          finishTime: finishTime !== undefined ? finishTime : r.finishTime
+        };
+      }
+      return r;
+    });
+
+    if (!racerFound) return;
+
+    const rankedRacers = state.computeRankings(updatedRacers);
+    const playerRank = rankedRacers.find(r => r.isPlayer)?.position || state.finalRank;
+
+    set({
+      racers: rankedRacers,
+      finalRank: playerRank
+    });
+  },
+
+  // Opponent bot progress simulation tick (called at stable 10Hz)
   tickRaceBots: (deltaTime = 0.1) => {
     const state = get();
     if (!state.isRacing || state.isFinished) return;
 
     const currentElapsed = state.startTime ? (Date.now() - state.startTime) / 1000 : 0;
+    const targetLength = state.passage?.text?.length || 100;
 
     const updatedRacers = state.racers.map(r => {
-      if (r.isPlayer) return r;
+      if (r.isPlayer || r.isHuman) return r;
 
-      // Bot progress increases smoothly based on their target WPM
-      // Target WPM 100 takes approx 45 seconds for typical passage
-      const speedFactor = (r.targetWpm || 100) / 100;
-      const progressDelta = (deltaTime / 40) * speedFactor * (0.95 + Math.random() * 0.1);
-      const newProgress = Math.min(1, r.progress + progressDelta);
+      if (r.isFinished) return r;
 
-      // Micro variation in displayed WPM
-      const displayWpm = Math.max(60, Math.round(r.targetWpm + Math.sin(currentElapsed * 2 + r.lane) * 4));
+      // Characters per second for target WPM: (WPM * 5) / 60
+      const charsPerSec = ((r.targetWpm || 100) * 5) / 60;
+      const progressDelta = (deltaTime * charsPerSec) / targetLength;
+      
+      // Subtle human typing rhythm variation
+      const jitter = 0.96 + Math.sin(currentElapsed * 1.5 + (r.gridPosition || 1)) * 0.08;
+      const newProgress = Math.min(1, r.progress + progressDelta * jitter);
+      const isDone = newProgress >= 1;
+
+      // Realistic live WPM oscillation
+      const displayWpm = Math.max(60, Math.round(r.targetWpm + Math.sin(currentElapsed * 2.2 + r.gridPosition) * 4));
 
       return {
         ...r,
         progress: newProgress,
         wpm: displayWpm,
-        speed: Math.round(displayWpm * 1.6)
+        speed: Math.round(displayWpm * 1.65),
+        isFinished: isDone,
+        finishTime: isDone ? currentElapsed : null
       };
     });
 
-    // Re-rank racers by progress
-    const sorted = [...updatedRacers].sort((a, b) => b.progress - a.progress);
-    const rankedRacers = sorted.map((r, i) => ({ ...r, position: i + 1 }));
-    const playerRank = rankedRacers.find(r => r.isPlayer)?.position || 3;
+    const rankedRacers = state.computeRankings(updatedRacers);
+    const playerRank = rankedRacers.find(r => r.isPlayer)?.position || state.finalRank;
 
     set({
       racers: rankedRacers,
