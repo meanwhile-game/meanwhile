@@ -1,8 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Environment variables for Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Environment variables for Supabase with robust URL sanitization
+const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+// Clean any accidental /rest/v1/ endpoint paths or trailing slashes
+const supabaseUrl = rawSupabaseUrl
+  .replace(/\/rest\/v1\/?$/i, '')
+  .replace(/\/+$/, '')
+  .trim();
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 const isConfigured = Boolean(
   supabaseUrl && 
