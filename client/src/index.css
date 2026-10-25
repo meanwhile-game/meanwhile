@@ -1,255 +1,104 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+@layer base {
+  :root {
+    --bg-deep: #070a13;
+    --bg-surface: #0e1526;
+    --bg-elevated: #151f38;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-focus: rgba(245, 158, 11, 0.5);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-amber: #f59e0b;
+    --accent-lavender: #a5b4fc;
+    --accent-teal: #14b8a6;
+  }
+
+  body {
+    background-color: #070a13;
+    color: #f8fafc;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+  }
 }
 
-:root {
-  color-scheme: dark;
-
-  /* Obsidian theme default fallback */
-  --bg-primary: #0b0c0e;
-  --bg-secondary: #121418;
-  --bg-elevated: #171a20;
-  --bg-muted: #20242d;
-  
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-default: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 255, 255, 0.22);
-  
-  --text-primary: #f4f4f6;
-  --text-secondary: #9499a5;
-  --text-muted: #5b616e;
-  
-  --accent: #10b981;
-  --accent-hover: #059669;
-  --accent-subtle: rgba(16, 185, 129, 0.12);
-  --accent-text: #34d399;
-
-  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.55);
+/* Handwritten Script Font Utility */
+.font-script {
+  font-family: 'Caveat', cursive;
 }
 
-[data-theme="porcelain"] {
-  color-scheme: light;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  user-select: none;
-  transition: background-color 200ms ease, color 200ms ease;
-}
-
-/* Minimalist Scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-default);
-  border-radius: 2.5px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
-}
-
-/* Core Design System Tokens & Utility Classes */
-.v-surface {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-}
-
-.v-surface-elevated {
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border-default);
-}
-
-.v-card {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--card-shadow);
-}
-
-.v-card-interactive {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.v-card-interactive:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6);
-}
-
-/* Tabular Numbers */
-.font-num {
-  font-family: var(--font-mono);
+/* Monospace Tabular Number Utility */
+.font-mono-num {
+  font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
 }
 
-/* Primary Button */
-.v-btn-primary {
-  background-color: var(--accent);
-  color: #050608;
-  font-weight: 700;
-  transition: all 160ms ease;
-  letter-spacing: 0.02em;
-}
-.v-btn-primary:hover {
-  background-color: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.45);
-}
-.v-btn-primary:active {
-  transform: scale(0.98);
-}
-
-/* Secondary Button */
-.v-btn-secondary {
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border-default);
-  color: var(--text-primary);
-  font-weight: 600;
-  transition: all 160ms ease;
-}
-.v-btn-secondary:hover {
-  border-color: var(--border-strong);
-  background-color: var(--bg-muted);
-  transform: translateY(-1px);
-}
-.v-btn-secondary:active {
-  transform: scale(0.98);
-}
-
-/* Cyber Grid Backgrounds */
-.bg-cyber-grid {
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 36px 36px;
-}
-
-.bg-circuit-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-/* Neon Glow Accents */
-.glow-emerald {
-  box-shadow: 0 0 35px -5px rgba(0, 255, 135, 0.35);
-}
-.glow-cyan {
-  box-shadow: 0 0 35px -5px rgba(6, 182, 212, 0.35);
-}
-.glow-amber {
-  box-shadow: 0 0 35px -5px rgba(245, 158, 11, 0.35);
-}
-.glow-rose {
-  box-shadow: 0 0 35px -5px rgba(244, 63, 94, 0.35);
-}
-
-/* Animated Border Glow */
-@keyframes borderPulse {
-  0%, 100% {
-    border-color: rgba(16, 185, 129, 0.4);
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
-  }
-  50% {
-    border-color: rgba(16, 185, 129, 0.9);
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
-  }
-}
-.animate-border-pulse {
-  animation: borderPulse 2.5s infinite ease-in-out;
-}
-
-/* Repeating Checkered Finish Flag */
-.bg-repeating-checkered {
-  background-image: 
-    linear-gradient(45deg, #ffffff 25%, transparent 25%),
-    linear-gradient(-45deg, #ffffff 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #ffffff 75%),
-    linear-gradient(-45deg, transparent 75%, #ffffff 75%);
-  background-size: 8px 8px;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
-}
-
-/* 3D Arcade Buttons (CrazyGames / Richup Style) */
-.btn-arcade-play {
-  background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
-  border-bottom: 4px solid #9a3412;
-  box-shadow: 0 6px 20px -2px rgba(249, 115, 22, 0.45);
-  transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.btn-arcade-play:hover {
-  background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
-  transform: translateY(-1px);
-}
-.btn-arcade-play:active {
-  transform: translateY(3px);
-  border-bottom-width: 1px;
-}
-
-.btn-arcade-green {
-  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-  border-bottom: 4px solid #065f46;
-  box-shadow: 0 6px 20px -2px rgba(16, 185, 129, 0.45);
-  transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.btn-arcade-green:hover {
-  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
-  transform: translateY(-1px);
-}
-.btn-arcade-green:active {
-  transform: translateY(3px);
-  border-bottom-width: 1px;
-}
-
-.btn-arcade-blue {
-  background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
-  border-bottom: 4px solid #075985;
-  box-shadow: 0 6px 20px -2px rgba(14, 165, 233, 0.45);
-  transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.btn-arcade-blue:hover {
-  background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 100%);
-  transform: translateY(-1px);
-}
-.btn-arcade-blue:active {
-  transform: translateY(3px);
-  border-bottom-width: 1px;
-}
-
-.btn-arcade-pill {
-  border-bottom: 3px solid rgba(0, 0, 0, 0.4);
-  transition: all 120ms ease;
-}
-.btn-arcade-pill:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
-}
-
-/* Race HUD Cockpit */
-.v-cockpit {
-  background: rgba(10, 14, 22, 0.88);
+/* Custom Glassmorphism Cards */
+.glass-panel {
+  background: rgba(14, 21, 38, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-[data-theme="porcelain"] .v-cockpit {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Subtle transitions for theme switching */
-* {
-  border-color: var(--border-subtle);
+.glass-pill {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Card Glow Effect */
+.card-glow-amber {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.15);
+}
+
+.card-glow-blue {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 25px -5px rgba(56, 189, 248, 0.15);
+}
+
+/* Custom Minimal Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(7, 10, 19, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Smooth Blinking Cursor for Typing Test */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-cursor-blink {
+  animation: blink 1s infinite;
+}
+
+/* Road Speed Lines Pulse */
+@keyframes speedLine {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.speed-line {
+  animation: speedLine 0.6s linear infinite;
 }
