@@ -1,90 +1,197 @@
-// Track Definitions matching the UI reference designs
+// Track & Circuit Definitions matching the 4-Circuit Reference Image & Upcoming Locked Maps
 
 export const TRACKS = [
+  // --- 01 MOUNTAIN CIRCUIT (Reference Quadrant 1) ---
   {
-    id: 'coastal-drive',
-    name: 'Coastal Drive',
-    subtitle: 'Sunsets, oceans, four long stretches.',
-    difficulty: 'Easy',
-    distanceKm: 4.8,
+    id: 'mountain-circuit',
+    circuitNumber: '01',
+    name: 'MOUNTAIN CIRCUIT',
+    subtitle: 'Lush forests. Sharp turns. Endless views.',
+    difficulty: 'Challenging',
+    distanceKm: 5.2,
     laps: 2,
-    gradient: 'from-amber-600/40 via-purple-900/30 to-slate-950',
-    skyTheme: 'sunset',
-    accentColor: '#f59e0b',
-    skyColorTop: '#1e1b4b',
+    isLocked: false,
+    skyTheme: 'mountain',
+    accentColor: '#34d399',
+    skyColorTop: '#102538',
+    skyColorBottom: '#2d4a3e',
+    roadColor: '#17202a',
+    fogColor: '#1a2e30',
+    fogDensity: 0.0025,
+    ambientLight: '#86efac',
+    turns: 'Alpine Hairpins',
+    description: 'Winding viaducts cut through emerald pine valleys and towering mountain waterfalls. Demands precision pacing through sharp elevation transitions.',
+    mainImage: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
+    thumbnails: [
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=300&q=80'
+    ],
+    svgPath: 'M 50 15 C 75 10, 85 35, 75 55 C 65 75, 80 95, 50 105 C 25 95, 20 70, 35 50 C 45 35, 25 20, 50 15 Z'
+  },
+
+  // --- 02 COASTAL CIRCUIT (Reference Quadrant 2) ---
+  {
+    id: 'coastal-circuit',
+    circuitNumber: '02',
+    name: 'COASTAL CIRCUIT',
+    subtitle: 'Ocean breeze. Flowing roads. Pure momentum.',
+    difficulty: 'Flowing',
+    distanceKm: 6.1,
+    laps: 2,
+    isLocked: false,
+    skyTheme: 'coastal',
+    accentColor: '#38bdf8',
+    skyColorTop: '#132238',
     skyColorBottom: '#ea580c',
-    roadColor: '#171c26',
-    fogColor: '#451a3b',
+    roadColor: '#161c28',
+    fogColor: '#2b1b36',
     fogDensity: 0.0018,
     ambientLight: '#fde047',
-    sceneryType: 'coastal',
-    elevationChange: 'Mild',
-    turns: 'Gentle Sweeps',
-    description: 'Golden hour along the cliff edge. Wide straights and smooth rolling camber give you ample room to achieve uninterrupted typing cadence.'
+    turns: 'Oceanic Sweepers',
+    description: 'Sun-drenched sea cliffs overlooking azure waters and distant sailboats. Wide rolling bends designed to unlock peak typing cadence.',
+    mainImage: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=1200&q=80',
+    thumbnails: [
+      'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=300&q=80'
+    ],
+    svgPath: 'M 40 18 C 70 12, 90 35, 80 60 C 70 85, 75 102, 45 105 C 20 102, 18 75, 30 55 C 38 40, 15 25, 40 18 Z'
   },
+
+  // --- 03 SNOW CIRCUIT (Reference Quadrant 3) ---
   {
-    id: 'neon-city',
-    name: 'Neon City',
-    subtitle: 'Highways, skyscrapers, night life.',
-    difficulty: 'Medium',
-    distanceKm: 5.4,
+    id: 'snow-circuit',
+    circuitNumber: '03',
+    name: 'SNOW CIRCUIT',
+    subtitle: 'Snowy heights. Icy corners. A different kind of thrill.',
+    difficulty: 'Extreme',
+    distanceKm: 4.8,
     laps: 2,
-    gradient: 'from-cyan-900/40 via-violet-950/40 to-slate-950',
-    skyTheme: 'night',
+    isLocked: false,
+    skyTheme: 'snow',
+    accentColor: '#93c5fd',
+    skyColorTop: '#0b1626',
+    skyColorBottom: '#cbd5e1',
+    roadColor: '#1a202c',
+    fogColor: '#1e293b',
+    fogDensity: 0.0035,
+    ambientLight: '#bfdbfe',
+    turns: 'Icy Transitions',
+    description: 'Carved through frosty snowbanks and towering frozen peaks. Low-grip sensory feedback and pristine white vistas reward calm focus.',
+    mainImage: 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?auto=format&fit=crop&w=1200&q=80',
+    thumbnails: [
+      'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1517299321609-52687d1bc55a?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1491555103944-7c647fd857e6?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=300&q=80'
+    ],
+    svgPath: 'M 45 20 C 70 15, 80 40, 70 65 C 60 85, 80 98, 48 105 C 22 98, 20 68, 32 48 C 40 32, 22 25, 45 20 Z'
+  },
+
+  // --- 04 CITY CIRCUIT (Reference Quadrant 4) ---
+  {
+    id: 'city-circuit',
+    circuitNumber: '04',
+    name: 'CITY CIRCUIT',
+    subtitle: 'Neon lights. High-speed streets. A new pace.',
+    difficulty: 'Fast Pace',
+    distanceKm: 5.6,
+    laps: 2,
+    isLocked: false,
+    skyTheme: 'city',
+    accentColor: '#c084fc',
+    skyColorTop: '#050713',
+    skyColorBottom: '#220b38',
+    roadColor: '#0f1422',
+    fogColor: '#160d29',
+    fogDensity: 0.002,
+    ambientLight: '#e879f9',
+    turns: 'Grid Sprints',
+    description: 'Rain-slicked metropolitan highway cutting beneath illuminated neon towers, cyber billboards, and glowing purple overpasses.',
+    mainImage: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=80',
+    thumbnails: [
+      'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=300&q=80'
+    ],
+    svgPath: 'M 30 20 L 75 20 C 85 20, 85 45, 75 45 L 50 45 L 50 65 L 75 65 C 85 65, 85 95, 75 95 L 30 95 C 15 95, 15 20, 30 20 Z'
+  },
+
+  // --- 05 CHENNAI CIRCUIT (Locked - Under Development) ---
+  {
+    id: 'chennai-circuit',
+    circuitNumber: '05',
+    name: 'CHENNAI GRAND PRIX',
+    subtitle: 'Coastal speedway, Marina sea breeze, high-velocity straights.',
+    difficulty: 'Grand Prix',
+    distanceKm: 5.8,
+    laps: 2,
+    isLocked: true,
+    statusBadge: 'Under Development',
+    releaseSeason: 'Season 2 Expansion',
+    skyTheme: 'chennai',
+    accentColor: '#f59e0b',
+    mainImage: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80',
+    description: 'Inspired by the historic Madras Motor Race Track and the sweeping Marina coastline. High-speed endurance layout currently in active 3D track modeling.'
+  },
+
+  // --- 06 HYDERABAD STREET CIRCUIT (Locked - Under Development) ---
+  {
+    id: 'hyderabad-circuit',
+    circuitNumber: '06',
+    name: 'HYDERABAD STREET CIRCUIT',
+    subtitle: 'Hussain Sagar lakefront loop, elevated flyovers, night lights.',
+    difficulty: 'Street Circuit',
+    distanceKm: 6.4,
+    laps: 2,
+    isLocked: true,
+    statusBadge: 'Under Development',
+    releaseSeason: 'Season 2 Expansion',
+    skyTheme: 'hyderabad',
     accentColor: '#38bdf8',
-    skyColorTop: '#050814',
-    skyColorBottom: '#181836',
-    roadColor: '#0e131f',
-    fogColor: '#0d1326',
-    fogDensity: 0.0022,
-    ambientLight: '#c084fc',
-    sceneryType: 'city',
-    elevationChange: 'Flat Viaducts',
-    turns: '90° City Blocks',
-    description: 'Rain-slicked asphalt reflecting towering holographic neon facades. Tight lane discipline and sharp focus reward precision typing.'
+    mainImage: 'https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=1200&q=80',
+    description: 'A technical city circuit tracing the contours of the historic lake and illuminated urban expressways. Under procedural lighting pass.'
   },
+
+  // --- 07 BANGALORE SILICON EXPRESSWAY (Locked - Under Development) ---
   {
-    id: 'mountain-pass',
-    name: 'Mountain Pass',
-    subtitle: 'Sharp turns, elevation, pure focus.',
-    difficulty: 'Hard',
-    distanceKm: 6.2,
-    laps: 1,
-    gradient: 'from-emerald-900/40 via-indigo-950/40 to-slate-950',
-    skyTheme: 'twilight',
-    accentColor: '#34d399',
-    skyColorTop: '#070f21',
-    skyColorBottom: '#162e3b',
-    roadColor: '#141a24',
-    fogColor: '#112233',
-    fogDensity: 0.003,
-    ambientLight: '#93c5fd',
-    sceneryType: 'mountain',
-    elevationChange: 'Steep Climbs',
-    turns: 'Hairpin Switches',
-    description: 'Crisp alpine air cut by headlight beams. Climbing hairpin roads test your sustained rhythm as mist rolls across the asphalt.'
-  },
-  {
-    id: 'desert-run',
-    name: 'Desert Run',
-    subtitle: 'Open road, minimal distraction.',
+    id: 'bangalore-circuit',
+    circuitNumber: '07',
+    name: 'BANGALORE EXPRESSWAY',
+    subtitle: 'Elevated tech corridors, rain-slicked flyovers, cool evening mist.',
     difficulty: 'Endurance',
-    distanceKm: 7.1,
+    distanceKm: 7.2,
     laps: 1,
-    gradient: 'from-orange-900/40 via-stone-900/40 to-slate-950',
-    skyTheme: 'dusk',
-    accentColor: '#fb923c',
-    skyColorTop: '#1a101f',
-    skyColorBottom: '#7c2d12',
-    roadColor: '#191516',
-    fogColor: '#331713',
-    fogDensity: 0.0015,
-    ambientLight: '#fed7aa',
-    sceneryType: 'desert',
-    elevationChange: 'Undulating',
-    turns: 'High-Speed Banking',
-    description: 'An endless strip of blacktop cutting through ancient red rock canyons under a quiet twilight canopy. Total focus, zero noise.'
+    isLocked: true,
+    statusBadge: 'Under Development',
+    releaseSeason: 'Season 2 Expansion',
+    skyTheme: 'bangalore',
+    accentColor: '#10b981',
+    mainImage: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=1200&q=80',
+    description: 'Sweeping multi-level flyovers through the tech capital. High sustained cadence challenge scheduled for post-launch drop.'
+  },
+
+  // --- 08 MUMBAI SEA LINK (Locked - Under Development) ---
+  {
+    id: 'mumbai-circuit',
+    circuitNumber: '08',
+    name: 'MUMBAI SEA LINK',
+    subtitle: 'Vast cable-stayed bridge slicing across the Arabian Sea.',
+    difficulty: 'High Speed',
+    distanceKm: 8.0,
+    laps: 1,
+    isLocked: true,
+    statusBadge: 'Under Development',
+    releaseSeason: 'Season 2 Expansion',
+    skyTheme: 'mumbai',
+    accentColor: '#f43f5e',
+    mainImage: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=1200&q=80',
+    description: 'An iconic 8-lane ocean causeway bathed in twilight reflections and monsoon sea spray. In engineering development.'
   }
 ];
 
-export const getTrackById = (id) => TRACKS.find(t => t.id === id) || TRACKS[0];
+export const getTrackById = (id) => TRACKS.find(t => t.id === id) || TRACKS[1]; // defaults to 02 Coastal Circuit

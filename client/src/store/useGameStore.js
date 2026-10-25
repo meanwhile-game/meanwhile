@@ -50,7 +50,7 @@ export const useGameStore = create((set, get) => ({
   setProfile: (newProfile) => set((state) => ({ profile: { ...state.profile, ...newProfile } })),
 
   // Machine & Track Selection
-  selectedTrackId: 'coastal-drive',
+  selectedTrackId: 'coastal-circuit',
   setSelectedTrackId: (id) => {
     soundEngine.playButtonClick();
     set({ selectedTrackId: id });
@@ -102,7 +102,7 @@ export const useGameStore = create((set, get) => ({
   initRace: (customPassage = null) => {
     let passage = customPassage;
     if (!passage) {
-      if (get().selectedTrackId === 'coastal-drive') {
+      if (get().selectedTrackId === 'coastal-circuit') {
         passage = PASSAGES[0]; // Exact coastal run passage from reference screenshot
       } else {
         passage = getRandomPassage();

@@ -81,7 +81,7 @@ export const HomeShowcase = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {TRACKS.map((track) => (
+          {TRACKS.filter(t => !t.isLocked).map((track) => (
             <div
               key={track.id}
               onClick={() => {
@@ -91,7 +91,7 @@ export const HomeShowcase = () => {
               className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] hover:border-amber-400/50 transition-all cursor-pointer group"
             >
               <div className="flex items-center justify-between text-xs text-[#64748b] mb-3">
-                <span className="font-semibold text-amber-400">{track.difficulty}</span>
+                <span className="font-semibold text-amber-400 font-mono-num">{track.circuitNumber} · {track.difficulty}</span>
                 <span>{track.distanceKm} KM</span>
               </div>
               <h3 className="text-base font-bold text-[#f8fafc] group-hover:text-amber-400 transition-colors">

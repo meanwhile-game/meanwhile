@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../../store/useGameStore.js';
 import { TRACKS } from '../../data/tracks.js';
 import { soundEngine } from '../../sound/soundEngine.js';
-import { ArrowLeft, ArrowRight, Zap, Users, Lock, Clock, Gauge, Compass } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  Zap, 
+  Users, 
+  Lock, 
+  Clock, 
+  Compass, 
+  Sparkles, 
+  AlertCircle,
+  Layers,
+  ChevronRight
+} from 'lucide-react';
 
 export const TrackSelectionScreen = () => {
   const { 
@@ -14,6 +26,23 @@ export const TrackSelectionScreen = () => {
     initRace,
     setMultiplayerModalOpen
   } = useGameStore();
+
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'upcoming'
+  const [lockedNotification, setLockedNotification] = useState(null);
+
+  const activeTracks = TRACKS.filter(t => !t.isLocked);
+  const lockedTracks = TRACKS.filter(t => t.isLocked);
+
+  const handleSelectTrack = (track) => {
+    soundEngine.playButtonClick();
+    if (track.isLocked) {
+      setLockedNotification(`${track.name} is currently under development for Season 2! Please choose one of the 4 active circuits.`);
+      setTimeout(() => setLockedNotification(null), 3500);
+      return;
+    }
+    setLockedNotification(null);
+    setSelectedTrackId(track.id);
+  };
 
   const handleStartRace = () => {
     soundEngine.playButtonClick();
@@ -31,27 +60,11 @@ export const TrackSelectionScreen = () => {
     { id: 'time_trial', label: 'Time Trial', icon: Clock }
   ];
 
-  // Cinematic preview images for the 4 tracks
-  const trackImages = {
-    'coastal-drive': 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=800&q=80',
-    'neon-city': 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=800&q=80',
-    'mountain-pass': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
-    'desert-run': 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80'
-  };
-
-  // SVG circuit paths for each track minimap icon
-  const trackSvgPaths = {
-    'coastal-drive': 'M 10 35 C 10 15, 30 10, 50 15 C 70 20, 85 10, 90 25 C 95 40, 75 55, 55 50 C 35 45, 10 55, 10 35 Z',
-    'neon-city': 'M 15 15 L 75 15 C 85 15, 85 30, 75 30 L 45 30 L 45 50 L 75 50 C 85 50, 85 65, 75 65 L 15 65 C 5 65, 5 15, 15 15 Z',
-    'mountain-pass': 'M 15 50 C 25 20, 35 60, 45 25 C 55 60, 65 15, 75 40 C 85 20, 90 60, 80 65 C 50 70, 20 65, 15 50 Z',
-    'desert-run': 'M 10 40 C 15 15, 70 10, 85 30 C 95 45, 80 65, 50 60 C 20 55, 5 60, 10 40 Z'
-  };
-
   return (
-    <div className="min-h-[calc(100vh-65px)] bg-[#070a13] px-6 lg:px-14 py-8 flex flex-col justify-between">
-      {/* Top Header */}
-      <div className="max-w-7xl mx-auto w-full">
-        <div className="flex items-center justify-between pb-6 border-b border-white/[0.06]">
+    <div className="min-h-[calc(100vh-65px)] bg-[#070a13] px-6 lg:px-14 py-8 flex flex-col justify-between select-none">
+      <div className="max-w-7xl mx-auto w-full space-y-8">
+        {/* Top Header */}
+        <div className="flex items-center justify-between pb-5 border-b border-white/[0.06]">
           <button
             onClick={() => setView('home')}
             className="flex items-center gap-2 text-sm text-[#94a3b8] hover:text-[#f8fafc] transition-colors cursor-pointer"
@@ -59,84 +72,209 @@ export const TrackSelectionScreen = () => {
             <ArrowLeft className="w-4 h-4" />
             <span className="font-bold text-[#f8fafc]">meanwhile</span>
           </button>
-          <div className="text-xs text-[#64748b] tracking-wider uppercase">
-            Select Track & Mode
+
+          {/* Tab Filter: Active Circuits vs Upcoming Circuits */}
+          <div className="flex items-center gap-1.5 p-1 rounded-full bg-[#0c1222] border border-white/[0.08]">
+            <button
+              onClick={() => {
+                soundEngine.playButtonClick();
+                setActiveTab('active');
+              }}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'active'
+                  ? 'bg-amber-400 text-slate-950 shadow-sm'
+                  : 'text-[#94a3b8] hover:text-[#f8fafc]'
+              }`}
+            >
+              Active Circuits (4)
+            </button>
+            <button
+              onClick={() => {
+                soundEngine.playButtonClick();
+                setActiveTab('upcoming');
+              }}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'upcoming'
+                  ? 'bg-white/15 text-[#f8fafc] shadow-sm'
+                  : 'text-[#94a3b8] hover:text-[#f8fafc]'
+              }`}
+            >
+              <Lock className="w-3 h-3 text-amber-400" />
+              <span>Upcoming & Locked (4)</span>
+            </button>
           </div>
         </div>
 
-        {/* Title & Subtitle */}
-        <div className="pt-8 pb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#f8fafc]">
-            Choose Your Track
-          </h1>
-          <p className="text-sm sm:text-base text-[#94a3b8] mt-1.5">
-            Different roads for different moods.
-          </p>
+        {/* Title & Notification */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[#f8fafc]">
+              {activeTab === 'active' ? 'Grand Prix Circuits' : 'Expansion Circuits (Under Development)'}
+            </h1>
+            <p className="text-sm sm:text-base text-[#94a3b8] mt-1.5">
+              {activeTab === 'active' 
+                ? '4 curated roads for different driving moods. Select your asphalt.'
+                : 'Upcoming Indian circuits scheduled for Season 2: Chennai, Hyderabad, Bangalore, Mumbai.'}
+            </p>
+          </div>
+
+          {lockedNotification && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-semibold text-amber-300 flex items-center gap-2 animate-bounce">
+              <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <span>{lockedNotification}</span>
+            </div>
+          )}
         </div>
 
-        {/* 4 Track Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {TRACKS.map((track) => {
-            const isSelected = selectedTrackId === track.id;
-            return (
+        {/* --- ACTIVE 4 CIRCUITS GRID (Matching Reference Image Layout) --- */}
+        {activeTab === 'active' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+            {activeTracks.map((track) => {
+              const isSelected = selectedTrackId === track.id;
+              return (
+                <div
+                  key={track.id}
+                  onClick={() => handleSelectTrack(track)}
+                  className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col justify-between border ${
+                    isSelected
+                      ? 'border-sky-400 ring-2 ring-sky-400/30 shadow-[0_0_35px_-5px_rgba(56,189,248,0.3)] scale-[1.01]'
+                      : 'border-white/[0.08] hover:border-white/[0.22] bg-[#0c1222]'
+                  }`}
+                >
+                  {/* Hero Image Stage */}
+                  <div className="relative aspect-[16/9] w-full overflow-hidden">
+                    <div
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                      style={{ backgroundImage: `url('${track.mainImage}')` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c1222] via-[#0c1222]/40 to-black/30" />
+
+                    {/* Circuit Header Overlay matching Reference Quadrant */}
+                    <div className="absolute top-5 left-5 right-5 flex items-start justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-mono-num font-bold text-sky-400 border-b-2 border-sky-400 pb-0.5">
+                            {track.circuitNumber}
+                          </span>
+                          <h2 className="text-xl sm:text-2xl font-black text-[#f8fafc] tracking-tight">
+                            {track.name}
+                          </h2>
+                        </div>
+                        <p className="text-xs text-slate-300 drop-shadow">
+                          {track.subtitle}
+                        </p>
+                      </div>
+
+                      {isSelected && (
+                        <span className="px-3 py-1 rounded-full bg-sky-400 text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-md">
+                          Selected
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Minimap Contour Floating Card on the Left matching Reference */}
+                    <div className="absolute bottom-4 left-5 flex items-center gap-3">
+                      <div className="w-16 h-20 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 p-2 flex items-center justify-center shadow-lg">
+                        <svg viewBox="0 0 100 120" className="w-full h-full fill-none stroke-sky-400 stroke-[4]">
+                          <path d={track.svgPath} />
+                        </svg>
+                      </div>
+                      <div className="text-xs font-mono-num space-y-0.5 text-white drop-shadow">
+                        <div className="font-bold text-sm">{track.distanceKm} KM</div>
+                        <div className="text-[11px] text-slate-300 font-semibold">{track.laps} LAPS</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4 Gallery Thumbnails Strip matching Reference Image Bottom */}
+                  <div className="p-4 bg-[#0a0f1d] border-t border-white/[0.06] flex items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2 overflow-hidden flex-1">
+                      {track.thumbnails?.map((thumb, idx) => (
+                        <div
+                          key={idx}
+                          className="w-16 h-10 rounded-md overflow-hidden border border-white/10 flex-shrink-0"
+                        >
+                          <img 
+                            src={thumb} 
+                            alt={`preview-${idx}`} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <span className="text-[11px] text-[#64748b] font-medium pl-2">
+                      {track.difficulty}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* --- LOCKED UPCOMING EXPANSION CIRCUITS (Under Development) --- */}
+        {activeTab === 'upcoming' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+            {lockedTracks.map((track) => (
               <div
                 key={track.id}
-                onClick={() => setSelectedTrackId(track.id)}
-                className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col justify-between border ${
-                  isSelected
-                    ? 'border-amber-400/80 shadow-[0_0_30px_-5px_rgba(245,158,11,0.25)] scale-[1.02]'
-                    : 'border-white/[0.08] hover:border-white/[0.2] bg-[#0c1222]/80 hover:bg-[#0e162a]'
-                }`}
+                onClick={() => handleSelectTrack(track)}
+                className="relative rounded-2xl overflow-hidden border border-white/[0.06] bg-[#0c1222]/60 cursor-not-allowed group opacity-85 hover:opacity-100 transition-opacity"
               >
-                {/* Visual Image Header */}
-                <div className="relative aspect-[16/10] w-full overflow-hidden">
+                {/* Image Background */}
+                <div className="relative aspect-[16/9] w-full overflow-hidden filter grayscale-[35%]">
                   <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                    style={{ backgroundImage: `url('${trackImages[track.id]}')` }}
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url('${track.mainImage}')` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c1222] via-[#0c1222]/30 to-black/20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c1222] via-[#0c1222]/80 to-black/70" />
 
-                  {/* Track Minimap Spline Icon */}
-                  <div className="absolute top-3 right-3 w-10 h-10 rounded-lg bg-black/50 backdrop-blur-md p-1.5 border border-white/10 flex items-center justify-center">
-                    <svg viewBox="0 0 100 80" className="w-full h-full fill-none stroke-amber-400 stroke-[3]">
-                      <path d={trackSvgPaths[track.id] || ''} />
-                    </svg>
+                  {/* Header */}
+                  <div className="absolute top-5 left-5 right-5 flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono-num font-bold text-amber-400 border-b border-amber-400">
+                          {track.circuitNumber}
+                        </span>
+                        <h2 className="text-xl font-black text-[#f8fafc] tracking-tight">
+                          {track.name}
+                        </h2>
+                      </div>
+                      <p className="text-xs text-[#94a3b8] mt-1">
+                        {track.subtitle}
+                      </p>
+                    </div>
+
+                    <span className="px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-300 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-md">
+                      <Lock className="w-3 h-3 text-amber-400" />
+                      <span>{track.statusBadge}</span>
+                    </span>
                   </div>
 
-                  {/* Difficulty Tag */}
-                  <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-semibold text-amber-300">
-                    {track.difficulty}
-                  </div>
-                </div>
-
-                {/* Card Content */}
-                <div className="p-5 flex-1 flex flex-col justify-between bg-[#0c1222]">
-                  <div>
-                    <h3 className="text-lg font-bold text-[#f8fafc] group-hover:text-amber-400 transition-colors">
-                      {track.name}
-                    </h3>
-                    <p className="text-xs text-[#94a3b8] mt-1 line-clamp-2 leading-relaxed">
-                      {track.subtitle}
+                  {/* Centered Lock Overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+                    <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-amber-400 mb-2 shadow-2xl">
+                      <Lock className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <span className="text-xs uppercase font-bold tracking-widest text-amber-400">
+                      Under Development
+                    </span>
+                    <p className="text-xs text-[#94a3b8] max-w-sm mt-1">
+                      {track.description}
                     </p>
                   </div>
-
-                  {/* Track Meta Details */}
-                  <div className="pt-4 mt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-[#64748b]">
-                    <span>{track.distanceKm} KM · {track.laps} {track.laps === 1 ? 'Lap' : 'Laps'}</span>
-                    <span className="text-slate-400">{track.turns}</span>
-                  </div>
                 </div>
 
-                {/* Active Indicator Ring */}
-                {isSelected && (
-                  <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px] tracking-wider uppercase">
-                    Active
-                  </div>
-                )}
+                {/* Footer specs */}
+                <div className="p-4 bg-[#0a0f1d] border-t border-white/[0.06] flex items-center justify-between text-xs text-[#64748b]">
+                  <span>{track.distanceKm} KM · {track.laps} Laps</span>
+                  <span className="text-amber-400/80 font-semibold">{track.releaseSeason}</span>
+                </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Bottom Control Bar matching Reference Image */}
@@ -144,7 +282,7 @@ export const TrackSelectionScreen = () => {
         {/* Left: Start Race Button */}
         <button
           onClick={handleStartRace}
-          className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#f8fafc] hover:bg-white text-slate-950 font-bold text-sm tracking-wide shadow-lg shadow-white/5 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
+          className="w-full sm:w-auto px-9 py-3.5 rounded-full bg-[#f8fafc] hover:bg-white text-slate-950 font-black text-sm tracking-wide shadow-xl shadow-white/5 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
         >
           <span>Start Race</span>
           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -161,7 +299,7 @@ export const TrackSelectionScreen = () => {
                 onClick={() => setGameMode(m.id)}
                 className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
                   isSelected
-                    ? 'bg-white/[0.12] text-[#f8fafc] border border-white/30 shadow-sm'
+                    ? 'bg-white/[0.14] text-[#f8fafc] border border-white/30 shadow-sm'
                     : 'text-[#94a3b8] hover:text-[#f8fafc] hover:bg-white/[0.04] border border-transparent'
                 }`}
               >
