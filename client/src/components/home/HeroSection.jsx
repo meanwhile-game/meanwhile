@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../../store/useGameStore.js';
 import { soundEngine } from '../../sound/soundEngine.js';
-import { ArrowRight, Play, Zap, Users, Compass, Car, Sparkles, Volume2 } from 'lucide-react';
+import { ArrowRight, Play, Zap, Users, Compass, Car, Sparkles, Volume2, Keyboard } from 'lucide-react';
+import keyboardHeroImage from '../../assets/mechanical_keyboard_hero.jpg';
 
 export const HeroSection = () => {
   const { setView, initRace, setGameMode } = useGameStore();
@@ -85,40 +86,64 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* Right Column: Cinematic Automotive Visual matching Reference */}
+        {/* Right Column: High-Speed Mechanical Keyboard Visual */}
         <div className="lg:col-span-6 relative flex justify-center items-center">
-          <div className="relative w-full aspect-[16/11] max-w-xl rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl shadow-black/80 group">
-            {/* Cinematic Sunset Road Visual Background */}
+          <div className="relative w-full aspect-[16/11] max-w-xl rounded-2xl overflow-hidden border border-white/[0.12] shadow-2xl shadow-black/90 group bg-[#0c1222]">
+            {/* Cinematic High-Speed Mechanical Keyboard Image */}
             <div 
               className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
               style={{
-                backgroundImage: `url('https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=1200&q=80')`
+                backgroundImage: `url(${keyboardHeroImage})`
               }}
             />
-            {/* Gradient Overlays for Twilight Automotive Mood */}
+            {/* Subtle Gradient Overlays for Ambient Glow & Contrast */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#070a13] via-transparent to-black/30" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#070a13]/80 via-transparent to-amber-950/20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#070a13]/60 via-transparent to-amber-950/20" />
 
-            {/* Glowing Taillights & Speed Accent */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-16 pointer-events-none">
-              <div className="w-16 h-2 bg-red-600 rounded-full blur-[2px] shadow-[0_0_20px_#ef4444]" />
-              <div className="w-16 h-2 bg-red-600 rounded-full blur-[2px] shadow-[0_0_20px_#ef4444]" />
+            {/* Top-Left: Live Mechanical Switch Status */}
+            <div className="absolute top-4 left-4 glass-pill px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-medium text-[#f8fafc] shadow-lg">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <Keyboard className="w-3.5 h-3.5 text-amber-400" />
+              <span>Tactile Switches · 1.2ms</span>
             </div>
 
-            {/* Floating Live Badge */}
-            <div className="absolute top-4 left-4 glass-pill px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-medium text-[#f8fafc]">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Coastal Drive · Golden Hour</span>
+            {/* Top-Right: Velocity Telemetry */}
+            <div className="absolute top-4 right-4 glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-mono-num font-bold text-amber-300 shadow-lg">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>142 WPM Cadence</span>
             </div>
 
-            {/* Floating Interactive Badge */}
-            <button
-              onClick={handleQuickLaunch}
-              className="absolute bottom-5 right-5 px-4 py-2 rounded-full glass-panel border border-white/20 text-xs font-semibold text-[#f8fafc] hover:bg-white/20 transition-all flex items-center gap-2 cursor-pointer shadow-lg"
-            >
-              <span>Launch 3D Race</span>
-              <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
-            </button>
+            {/* Bottom Interactive Area */}
+            <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between gap-3">
+              {/* Interactive Keycaps Strip */}
+              <div className="flex items-center gap-1.5">
+                {['W', 'P', 'M', '⚡'].map((keyLabel, idx) => (
+                  <button
+                    key={idx}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      soundEngine.playKeypress(keyLabel === '⚡');
+                    }}
+                    title="Click for mechanical keypress sound"
+                    className="w-8 h-8 rounded-lg bg-black/70 hover:bg-amber-400/20 active:scale-90 border border-white/20 hover:border-amber-400 text-[11px] font-mono font-bold text-white hover:text-amber-300 shadow-md backdrop-blur-md flex items-center justify-center transition-all cursor-pointer"
+                  >
+                    {keyLabel}
+                  </button>
+                ))}
+                <span className="text-[10px] text-slate-300 font-medium pl-1 hidden sm:inline drop-shadow">
+                  Click to test sound
+                </span>
+              </div>
+
+              {/* Floating Launch Button */}
+              <button
+                onClick={handleQuickLaunch}
+                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-[#f8fafc] backdrop-blur-md transition-all flex items-center gap-2 cursor-pointer shadow-lg hover:scale-105 active:scale-95"
+              >
+                <span>Launch Race</span>
+                <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
