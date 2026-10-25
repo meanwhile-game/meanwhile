@@ -1,9 +1,13 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, Stars, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGameStore } from '../../store/useGameStore.js';
 import { getTrackById } from '../../data/tracks.js';
+import { MountainEnvironment } from './environments/MountainEnvironment.jsx';
+import { CoastalEnvironment } from './environments/CoastalEnvironment.jsx';
+import { SnowEnvironment } from './environments/SnowEnvironment.jsx';
+import { CityEnvironment } from './environments/CityEnvironment.jsx';
 
 // High-fidelity 3D Racing Car matching the exact rear view in the reference screenshot
 const RealisticRaceCar = ({ 
@@ -134,147 +138,6 @@ const RealisticRaceCar = ({
   );
 };
 
-// Scenic Coastal Highway Environment with Tunnel Portal and Ocean matching Screenshot
-const ScenicCoastalRoad = ({ speedKmh = 100 }) => {
-  const roadOffsetRef = useRef(0);
-  const roadMatRef = useRef();
-  const dashesMatRef = useRef();
-  const lampsGroupRef = useRef();
-
-  useFrame((state, delta) => {
-    const moveStep = (speedKmh / 3.6) * delta;
-    roadOffsetRef.current = (roadOffsetRef.current + moveStep) % 60;
-
-    if (dashesMatRef.current) {
-      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 22;
-    }
-
-    if (lampsGroupRef.current) {
-      lampsGroupRef.current.position.z = (lampsGroupRef.current.position.z + moveStep * 0.5) % 80;
-    }
-  });
-
-  // Dashed lane line texture
-  const dashesTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#111726';
-    ctx.fillRect(0, 0, 128, 512);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(60, 40, 8, 140);
-    ctx.fillRect(60, 290, 8, 140);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(1, 20);
-    return tex;
-  }, []);
-
-  return (
-    <group>
-      {/* 3-Lane Asphalt Road Surface */}
-      <mesh position={[0, -0.05, 40]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[16, 260]} />
-        <meshStandardMaterial 
-          ref={roadMatRef}
-          color="#161c2b" 
-          roughness={0.75} 
-          metalness={0.25} 
-        />
-      </mesh>
-
-      {/* Road Markings */}
-      <mesh position={[0, -0.04, 40]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[15.6, 260]} />
-        <meshBasicMaterial 
-          ref={dashesMatRef}
-          map={dashesTexture} 
-          transparent 
-          opacity={0.85} 
-        />
-      </mesh>
-
-      {/* Left & Right Guardrails */}
-      <mesh position={[-8.2, 0.45, 40]}>
-        <boxGeometry args={[0.3, 0.7, 260]} />
-        <meshStandardMaterial color="#475569" metalness={0.8} roughness={0.3} />
-      </mesh>
-      <mesh position={[8.2, 0.45, 40]}>
-        <boxGeometry args={[0.3, 0.7, 260]} />
-        <meshStandardMaterial color="#475569" metalness={0.8} roughness={0.3} />
-      </mesh>
-
-      {/* Tunnel Entrance Portal Ahead on the Left matching Screenshot */}
-      <group position={[-6, 4, 120]}>
-        {/* Stone Arch Portal */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[14, 9, 8]} />
-          <meshStandardMaterial color="#2d3748" roughness={0.9} />
-        </mesh>
-        {/* Tunnel Interior Void */}
-        <mesh position={[0, -0.5, 2]}>
-          <boxGeometry args={[11, 7, 7]} />
-          <meshBasicMaterial color="#050810" />
-        </mesh>
-        {/* Warm Golden Illuminated Tunnel Portal Light matching Screenshot */}
-        <pointLight position={[0, 1.5, 1]} intensity={3.5} distance={35} color="#f59e0b" />
-        <pointLight position={[0, 2, 6]} intensity={2.5} distance={25} color="#fbbf24" />
-      </group>
-
-      {/* Left Side: Steep Coastal Mountain Cliffs matching Screenshot */}
-      <group position={[-38, 20, 70]}>
-        <mesh rotation={[0, 0.3, 0]}>
-          <coneGeometry args={[45, 55, 6]} />
-          <meshStandardMaterial color="#2a1f33" roughness={0.95} />
-        </mesh>
-        <mesh position={[12, -8, 40]} rotation={[0, -0.2, 0]}>
-          <coneGeometry args={[35, 45, 6]} />
-          <meshStandardMaterial color="#1f1826" roughness={0.95} />
-        </mesh>
-      </group>
-
-      {/* Right Side: Mediterranean Sunset Ocean with Calm Waters matching Screenshot */}
-      <group position={[70, -2, 40]}>
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[110, 280]} />
-          <meshStandardMaterial color="#14213d" roughness={0.1} metalness={0.85} />
-        </mesh>
-        {/* Distant Sailboat Silhouettes */}
-        <mesh position={[15, 2, 30]}>
-          <coneGeometry args={[1.5, 4, 3]} />
-          <meshBasicMaterial color="#ffffff" opacity={0.7} transparent />
-        </mesh>
-        <mesh position={[30, 1.5, 70]}>
-          <coneGeometry args={[1.2, 3.2, 3]} />
-          <meshBasicMaterial color="#ffffff" opacity={0.6} transparent />
-        </mesh>
-      </group>
-
-      {/* Passing Golden Lampposts matching Screenshot */}
-      <group ref={lampsGroupRef} position={[0, 0, 0]}>
-        {[-50, -10, 30, 70, 110, 150].map((zPos, idx) => (
-          <group key={idx} position={[0, 0, zPos]}>
-            {/* Left Lamppost */}
-            <mesh position={[-8.8, 3.8, 0]}>
-              <cylinderGeometry args={[0.08, 0.1, 7.5]} />
-              <meshStandardMaterial color="#1e293b" />
-            </mesh>
-            <mesh position={[-7.8, 7.2, 0]} rotation={[0, 0, -Math.PI / 6]}>
-              <cylinderGeometry args={[0.06, 0.06, 2.4]} />
-              <meshStandardMaterial color="#1e293b" />
-            </mesh>
-            <pointLight position={[-7.2, 6.8, 0]} intensity={1.8} distance={22} color="#f59e0b" />
-          </group>
-        ))}
-      </group>
-    </group>
-  );
-};
-
 // Dynamic Camera with Chase Cam and Speed FOV
 const DynamicChaseCamera = ({ speedKmh = 100 }) => {
   const { camera } = useThree();
@@ -293,6 +156,30 @@ const DynamicChaseCamera = ({ speedKmh = 100 }) => {
   return null;
 };
 
+// Scene Sky & Atmospheric Fog Manager driven by selected track
+const SceneEnvironmentConfig = ({ track }) => {
+  const { scene } = useThree();
+
+  useEffect(() => {
+    if (track.skyTheme === 'mountain') {
+      scene.background = new THREE.Color(track.skyColorTop || '#152938');
+      scene.fog = new THREE.FogExp2(track.fogColor || '#1c3032', track.fogDensity || 0.0028);
+    } else if (track.skyTheme === 'snow') {
+      scene.background = new THREE.Color(track.skyColorTop || '#0e1826');
+      scene.fog = new THREE.FogExp2(track.fogColor || '#1e293b', track.fogDensity || 0.0038);
+    } else if (track.skyTheme === 'city') {
+      scene.background = new THREE.Color(track.skyColorTop || '#04060f');
+      scene.fog = new THREE.FogExp2(track.fogColor || '#160826', track.fogDensity || 0.0024);
+    } else {
+      // Coastal sunset default
+      scene.background = new THREE.Color(track.skyColorTop || '#2d1838');
+      scene.fog = new THREE.FogExp2(track.fogColor || '#351d3e', track.fogDensity || 0.0032);
+    }
+  }, [track.id, scene]);
+
+  return null;
+};
+
 export const RaceCanvas = () => {
   const { 
     speedKmh, 
@@ -304,13 +191,11 @@ export const RaceCanvas = () => {
 
   const track = getTrackById(selectedTrackId);
 
-  // Position opponent cars ahead on the road with driver tags matching the screenshot!
-  // In the screenshot: 1 kero (right), 2 aryan (middle), 3 nova (left)
+  // Position opponent cars ahead on the road with driver tags matching the screenshot
   const visibleOpponents = useMemo(() => {
     const playerRacer = racers.find(r => r.isPlayer);
     const playerProg = playerRacer?.progress || progress;
 
-    // Render opponent cars (bots and multiplayer challengers)
     const opponents = racers.filter(r => !r.isPlayer);
     const colors = ['#090d16', '#1e293b', '#7c2d12', '#14532d', '#1e1b4b', '#4c1d95', '#831843'];
 
@@ -338,36 +223,89 @@ export const RaceCanvas = () => {
         camera={{ position: [0, 2.05, -5.8], fov: 56, near: 0.1, far: 500 }}
         shadows
         gl={{ antialias: true, alpha: false }}
-        onCreated={({ scene }) => {
-          // Warm sunset twilight sky gradient matching screenshot
-          scene.background = new THREE.Color('#2d1838');
-          scene.fog = new THREE.FogExp2('#351d3e', 0.0032);
-        }}
       >
+        {/* Dynamic Sky Background and Fog */}
+        <SceneEnvironmentConfig track={track} />
+
         <DynamicChaseCamera speedKmh={speedKmh} />
 
-        {/* Ambient & Golden Sunset Directional Sunlight */}
-        <ambientLight intensity={0.7} color="#fed7aa" />
-        <directionalLight 
-          position={[-15, 18, 30]} 
-          intensity={1.9} 
-          color="#fb923c" 
-          castShadow 
-          shadow-mapSize={[1024, 1024]}
-        />
-        <directionalLight position={[15, 6, -20]} intensity={0.4} color="#818cf8" />
+        {/* --- Track-Specific Realistic Lighting --- */}
+        {track.skyTheme === 'mountain' && (
+          <>
+            <ambientLight intensity={0.65} color="#86efac" />
+            <directionalLight 
+              position={[-18, 25, 30]} 
+              intensity={2.2} 
+              color="#fef08a" 
+              castShadow 
+              shadow-mapSize={[1024, 1024]} 
+            />
+            <directionalLight position={[15, 8, -20]} intensity={0.4} color="#7dd3fc" />
+          </>
+        )}
 
-        {/* Twilight Stars */}
+        {track.skyTheme === 'coastal' && (
+          <>
+            <ambientLight intensity={0.7} color="#fed7aa" />
+            <directionalLight 
+              position={[-15, 18, 30]} 
+              intensity={2.0} 
+              color="#fb923c" 
+              castShadow 
+              shadow-mapSize={[1024, 1024]} 
+            />
+            <directionalLight position={[15, 6, -20]} intensity={0.4} color="#818cf8" />
+          </>
+        )}
+
+        {track.skyTheme === 'snow' && (
+          <>
+            <ambientLight intensity={0.85} color="#bfdbfe" />
+            <directionalLight 
+              position={[-12, 28, 25]} 
+              intensity={1.9} 
+              color="#e0f2fe" 
+              castShadow 
+              shadow-mapSize={[1024, 1024]} 
+            />
+            <directionalLight position={[12, 6, -15]} intensity={0.5} color="#93c5fd" />
+          </>
+        )}
+
+        {track.skyTheme === 'city' && (
+          <>
+            <ambientLight intensity={0.6} color="#581c87" />
+            <directionalLight 
+              position={[-25, 20, 20]} 
+              intensity={2.4} 
+              color="#d946ef" 
+              castShadow 
+              shadow-mapSize={[1024, 1024]} 
+            />
+            <directionalLight position={[25, 15, -10]} intensity={2.0} color="#38bdf8" />
+          </>
+        )}
+
+        {/* Ambient Twilight Stars */}
         <Stars radius={200} depth={50} count={900} factor={3} saturation={0} fade speed={1} />
 
-        {/* Coastal Highway & Mountain Environment with Tunnel */}
-        <ScenicCoastalRoad speedKmh={speedKmh} />
+        {/* --- Track-Specific 3D Landscapes & Scenery --- */}
+        {track.id === 'mountain-circuit' && <MountainEnvironment speedKmh={speedKmh} />}
+        {track.id === 'coastal-circuit' && <CoastalEnvironment speedKmh={speedKmh} />}
+        {track.id === 'snow-circuit' && <SnowEnvironment speedKmh={speedKmh} />}
+        {track.id === 'city-circuit' && <CityEnvironment speedKmh={speedKmh} />}
+
+        {/* Fallback for any other custom circuit */}
+        {!['mountain-circuit', 'coastal-circuit', 'snow-circuit', 'city-circuit'].includes(track.id) && (
+          <CoastalEnvironment speedKmh={speedKmh} />
+        )}
 
         {/* Player's Car (White Sports Car with 'meanwhile' plate matching Screenshot) */}
-        <RacingCarWithPlate 
+        <RealisticRaceCar 
           position={[0, 0, 0]} 
           color={selectedPaint || '#f8fafc'} 
           speed={speedKmh}
+          isPlayer={true}
         />
 
         {/* Opponent Cars with Floating Driver Tags (1 kero, 2 aryan, 3 nova) */}
@@ -394,13 +332,3 @@ export const RaceCanvas = () => {
     </div>
   );
 };
-
-// Player Car with White Finish and 'meanwhile' plate
-const RacingCarWithPlate = ({ position, color, speed }) => (
-  <RealisticRaceCar
-    position={position}
-    color={color}
-    isPlayer={true}
-    speed={speed}
-  />
-);

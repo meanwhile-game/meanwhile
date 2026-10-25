@@ -28,7 +28,7 @@ export const TRACKS = [
       'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=300&q=80'
     ],
-    svgPath: 'M 50 15 C 75 10, 85 35, 75 55 C 65 75, 80 95, 50 105 C 25 95, 20 70, 35 50 C 45 35, 25 20, 50 15 Z'
+    svgPath: 'M 48 18 C 68 15, 82 28, 80 48 C 78 62, 62 66, 68 80 C 76 96, 62 106, 44 105 C 26 104, 22 84, 30 65 C 36 50, 24 24, 48 18 Z'
   },
 
   // --- 02 COASTAL CIRCUIT (Reference Quadrant 2) ---
@@ -58,7 +58,7 @@ export const TRACKS = [
       'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=300&q=80'
     ],
-    svgPath: 'M 40 18 C 70 12, 90 35, 80 60 C 70 85, 75 102, 45 105 C 20 102, 18 75, 30 55 C 38 40, 15 25, 40 18 Z'
+    svgPath: 'M 35 22 C 55 12, 86 18, 85 45 C 84 65, 62 66, 58 80 C 54 94, 48 106, 32 102 C 18 98, 14 74, 24 54 C 32 38, 16 30, 35 22 Z'
   },
 
   // --- 03 SNOW CIRCUIT (Reference Quadrant 3) ---
@@ -88,7 +88,7 @@ export const TRACKS = [
       'https://images.unsplash.com/photo-1491555103944-7c647fd857e6?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=300&q=80'
     ],
-    svgPath: 'M 45 20 C 70 15, 80 40, 70 65 C 60 85, 80 98, 48 105 C 22 98, 20 68, 32 48 C 40 32, 22 25, 45 20 Z'
+    svgPath: 'M 50 16 C 72 20, 82 36, 72 54 C 62 70, 72 84, 64 100 C 56 108, 36 108, 28 96 C 20 84, 28 66, 24 50 C 20 36, 30 16, 50 16 Z'
   },
 
   // --- 04 CITY CIRCUIT (Reference Quadrant 4) ---
@@ -118,7 +118,7 @@ export const TRACKS = [
       'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=300&q=80'
     ],
-    svgPath: 'M 30 20 L 75 20 C 85 20, 85 45, 75 45 L 50 45 L 50 65 L 75 65 C 85 65, 85 95, 75 95 L 30 95 C 15 95, 15 20, 30 20 Z'
+    svgPath: 'M 24 24 L 76 24 C 84 24, 86 32, 86 44 C 86 56, 76 56, 76 68 C 76 80, 86 80, 86 92 C 86 102, 80 104, 68 104 L 32 104 C 20 104, 16 98, 16 86 L 16 42 C 16 28, 20 24, 24 24 Z'
   },
 
   // --- 05 CHENNAI CIRCUIT (Locked - Under Development) ---

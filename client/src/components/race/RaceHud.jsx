@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useGameStore } from '../../store/useGameStore.js';
+import { getTrackById } from '../../data/tracks.js';
 import { SpeedometerGauge } from './SpeedometerGauge.jsx';
 import { TrackMinimap } from './TrackMinimap.jsx';
 import { ArrowLeft, Wifi } from 'lucide-react';
@@ -21,8 +22,11 @@ export const RaceHud = () => {
     finalRank,
     countdown,
     isCountdown,
+    selectedTrackId,
     setView
   } = useGameStore();
+
+  const track = getTrackById(selectedTrackId);
 
   // Format elapsed time 00:42.18
   const mins = Math.floor(elapsedSeconds / 60);
@@ -98,7 +102,7 @@ export const RaceHud = () => {
 
           {/* Track Minimap with Curve Warning Arrow */}
           <div className="mt-2">
-            <TrackMinimap racers={racers} playerProgress={progress} />
+            <TrackMinimap racers={racers} playerProgress={progress} track={track} />
           </div>
         </div>
 
