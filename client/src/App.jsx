@@ -15,16 +15,33 @@ import { MultiplayerLobbyModal } from './components/lobby/MultiplayerLobbyModal.
 import { api } from './services/supabase.js';
 
 export function App() {
-  const { view, setProfile } = useGameStore();
+  const { view, setProfile, setMultiplayerModalOpen } = useGameStore();
 
-  // Load saved profile on initial boot
+  // Load saved profile on initial boot and subscribe to auth state changes
   useEffect(() => {
     api.getProfile().then((loadedProfile) => {
       if (loadedProfile) {
         setProfile(loadedProfile);
       }
     });
-  }, [setProfile]);
+
+    const unsubAuth = api.initAuthListener((updatedProfile) => {
+      if (updatedProfile) setProfile(updatedProfile);
+    });
+
+    // Handle deep-link private room join ?room=MW-XXXX
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get('room');
+      if (roomParam) {
+        setMultiplayerModalOpen(true);
+      }
+    } catch (e) {}
+
+    return () => {
+      if (typeof unsubAuth === 'function') unsubAuth();
+    };
+  }, [setProfile, setMultiplayerModalOpen]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#070a13] text-[#f8fafc] font-sans antialiased selection:bg-amber-400/30 selection:text-[#f8fafc]">

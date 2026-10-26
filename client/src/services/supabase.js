@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Environment variables for Supabase with robust URL sanitization
-const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-// Clean any accidental /rest/v1/ endpoint paths or trailing slashes
+const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : (typeof process !== 'undefined' && process.env ? process.env : {});
+const rawSupabaseUrl = env.VITE_SUPABASE_URL || '';
 const supabaseUrl = rawSupabaseUrl
   .replace(/\/rest\/v1\/?$/i, '')
   .replace(/\/+$/, '')
   .trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+const supabaseAnonKey = (env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 const isConfigured = Boolean(
   supabaseUrl && 
@@ -18,27 +18,47 @@ const isConfigured = Boolean(
 
 // Real Supabase Client instance (if configured)
 export const supabase = isConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    })
   : null;
 
-// Initial Mock Leaderboard matching the UI reference screenshot exactly!
+// Secure SHA-256 password hashing for offline / local mode so passwords are NEVER plaintext
+const hashPassword = async (password) => {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password + '_meanwhile_salt_2026');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    // Fallback basic obfuscation if SubtleCrypto unavailable
+    return btoa(password);
+  }
+};
+
+// Initial Mock Leaderboard matching the UI reference screenshot exactly
 const DEFAULT_LEADERBOARD = [
-  { rank: 1, username: 'aryan', avatar_url: '🏎️', best_wpm: 168, total_races: 420, win_rate: 78 },
-  { rank: 2, username: 'kero', avatar_url: '⚡', best_wpm: 152, total_races: 398, win_rate: 74 },
-  { rank: 3, username: 'nova', avatar_url: '🏁', best_wpm: 158, total_races: 380, win_rate: 71 },
-  { rank: 4, username: 'rishi', avatar_url: '👤', best_wpm: 134, total_races: 310, win_rate: 68 },
-  { rank: 5, username: 'zen', avatar_url: '🎌', best_wpm: 132, total_races: 298, win_rate: 66 },
-  { rank: 6, username: 'rhea', avatar_url: '🌟', best_wpm: 128, total_races: 276, win_rate: 64 },
-  { rank: 7, username: 'arlo', avatar_url: '🔥', best_wpm: 126, total_races: 250, win_rate: 61 },
-  { rank: 8, username: 'blank', avatar_url: '✨', best_wpm: 122, total_races: 240, win_rate: 59 }
+  { rank: 1, username: 'aryan', avatar_url: '🏎️', best_wpm: 88, total_races: 420, win_rate: 78 },
+  { rank: 2, username: 'kero', avatar_url: '⚡', best_wpm: 86, total_races: 398, win_rate: 74 },
+  { rank: 3, username: 'nova', avatar_url: '🏁', best_wpm: 84, total_races: 380, win_rate: 71 },
+  { rank: 4, username: 'rishi', avatar_url: '👤', best_wpm: 82, total_races: 310, win_rate: 68 },
+  { rank: 5, username: 'zenyx', avatar_url: '🎌', best_wpm: 76, total_races: 298, win_rate: 66 },
+  { rank: 6, username: 'rhea', avatar_url: '🌟', best_wpm: 72, total_races: 276, win_rate: 64 },
+  { rank: 7, username: 'blank', avatar_url: '✨', best_wpm: 68, total_races: 250, win_rate: 61 },
+  { rank: 8, username: 'arlo', avatar_url: '🔥', best_wpm: 62, total_races: 240, win_rate: 59 }
 ];
 
-// Initial Recent Races matching the UI reference screenshot
+// Initial Recent Races matching reference UI
 const DEFAULT_RECENT_RACES = [
-  { id: 'r-1', track: 'Coastal Drive', position: '1st', wpm: 128, time: '02:14', date: 'Just now' },
-  { id: 'r-2', track: 'Neon City', position: '3rd', wpm: 112, time: '02:32', date: '2 hours ago' },
-  { id: 'r-3', track: 'Mountain Pass', position: '5th', wpm: 104, time: '02:48', date: 'Yesterday' },
-  { id: 'r-4', track: 'Desert Run', position: '1st', wpm: 138, time: '02:10', date: '2 days ago' }
+  { id: 'r-1', track: 'Coastal Run', position: '1st', wpm: 82, time: '01:54', date: 'Just now' },
+  { id: 'r-2', track: 'Neon City', position: '3rd', wpm: 78, time: '02:08', date: '2 hours ago' },
+  { id: 'r-3', track: 'Mountain Pass', position: '4th', wpm: 74, time: '02:18', date: 'Yesterday' },
+  { id: 'r-4', track: 'Snow Circuit', position: '1st', wpm: 80, time: '02:02', date: '2 days ago' }
 ];
 
 // Helper to get local storage profile
@@ -59,28 +79,28 @@ const getLocalProfile = () => {
       coins: 2450,
       equipped_vehicle_id: 'vortex',
       equipped_vehicle_paint: '#f8fafc',
-      best_wpm: 134,
-      bestWpm: 134,
-      average_wpm: 118,
-      averageWpm: 118,
-      average_accuracy: 96,
-      accuracy: 96,
+      best_wpm: 84,
+      bestWpm: 84,
+      average_wpm: 76,
+      averageWpm: 76,
+      average_accuracy: 97,
+      accuracy: 97,
       total_races: 310,
       totalRaces: 310,
       wins: 211,
       global_rank: 4,
-      globalRank: 4
+      globalRank: 4,
+      isGuest: false
     };
   }
 
-  // Ensure both camelCase and snake_case are present
-  profile.averageWpm = profile.averageWpm || profile.average_wpm || 118;
+  profile.averageWpm = profile.averageWpm || profile.average_wpm || 76;
   profile.average_wpm = profile.averageWpm;
-  profile.bestWpm = profile.bestWpm || profile.best_wpm || 134;
+  profile.bestWpm = profile.bestWpm || profile.best_wpm || 84;
   profile.best_wpm = profile.bestWpm;
   profile.totalRaces = profile.totalRaces || profile.total_races || 310;
   profile.total_races = profile.totalRaces;
-  profile.accuracy = profile.accuracy || profile.average_accuracy || 96;
+  profile.accuracy = profile.accuracy || profile.average_accuracy || 97;
   profile.globalRank = profile.globalRank || profile.global_rank || 4;
 
   return profile;
@@ -98,46 +118,231 @@ export const api = {
 
   // --- AUTHENTICATION ---
   async signUp(email, password, username) {
+    if (!email || !email.includes('@')) {
+      throw new Error('Please enter a valid email address.');
+    }
+    if (!password || password.length < 6) {
+      throw new Error('Password must be at least 6 characters long.');
+    }
+    const cleanUsername = (username || email.split('@')[0]).trim();
+    if (cleanUsername.length < 3) {
+      throw new Error('Username must be at least 3 characters.');
+    }
+
+    // 1. Supabase Cloud Auth
     if (isConfigured && supabase) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { username } }
+        options: {
+          data: {
+            username: cleanUsername,
+            avatar_url: '🏎️'
+          }
+        }
       });
-      if (error) throw error;
+      if (error) {
+        if (error.message?.toLowerCase().includes('already registered')) {
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        }
+        throw error;
+      }
+
+      // Provision profile row if created
+      if (data?.user) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            username: cleanUsername,
+            avatar_url: '🏎️',
+            bio: 'Typing today. Racing meanwhile.',
+            coins: 2450
+          }, { onConflict: 'id' });
+        } catch (e) {
+          console.warn('Profile provisioning fallback:', e);
+        }
+      }
+
       return data;
     }
 
-    // Mock sign up
-    const profile = getLocalProfile();
-    profile.username = username || email.split('@')[0];
+    // 2. Offline / Local Secure Fallback
+    let users = [];
+    try {
+      const stored = localStorage.getItem('meanwhile_registered_users');
+      if (stored) users = JSON.parse(stored);
+    } catch (e) {}
+
+    const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (existing) {
+      throw new Error('An account with this email already exists. Please sign in instead.');
+    }
+
+    const hashedPassword = await hashPassword(password);
+    const userId = 'usr_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    const newUser = {
+      id: userId,
+      email: email.toLowerCase(),
+      passwordHash: hashedPassword,
+      username: cleanUsername,
+      created_at: new Date().toISOString()
+    };
+
+    users.push(newUser);
+    try {
+      localStorage.setItem('meanwhile_registered_users', JSON.stringify(users));
+    } catch (e) {}
+
+    // Save active session
+    const session = {
+      userId: newUser.id,
+      email: newUser.email,
+      username: cleanUsername,
+      token: 'local_token_' + Date.now()
+    };
+    try {
+      localStorage.setItem('meanwhile_auth_session', JSON.stringify(session));
+    } catch (e) {}
+
+    const profile = {
+      ...getLocalProfile(),
+      id: newUser.id,
+      username: cleanUsername,
+      email: newUser.email,
+      isGuest: false
+    };
     saveLocalProfile(profile);
-    return { user: { id: profile.id, email } };
+
+    return { user: newUser, session };
   },
 
   async signIn(email, password) {
+    if (!email || !password) {
+      throw new Error('Please enter both email and password.');
+    }
+
+    // 1. Supabase Cloud Auth
     if (isConfigured && supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) {
+        if (error.message?.toLowerCase().includes('invalid login credentials')) {
+          throw new Error('Invalid email or password. Please verify your credentials.');
+        }
+        throw error;
+      }
+
+      // Fetch cloud profile
+      if (data?.user) {
+        const cloudProfile = await this.getProfile(data.user.id);
+        if (cloudProfile) saveLocalProfile(cloudProfile);
+      }
+
       return data;
     }
 
-    const profile = getLocalProfile();
-    return { user: { id: profile.id, email } };
+    // 2. Offline / Local Secure Fallback
+    let users = [];
+    try {
+      const stored = localStorage.getItem('meanwhile_registered_users');
+      if (stored) users = JSON.parse(stored);
+    } catch (e) {}
+
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const inputHash = await hashPassword(password);
+
+    if (!user || user.passwordHash !== inputHash) {
+      throw new Error('Invalid email or password. Please check your credentials.');
+    }
+
+    const session = {
+      userId: user.id,
+      email: user.email,
+      username: user.username,
+      token: 'local_token_' + Date.now()
+    };
+    try {
+      localStorage.setItem('meanwhile_auth_session', JSON.stringify(session));
+    } catch (e) {}
+
+    const profile = {
+      ...getLocalProfile(),
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      isGuest: false
+    };
+    saveLocalProfile(profile);
+
+    return { user, session };
   },
 
   async signOut() {
     if (isConfigured && supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
+    }
+
+    try {
+      localStorage.removeItem('meanwhile_auth_session');
+    } catch (e) {}
+
+    // Reset to guest profile
+    const guestProfile = {
+      ...getLocalProfile(),
+      id: 'guest_' + Math.random().toString(36).substring(2, 7),
+      username: 'Guest_Racer',
+      email: null,
+      isGuest: true
+    };
+    saveLocalProfile(guestProfile);
+    return true;
+  },
+
+  async getCurrentSession() {
+    if (isConfigured && supabase) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        return data?.session || null;
+      } catch (e) {}
+    }
+
+    try {
+      const session = localStorage.getItem('meanwhile_auth_session');
+      return session ? JSON.parse(session) : null;
+    } catch (e) {
+      return null;
     }
   },
 
   async getCurrentUser() {
     if (isConfigured && supabase) {
-      const { data } = await supabase.auth.getUser();
-      return data?.user || null;
+      try {
+        const { data } = await supabase.auth.getUser();
+        return data?.user || null;
+      } catch (e) {}
     }
-    return null;
+    const session = await this.getCurrentSession();
+    return session ? { id: session.userId, email: session.email } : null;
+  },
+
+  // Setup Auth Listener that updates session on external changes
+  initAuthListener(callback) {
+    if (isConfigured && supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          const profile = await this.getProfile(session.user.id);
+          callback(profile);
+        } else if (event === 'SIGNED_OUT') {
+          callback(getLocalProfile());
+        }
+      });
+      return () => subscription?.unsubscribe();
+    }
+    return () => {};
   },
 
   // --- PROFILES ---
@@ -181,12 +386,12 @@ export const api = {
     return updated;
   },
 
-  // --- RACE RESULTS & OVERALL AVERAGE WPM ---
+  // --- RACE RESULTS & ACCURATE ALL-RACE AVERAGE WPM ---
   async saveRaceResult(raceData) {
     const profile = getLocalProfile();
     const isWin = raceData.position === 1;
 
-    // Load full race history to compute true all-race ending average WPM
+    // Load full race history
     let raceHistory = [];
     try {
       const stored = localStorage.getItem('meanwhile_race_history');
@@ -195,16 +400,16 @@ export const api = {
 
     if (raceHistory.length === 0) {
       raceHistory = [
-        { id: 'h-1', wpm: 128, accuracy: 98, track: 'Coastal Circuit', position: 1, date: 'Earlier today' },
-        { id: 'h-2', wpm: 112, accuracy: 96, track: 'City Circuit', position: 2, date: 'Yesterday' },
-        { id: 'h-3', wpm: 118, accuracy: 95, track: 'Mountain Circuit', position: 3, date: '2 days ago' },
-        { id: 'h-4', wpm: 114, accuracy: 97, track: 'Snow Circuit', position: 1, date: '3 days ago' }
+        { id: 'h-1', wpm: 82, accuracy: 98, track: 'Coastal Run', position: 1, date: 'Earlier today' },
+        { id: 'h-2', wpm: 78, accuracy: 96, track: 'Neon City', position: 2, date: 'Yesterday' },
+        { id: 'h-3', wpm: 74, accuracy: 95, track: 'Mountain Pass', position: 3, date: '2 days ago' },
+        { id: 'h-4', wpm: 80, accuracy: 97, track: 'Snow Circuit', position: 1, date: '3 days ago' }
       ];
     }
 
     const newRecord = {
       id: 'race_' + Date.now(),
-      track: raceData.trackName || 'Coastal Circuit',
+      track: raceData.trackName || 'Coastal Run',
       position: `${raceData.position}${raceData.position === 1 ? 'st' : raceData.position === 2 ? 'nd' : raceData.position === 3 ? 'rd' : 'th'}`,
       wpm: raceData.wpm,
       accuracy: raceData.accuracy,
@@ -217,7 +422,7 @@ export const api = {
       localStorage.setItem('meanwhile_race_history', JSON.stringify(raceHistory));
     } catch (e) {}
 
-    // Calculate mathematically exact overall average WPM across all race finishes
+    // Calculate mathematically exact overall average WPM across all completed races
     const totalWpmSum = raceHistory.reduce((acc, r) => acc + (Number(r.wpm) || 0), 0);
     const overallAverageWpm = Math.round(totalWpmSum / raceHistory.length);
 
@@ -229,20 +434,21 @@ export const api = {
     profile.bestWpm = profile.best_wpm;
     profile.average_wpm = overallAverageWpm;
     profile.averageWpm = overallAverageWpm;
-    profile.accuracy = raceData.accuracy || profile.accuracy || 96;
+    profile.accuracy = raceData.accuracy || profile.accuracy || 97;
     profile.coins = (profile.coins || 0) + (isWin ? 150 : 50);
 
     saveLocalProfile(profile);
 
-    // Update recent races for UI
     try {
       localStorage.setItem('meanwhile_recent_races', JSON.stringify(raceHistory.slice(0, 8)));
     } catch (e) {}
 
+    // Persist to Supabase if connected
     if (isConfigured && supabase) {
       try {
+        const user = await this.getCurrentUser();
         await supabase.from('race_results').insert({
-          user_id: raceData.userId || null,
+          user_id: user?.id || null,
           username: profile.username,
           track_id: raceData.trackId,
           game_mode: raceData.mode || 'quick_race',
@@ -261,24 +467,22 @@ export const api = {
     return { profile, recents: raceHistory.slice(0, 8), overallAverageWpm };
   },
 
-  // Get all race history
   getRaceHistory() {
     try {
       const stored = localStorage.getItem('meanwhile_race_history');
       if (stored) return JSON.parse(stored);
     } catch (e) {}
     return [
-      { id: 'h-1', wpm: 128, accuracy: 98, track: 'Coastal Circuit', position: 1, date: 'Earlier today' },
-      { id: 'h-2', wpm: 112, accuracy: 96, track: 'City Circuit', position: 2, date: 'Yesterday' },
-      { id: 'h-3', wpm: 118, accuracy: 95, track: 'Mountain Circuit', position: 3, date: '2 days ago' },
-      { id: 'h-4', wpm: 114, accuracy: 97, track: 'Snow Circuit', position: 1, date: '3 days ago' }
+      { id: 'h-1', wpm: 82, accuracy: 98, track: 'Coastal Run', position: 1, date: 'Earlier today' },
+      { id: 'h-2', wpm: 78, accuracy: 96, track: 'Neon City', position: 2, date: 'Yesterday' },
+      { id: 'h-3', wpm: 74, accuracy: 95, track: 'Mountain Pass', position: 3, date: '2 days ago' },
+      { id: 'h-4', wpm: 80, accuracy: 97, track: 'Snow Circuit', position: 1, date: '3 days ago' }
     ];
   },
 
-  // Get overall average WPM across all recorded race endings
   getOverallAverageWpm() {
     const history = this.getRaceHistory();
-    if (!history || history.length === 0) return 118;
+    if (!history || history.length === 0) return 76;
     const sum = history.reduce((acc, r) => acc + (Number(r.wpm) || 0), 0);
     return Math.round(sum / history.length);
   },
@@ -300,10 +504,9 @@ export const api = {
       }
     }
 
-    // Return reference design leaderboard
     const profile = getLocalProfile();
     return DEFAULT_LEADERBOARD.map(item => {
-      if (item.username === 'rishi') {
+      if (item.username === 'rishi' || item.username === profile.username) {
         return {
           ...item,
           best_wpm: Math.max(item.best_wpm, profile.best_wpm),

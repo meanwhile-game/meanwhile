@@ -4,16 +4,17 @@ import { VEHICLES, getVehicleById } from '../data/vehicles.js';
 import { PASSAGES, getRandomPassage } from '../data/passages.js';
 import { soundEngine } from '../sound/soundEngine.js';
 import { api } from '../services/supabase.js';
+import { multiplayer } from '../services/multiplayer.js';
 
-// Default 7 AI bot racers matching the reference UI leaderboard!
-const BOT_DRIVERS = [
-  { id: 'bot-1', name: 'kero', avatar: '⚡', targetWpm: 128, lane: 1 },
-  { id: 'bot-2', name: 'aryan', avatar: '🏎️', targetWpm: 116, lane: 0 },
-  { id: 'bot-3', name: 'nova', avatar: '🏁', targetWpm: 112, lane: -1 },
-  { id: 'bot-4', name: 'zenyx', avatar: '🎌', targetWpm: 98, lane: 0.5 },
-  { id: 'bot-5', name: 'rhea', avatar: '🌟', targetWpm: 94, lane: -0.5 },
-  { id: 'bot-6', name: 'blank', avatar: '✨', targetWpm: 91, lane: 1 },
-  { id: 'bot-7', name: 'arlo', avatar: '🔥', targetWpm: 86, lane: -1 }
+// Believable AI Bot Drivers configured strictly within the 50–90 WPM range
+export const BOT_DRIVERS = [
+  { id: 'bot-1', name: 'kero', avatar: '⚡', targetWpm: 88, baseWpm: 88, lane: 1, consistency: 0.94 },
+  { id: 'bot-2', name: 'aryan', avatar: '🏎️', targetWpm: 84, baseWpm: 84, lane: 0, consistency: 0.92 },
+  { id: 'bot-3', name: 'nova', avatar: '🏁', targetWpm: 78, baseWpm: 78, lane: -1, consistency: 0.90 },
+  { id: 'bot-4', name: 'zenyx', avatar: '🎌', targetWpm: 72, baseWpm: 72, lane: 0.5, consistency: 0.88 },
+  { id: 'bot-5', name: 'rhea', avatar: '🌟', targetWpm: 66, baseWpm: 66, lane: -0.5, consistency: 0.85 },
+  { id: 'bot-6', name: 'blank', avatar: '✨', targetWpm: 59, baseWpm: 59, lane: 1, consistency: 0.82 },
+  { id: 'bot-7', name: 'arlo', avatar: '🔥', targetWpm: 52, baseWpm: 52, lane: -1, consistency: 0.80 }
 ];
 
 export const useGameStore = create((set, get) => ({
@@ -41,16 +42,17 @@ export const useGameStore = create((set, get) => ({
     avatar: '👤',
     bio: 'Typing today. Racing meanwhile.',
     coins: 2450,
-    bestWpm: 134,
-    averageWpm: 118,
-    accuracy: 68,
+    bestWpm: 84,
+    averageWpm: 76,
+    accuracy: 97,
     totalRaces: 310,
-    globalRank: 4
+    globalRank: 4,
+    isGuest: false
   },
   setProfile: (newProfile) => set((state) => ({ profile: { ...state.profile, ...newProfile } })),
 
   // Machine & Track Selection
-  selectedTrackId: 'coastal-circuit',
+  selectedTrackId: 'coastal-run',
   setSelectedTrackId: (id) => {
     soundEngine.playButtonClick();
     set({ selectedTrackId: id });
@@ -74,23 +76,34 @@ export const useGameStore = create((set, get) => ({
     set({ gameMode: mode });
   },
 
+  // Bot Difficulty Setting within 50–90 WPM range
+  botDifficulty: 'standard', // 'casual' (50-65) | 'standard' (52-88) | 'pro' (70-90)
+  setBotDifficulty: (diff) => set({ botDifficulty: diff }),
+
   // Active Race Simulation State
   isRacing: false,
   isCountdown: false,
   countdown: 3,
   passage: PASSAGES[0],
   typedText: '',
+  errorText: '', // Mistyped characters currently blocking progression
+  totalAttempted: 0,
   errorsCount: 0,
   rawWpm: 0,
   wpm: 0,
+  rollingWpm: 0,
   accuracy: 100,
   speedKmh: 0,
+  targetSpeedKmh: 0,
   gear: 1,
   progress: 0, // 0 to 1
   lap: 1,
   totalLaps: 2,
   elapsedSeconds: 0,
   startTime: null,
+  firstKeystrokeTime: null,
+  lastKeystrokeTime: null,
+  keystrokeHistory: [], // Rolling window keystrokes: [{ time, chars }]
   isFinished: false,
   finalRank: 4,
   results: null,
@@ -98,19 +111,17 @@ export const useGameStore = create((set, get) => ({
   // Racers array (Player + 7 opponents)
   racers: [],
 
-  // Start new race
-  // Compute live racing rankings with starting grid preservation and smooth overtaking
+  // Live racing standings calculation
   computeRankings: (racersList) => {
     return [...racersList].sort((a, b) => {
-      // 1. Finished racers always rank ahead, sorted by finish time
+      // 1. Finished racers rank ahead, ordered by finish time
       if (a.isFinished && !b.isFinished) return -1;
       if (!a.isFinished && b.isFinished) return 1;
       if (a.isFinished && b.isFinished) {
         return (a.finishTime || 0) - (b.finishTime || 0);
       }
 
-      // 2. Active racers sorted by effective distance along the track
-      // Grid bonus starts at realistic car lengths and fades smoothly over the first 30% of progress
+      // 2. Active racers sorted by distance along the track with smooth starting grid bonus fading
       const aGridWeight = Math.max(0, 1 - (a.progress / 0.30));
       const bGridWeight = Math.max(0, 1 - (b.progress / 0.30));
       const aDist = (a.progress * 1000) + (8 - (a.gridPosition || 4)) * 14 * aGridWeight;
@@ -127,25 +138,33 @@ export const useGameStore = create((set, get) => ({
   initRace: (customPassage = null, multiplayerPlayers = null) => {
     let passage = customPassage;
     if (!passage) {
-      if (get().selectedTrackId === 'coastal-circuit') {
-        passage = PASSAGES[0]; // Exact coastal run passage from reference screenshot
+      if (get().selectedTrackId === 'coastal-run' || get().selectedTrackId === 'coastal-circuit') {
+        passage = PASSAGES[0];
       } else {
         passage = getRandomPassage();
       }
     }
     const track = getTrackById(get().selectedTrackId);
     const userProfile = get().profile;
+    const diff = get().botDifficulty;
 
-    // Build 8 racers matching reference screenshot starting grid
-    // Grid: 1 kero (125 WPM), 2 aryan (117 WPM), 3 nova (116 WPM), 4 You, 5 zenyx (97 WPM), 6 rhea (97 WPM), 7 blank (88 WPM), 8 arlo (90 WPM)
+    // Apply difficulty scaling within 50–90 WPM range
+    const botDrivers = BOT_DRIVERS.map(b => {
+      let target = b.baseWpm;
+      if (diff === 'casual') target = Math.max(50, Math.min(65, Math.round(b.baseWpm * 0.75)));
+      if (diff === 'pro') target = Math.max(70, Math.min(90, Math.round(b.baseWpm * 1.05)));
+      return { ...b, targetWpm: target };
+    });
+
     let allRacers = [];
 
     if (multiplayerPlayers && multiplayerPlayers.length > 0) {
-      // Multiplayer Room Grid Setup
-      const otherPlayers = multiplayerPlayers.filter(p => p.id !== userProfile.id);
+      // Multiplayer Grid Setup
+      const localId = multiplayer.localPlayer?.id || userProfile.id;
+      const otherPlayers = multiplayerPlayers.filter(p => p.id !== localId);
       
       const playerRacer = {
-        id: userProfile.id || 'player',
+        id: localId || 'player',
         name: userProfile.username || 'You',
         username: userProfile.username || 'You',
         avatar: userProfile.avatar || '👤',
@@ -174,9 +193,8 @@ export const useGameStore = create((set, get) => ({
         speed: 0
       }));
 
-      // Fill remaining slots with AI bot drivers
       const remainingCount = 8 - (1 + humanRacers.length);
-      const fillerBots = BOT_DRIVERS.slice(humanRacers.length, humanRacers.length + remainingCount).map((b, idx) => {
+      const fillerBots = botDrivers.slice(humanRacers.length, humanRacers.length + remainingCount).map((b, idx) => {
         const gridPos = humanRacers.length + idx + (humanRacers.length + idx >= 3 ? 2 : 1);
         return {
           ...b,
@@ -195,7 +213,7 @@ export const useGameStore = create((set, get) => ({
       const combined = [playerRacer, ...humanRacers, ...fillerBots];
       allRacers = combined.sort((a, b) => a.gridPosition - b.gridPosition);
     } else {
-      // Single Player / Quick Race default grid
+      // Single Player / Quick Race default 8-driver grid
       const playerRacer = {
         id: userProfile.id || 'player',
         name: 'You',
@@ -211,7 +229,7 @@ export const useGameStore = create((set, get) => ({
         speed: 0
       };
 
-      const botRacers = BOT_DRIVERS.map((b, idx) => {
+      const botRacers = botDrivers.map((b, idx) => {
         const gridPos = idx < 3 ? idx + 1 : idx + 2;
         return {
           ...b,
@@ -228,29 +246,36 @@ export const useGameStore = create((set, get) => ({
       });
 
       allRacers = [
-        botRacers[0], // 1 kero
-        botRacers[1], // 2 aryan
-        botRacers[2], // 3 nova
+        botRacers[0], // 1 kero (88 WPM)
+        botRacers[1], // 2 aryan (84 WPM)
+        botRacers[2], // 3 nova (78 WPM)
         playerRacer,  // 4 You
-        botRacers[3], // 5 zenyx
-        botRacers[4], // 6 rhea
-        botRacers[5], // 7 blank
-        botRacers[6]  // 8 arlo
+        botRacers[3], // 5 zenyx (72 WPM)
+        botRacers[4], // 6 rhea (66 WPM)
+        botRacers[5], // 7 blank (59 WPM)
+        botRacers[6]  // 8 arlo (52 WPM)
       ];
     }
 
+    const isMultiplayerGame = Boolean(multiplayerPlayers && multiplayerPlayers.length > 1);
+
     set({
       view: 'racing',
+      gameMode: isMultiplayerGame ? 'multiplayer' : get().gameMode,
       isRacing: false,
       isCountdown: true,
       countdown: 3,
       passage,
       typedText: '',
+      errorText: '',
+      totalAttempted: 0,
       errorsCount: 0,
       rawWpm: 0,
       wpm: 0,
+      rollingWpm: 0,
       accuracy: 100,
       speedKmh: 0,
+      targetSpeedKmh: 0,
       gear: 1,
       progress: 0,
       lap: 1,
@@ -259,13 +284,14 @@ export const useGameStore = create((set, get) => ({
       startTime: null,
       firstKeystrokeTime: null,
       lastKeystrokeTime: null,
+      keystrokeHistory: [],
       isFinished: false,
       finalRank: 4,
       results: null,
       racers: allRacers
     });
 
-    // Start countdown sound & timer
+    // Countdown timer & audio
     soundEngine.playCountdownBeep(false);
 
     let count = 3;
@@ -288,107 +314,148 @@ export const useGameStore = create((set, get) => ({
     }, 1000);
   },
 
-  // Process typed character input with accurate typing cadence
+  // Process typed character input with accurate typing cadence and rolling WPM
   handleKeyInput: (char) => {
     const state = get();
     if (!state.isRacing || state.isFinished) return;
 
     const targetText = state.passage.text;
     const currentTyped = state.typedText;
+    const errorText = state.errorText;
     const nextIndex = currentTyped.length;
 
     if (nextIndex >= targetText.length) return;
 
-    const expectedChar = targetText[nextIndex];
-    const isCorrect = char === expectedChar;
     const now = Date.now();
-
-    // Track active typing start on first keystroke
     const firstKeyTime = state.firstKeystrokeTime || now;
 
-    if (isCorrect) {
-      soundEngine.playKeypress(char === ' ');
-      const newTyped = currentTyped + char;
-      const newProgress = Math.min(1, newTyped.length / targetText.length);
+    // If no existing typo, test expected character
+    if (errorText.length === 0) {
+      const expectedChar = targetText[nextIndex];
+      const isCorrect = char === expectedChar;
 
-      // Standard WPM formula: (characters typed / 5) / active typing minutes
-      // Floor duration at 2.0s (0.033 min) to avoid initial division spike
-      const activeMinutes = Math.max(0.033, (now - firstKeyTime) / 60000);
-      const wordsTyped = (newTyped.length / 5);
-      const grossWpm = Math.round(wordsTyped / activeMinutes);
-      const errorDeduction = (state.errorsCount * 0.4) / activeMinutes;
-      const calculatedWpm = Math.max(0, Math.min(260, Math.round(grossWpm - errorDeduction)));
+      if (isCorrect) {
+        soundEngine.playKeypress(char === ' ');
+        const newTyped = currentTyped + char;
+        const newProgress = Math.min(1, newTyped.length / targetText.length);
+        const newAttempted = state.totalAttempted + 1;
 
-      const totalChars = newTyped.length;
-      const accuracy = Math.max(0, Math.min(100, Math.round(((totalChars - state.errorsCount) / totalChars) * 100)));
+        // Rolling 3.0-second keystroke window
+        const updatedHistory = [...state.keystrokeHistory, { time: now, count: 1 }]
+          .filter(k => now - k.time <= 3000);
 
-      // Smooth vehicle speed and gear mapping based on cadence and accuracy
-      const targetSpeed = Math.min(320, Math.max(35, calculatedWpm * 1.85 * (accuracy / 100)));
-      const gear = targetSpeed < 50 ? 1 : targetSpeed < 90 ? 2 : targetSpeed < 140 ? 3 : targetSpeed < 190 ? 4 : targetSpeed < 250 ? 5 : 6;
+        const charsInWindow = updatedHistory.length;
+        // Rolling WPM: (charsInWindow / 5) / (3.0s / 60s) = (charsInWindow / 5) * 20
+        const rollingWpm = Math.round((charsInWindow / 5) * 20);
 
-      soundEngine.updateEngineSpeed(targetSpeed);
+        // Standard cumulative WPM: (totalChars / 5) / activeMinutes
+        const activeMinutes = Math.max(0.033, (now - firstKeyTime) / 60000);
+        const cumulativeWpm = Math.round((newTyped.length / 5) / activeMinutes);
 
-      // Update player in racers list
-      const isDone = newTyped.length === targetText.length;
-      const updatedRacers = state.racers.map(r => {
-        if (r.isPlayer) {
-          return {
-            ...r,
-            progress: newProgress,
-            wpm: calculatedWpm,
-            speed: targetSpeed,
-            isFinished: isDone,
-            finishTime: isDone ? (now - state.startTime) / 1000 : null
-          };
+        // Smooth live display WPM: 65% responsive rolling window, 35% cumulative anchor
+        const liveWpm = Math.max(0, Math.min(240, Math.round(0.65 * rollingWpm + 0.35 * cumulativeWpm)));
+
+        // Standard Accuracy convention
+        const accuracy = Math.max(0, Math.min(100, Math.round(((newAttempted - state.errorsCount) / newAttempted) * 100)));
+
+        // Frame-rate independent vehicle speed target based on pace and accuracy
+        const targetSpeed = Math.min(320, Math.max(35, liveWpm * 1.95 * (accuracy / 100)));
+        const gear = targetSpeed < 50 ? 1 : targetSpeed < 90 ? 2 : targetSpeed < 140 ? 3 : targetSpeed < 190 ? 4 : targetSpeed < 250 ? 5 : 6;
+
+        soundEngine.updateEngineSpeed(targetSpeed);
+
+        const isDone = newTyped.length === targetText.length;
+        const updatedRacers = state.racers.map(r => {
+          if (r.isPlayer) {
+            return {
+              ...r,
+              progress: newProgress,
+              wpm: liveWpm,
+              speed: targetSpeed,
+              isFinished: isDone,
+              finishTime: isDone ? (now - state.startTime) / 1000 : null
+            };
+          }
+          return r;
+        });
+
+        const rankedRacers = state.computeRankings(updatedRacers);
+        const playerRank = rankedRacers.find(r => r.isPlayer)?.position || 4;
+
+        set({
+          typedText: newTyped,
+          wpm: liveWpm,
+          rollingWpm,
+          accuracy,
+          totalAttempted: newAttempted,
+          speedKmh: Math.round(targetSpeed),
+          targetSpeedKmh: targetSpeed,
+          gear,
+          progress: newProgress,
+          firstKeystrokeTime: firstKeyTime,
+          lastKeystrokeTime: now,
+          keystrokeHistory: updatedHistory,
+          racers: rankedRacers,
+          finalRank: playerRank
+        });
+
+        if (isDone) {
+          get().finishRace();
         }
-        return r;
-      });
+      } else {
+        // First typo on this character: append to errorText
+        soundEngine.playError();
+        const newAttempted = state.totalAttempted + 1;
+        const newErrors = state.errorsCount + 1;
+        const accuracy = Math.max(0, Math.min(100, Math.round(((newAttempted - newErrors) / newAttempted) * 100)));
 
-      // Compute smooth live rankings
-      const rankedRacers = state.computeRankings(updatedRacers);
-      const playerRank = rankedRacers.find(r => r.isPlayer)?.position || 4;
-
-      set({
-        typedText: newTyped,
-        wpm: calculatedWpm,
-        accuracy,
-        speedKmh: Math.round(targetSpeed),
-        gear,
-        progress: newProgress,
-        firstKeystrokeTime: firstKeyTime,
-        lastKeystrokeTime: now,
-        racers: rankedRacers,
-        finalRank: playerRank
-      });
-
-      // Check race finish
-      if (isDone) {
-        get().finishRace();
+        set(s => ({
+          errorText: char,
+          totalAttempted: newAttempted,
+          errorsCount: newErrors,
+          accuracy,
+          lastKeystrokeTime: now,
+          speedKmh: Math.max(25, s.speedKmh * 0.90) // Modest mistake penalty
+        }));
       }
     } else {
-      // Mistyped character
-      soundEngine.playError();
-      set(s => ({
-        errorsCount: s.errorsCount + 1,
-        lastKeystrokeTime: now,
-        speedKmh: Math.max(25, s.speedKmh * 0.88)
-      }));
+      // Existing typo: append more error chars (up to 6)
+      if (errorText.length < 6) {
+        soundEngine.playError();
+        set(s => ({
+          errorText: s.errorText + char,
+          totalAttempted: s.totalAttempted + 1,
+          errorsCount: s.errorsCount + 1,
+          lastKeystrokeTime: now,
+          speedKmh: Math.max(25, s.speedKmh * 0.92)
+        }));
+      }
     }
   },
 
-  // Backspace key support
+  // Backspace key support: removes error character first, then previous character
   handleBackspace: () => {
     const state = get();
-    if (!state.isRacing || state.isFinished || state.typedText.length === 0) return;
+    if (!state.isRacing || state.isFinished) return;
 
-    const newTyped = state.typedText.slice(0, -1);
-    const newProgress = Math.min(1, newTyped.length / state.passage.text.length);
+    if (state.errorText.length > 0) {
+      set({
+        errorText: state.errorText.slice(0, -1),
+        lastKeystrokeTime: Date.now()
+      });
+      return;
+    }
 
-    set({
-      typedText: newTyped,
-      progress: newProgress,
-      lastKeystrokeTime: Date.now()
-    });
+    if (state.typedText.length > 0) {
+      const newTyped = state.typedText.slice(0, -1);
+      const newProgress = Math.min(1, newTyped.length / state.passage.text.length);
+
+      set({
+        typedText: newTyped,
+        progress: newProgress,
+        lastKeystrokeTime: Date.now()
+      });
+    }
   },
 
   // Finish race & persist result with exact ending WPM & updated all-race average
@@ -405,12 +472,14 @@ export const useGameStore = create((set, get) => ({
     const secs = (elapsed % 60).toFixed(2);
     const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(5, '0')}`;
 
-    // Compute mathematically exact ending WPM based on active typing time
+    // Compute mathematically exact ending WPM based on active typing time: (words / minutes)
     const activeStart = state.firstKeystrokeTime || state.startTime || now;
     const activeElapsedMin = Math.max(0.04, (now - activeStart) / 60000);
     const targetWords = (state.passage?.text?.length || 100) / 5;
     const finalEndingWpm = Math.max(1, Math.round(targetWords / activeElapsedMin));
-    const finalAccuracy = Math.max(0, Math.round(((state.passage.text.length - state.errorsCount) / state.passage.text.length) * 100));
+    const finalAccuracy = state.totalAttempted > 0
+      ? Math.max(0, Math.min(100, Math.round(((state.totalAttempted - state.errorsCount) / state.totalAttempted) * 100)))
+      : 100;
 
     const track = getTrackById(state.selectedTrackId);
 
@@ -428,7 +497,6 @@ export const useGameStore = create((set, get) => ({
       date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    // Save to Supabase & local storage, updating all-race ending average WPM
     api.saveRaceResult(raceResults).then(({ profile }) => {
       if (profile) {
         set({
@@ -483,7 +551,7 @@ export const useGameStore = create((set, get) => ({
     });
   },
 
-  // Opponent bot progress simulation tick & continuous live WPM/speed decay during hesitation
+  // Opponent bot progress simulation tick strictly between 50–90 WPM & continuous smooth decay
   tickRaceBots: (deltaTime = 0.1) => {
     const state = get();
     if (!state.isRacing || state.isFinished) return;
@@ -492,27 +560,34 @@ export const useGameStore = create((set, get) => ({
     const currentElapsed = state.startTime ? (now - state.startTime) / 1000 : 0;
     const targetLength = state.passage?.text?.length || 100;
 
-    // Check if player is hesitating/idle (> 450ms without keypress) to smoothly decay live speed
+    // 1. Prune rolling keystroke window and decay player speed when pausing
     let playerLiveWpm = state.wpm;
     let playerLiveSpeed = state.speedKmh;
     let playerLiveGear = state.gear;
 
+    // Prune keystrokes older than 3 seconds
+    const activeKeystrokes = state.keystrokeHistory.filter(k => now - k.time <= 3000);
+
     if (state.firstKeystrokeTime && state.lastKeystrokeTime) {
       const idleMs = now - state.lastKeystrokeTime;
-      if (idleMs > 450) {
-        // Continuous clock tracking
+      if (idleMs > 400) {
+        // Keystroke decay in rolling window
+        const charsInWindow = activeKeystrokes.length;
+        const currentRollingWpm = Math.round((charsInWindow / 5) * 20);
+
         const activeMinutes = (now - state.firstKeystrokeTime) / 60000;
-        const realTimePace = Math.max(0, Math.round((state.typedText.length / 5) / activeMinutes));
-        
-        // Smoothly decay WPM and speed towards real-time pace rather than freezing
-        playerLiveWpm = Math.max(realTimePace, Math.round(state.wpm * 0.96));
-        playerLiveSpeed = Math.max(25, Math.round(state.speedKmh * 0.95));
+        const cumulativeWpm = Math.round((state.typedText.length / 5) / activeMinutes);
+
+        // Smoothly decay displayed WPM towards real-time pace
+        playerLiveWpm = Math.max(0, Math.round(0.7 * currentRollingWpm + 0.3 * cumulativeWpm));
+        playerLiveSpeed = Math.max(25, Math.round(state.speedKmh * 0.94));
         playerLiveGear = playerLiveSpeed < 50 ? 1 : playerLiveSpeed < 90 ? 2 : playerLiveSpeed < 140 ? 3 : playerLiveSpeed < 190 ? 4 : 5;
-        
+
         soundEngine.updateEngineSpeed(playerLiveSpeed);
       }
     }
 
+    // 2. Realistic 50–90 WPM Bot Racer Simulation
     const updatedRacers = state.racers.map(r => {
       if (r.isPlayer) {
         return {
@@ -524,23 +599,29 @@ export const useGameStore = create((set, get) => ({
 
       if (r.isHuman || r.isFinished) return r;
 
-      // Characters per second for target WPM: (WPM * 5) / 60
-      const charsPerSec = ((r.targetWpm || 100) * 5) / 60;
-      const progressDelta = (deltaTime * charsPerSec) / targetLength;
+      // Realistic speed oscillation within [50, 90] WPM range
+      const baseTarget = r.targetWpm || 70;
+      const cadenceOscillation = Math.sin(currentElapsed * 1.6 + (r.gridPosition || 1)) * 4.2;
+      const microJitter = (Math.sin(currentElapsed * 5.3) * 1.5);
       
-      // Subtle human typing rhythm variation
-      const jitter = 0.96 + Math.sin(currentElapsed * 1.5 + (r.gridPosition || 1)) * 0.08;
-      const newProgress = Math.min(1, r.progress + progressDelta * jitter);
-      const isDone = newProgress >= 1;
+      // Simulated occasional typo / word-break pause
+      const pauseCycle = Math.sin(currentElapsed * 0.4 + (r.gridPosition * 2));
+      const isPausing = pauseCycle > 0.94;
+      const pausePenalty = isPausing ? 0.65 : 1.0;
 
-      // Realistic live WPM oscillation
-      const displayWpm = Math.max(60, Math.round(r.targetWpm + Math.sin(currentElapsed * 2.2 + r.gridPosition) * 4));
+      const liveBotWpm = Math.max(50, Math.min(90, Math.round((baseTarget + cadenceOscillation + microJitter) * pausePenalty)));
+
+      // Standard 5 characters/word progress increment: charsPerSec = (WPM * 5) / 60
+      const charsPerSec = (liveBotWpm * 5) / 60;
+      const progressDelta = (deltaTime * charsPerSec) / targetLength;
+      const newProgress = Math.min(1, r.progress + progressDelta);
+      const isDone = newProgress >= 1;
 
       return {
         ...r,
         progress: newProgress,
-        wpm: displayWpm,
-        speed: Math.round(displayWpm * 1.65),
+        wpm: liveBotWpm,
+        speed: Math.round(liveBotWpm * 1.7),
         isFinished: isDone,
         finishTime: isDone ? currentElapsed : null
       };
@@ -553,6 +634,7 @@ export const useGameStore = create((set, get) => ({
       wpm: playerLiveWpm,
       speedKmh: playerLiveSpeed,
       gear: playerLiveGear,
+      keystrokeHistory: activeKeystrokes,
       racers: rankedRacers,
       finalRank: playerRank,
       elapsedSeconds: currentElapsed

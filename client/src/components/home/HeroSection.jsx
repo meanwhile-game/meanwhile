@@ -5,7 +5,7 @@ import { ArrowRight, Play, Zap, Users, Compass, Car, Sparkles, Volume2, Keyboard
 import keyboardHeroImage from '../../assets/mechanical_keyboard_hero.jpg';
 
 export const HeroSection = () => {
-  const { setView, initRace, setGameMode } = useGameStore();
+  const { setView, initRace, setGameMode, setMultiplayerModalOpen } = useGameStore();
   const [showTrailerModal, setShowTrailerModal] = useState(false);
 
   const handlePlayNow = () => {
@@ -74,6 +74,17 @@ export const HeroSection = () => {
                 <Play className="w-2.5 h-2.5 fill-current text-[#f8fafc] ml-0.5" />
               </div>
               <span>Watch Trailer</span>
+            </button>
+
+            <button
+              onClick={() => {
+                soundEngine.playButtonClick();
+                setMultiplayerModalOpen(true);
+              }}
+              className="px-5 py-3.5 rounded-full glass-pill border border-amber-400/20 text-amber-300 font-medium text-sm hover:bg-amber-400/10 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Users className="w-4 h-4 text-amber-400" />
+              <span>Multiplayer Rooms</span>
             </button>
 
             <button

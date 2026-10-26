@@ -134,6 +134,20 @@ const RealisticRaceCar = ({
           </mesh>
         ))
       )}
+
+      {/* Tire Spray Mist behind Rear Wheels when moving fast */}
+      {speed > 40 && (
+        <group position={[0, 0.22, -2.3]}>
+          <mesh position={[-0.96, 0, 0]} rotation={[-Math.PI / 5, 0, 0]}>
+            <planeGeometry args={[0.42, 1.4]} />
+            <meshBasicMaterial color="#cbd5e1" transparent opacity={Math.min(0.3, speed / 360)} depthWrite={false} />
+          </mesh>
+          <mesh position={[0.96, 0, 0]} rotation={[-Math.PI / 5, 0, 0]}>
+            <planeGeometry args={[0.42, 1.4]} />
+            <meshBasicMaterial color="#cbd5e1" transparent opacity={Math.min(0.3, speed / 360)} depthWrite={false} />
+          </mesh>
+        </group>
+      )}
     </group>
   );
 };
@@ -290,13 +304,21 @@ export const RaceCanvas = () => {
         <Stars radius={200} depth={50} count={900} factor={3} saturation={0} fade speed={1} />
 
         {/* --- Track-Specific 3D Landscapes & Scenery --- */}
-        {track.id === 'mountain-circuit' && <MountainEnvironment speedKmh={speedKmh} />}
-        {track.id === 'coastal-circuit' && <CoastalEnvironment speedKmh={speedKmh} />}
-        {track.id === 'snow-circuit' && <SnowEnvironment speedKmh={speedKmh} />}
-        {track.id === 'city-circuit' && <CityEnvironment speedKmh={speedKmh} />}
+        {(track.skyTheme === 'mountain' || track.id === 'mountain-pass' || track.id === 'mountain-circuit') && (
+          <MountainEnvironment speedKmh={speedKmh} />
+        )}
+        {(track.skyTheme === 'coastal' || track.id === 'coastal-run' || track.id === 'coastal-circuit') && (
+          <CoastalEnvironment speedKmh={speedKmh} />
+        )}
+        {(track.skyTheme === 'snow' || track.id === 'snow-circuit') && (
+          <SnowEnvironment speedKmh={speedKmh} />
+        )}
+        {(track.skyTheme === 'city' || track.id === 'neon-city' || track.id === 'city-circuit') && (
+          <CityEnvironment speedKmh={speedKmh} />
+        )}
 
         {/* Fallback for any other custom circuit */}
-        {!['mountain-circuit', 'coastal-circuit', 'snow-circuit', 'city-circuit'].includes(track.id) && (
+        {!['mountain', 'coastal', 'snow', 'city'].includes(track.skyTheme) && (
           <CoastalEnvironment speedKmh={speedKmh} />
         )}
 

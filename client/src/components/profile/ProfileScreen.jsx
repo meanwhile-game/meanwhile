@@ -11,6 +11,10 @@ export const ProfileScreen = () => {
   const [editUsername, setEditUsername] = useState(profile?.username || 'rishi');
   const [editBio, setEditBio] = useState(profile?.bio || 'Typing today. Racing meanwhile.');
 
+  const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatar || '👤');
+
+  const avatarOptions = ['🏎️', '⚡', '🏁', '👤', '🎌', '🌟', '🔥', '✨', '🚀', '🛸'];
+
   useEffect(() => {
     api.getRecentRaces(profile?.id).then(races => setRecentRaces(races));
   }, [profile?.id]);
@@ -20,12 +24,23 @@ export const ProfileScreen = () => {
     const updated = {
       ...profile,
       username: editUsername.trim() || profile.username,
-      bio: editBio.trim() || profile.bio
+      bio: editBio.trim() || profile.bio,
+      avatar: selectedAvatar,
+      avatar_url: selectedAvatar
     };
     setProfile(updated);
     api.updateProfile(profile?.id, updated);
     setIsEditing(false);
   };
+
+  const handleSignOut = async () => {
+    soundEngine.playButtonClick();
+    await api.signOut();
+    const guestProfile = await api.getProfile();
+    setProfile(guestProfile);
+  };
+
+  const isGuest = profile?.isGuest || !profile?.email;
 
   return (
     <div className="min-h-[calc(100vh-65px)] bg-[#070a13] px-6 lg:px-14 py-8 flex flex-col justify-between">
@@ -65,6 +80,16 @@ export const ProfileScreen = () => {
                 <span className="w-4 h-4 rounded-full bg-sky-400/20 text-sky-400 flex items-center justify-center text-[10px] font-bold">
                   ✓
                 </span>
+                {!isGuest && (
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    Cloud Synced
+                  </span>
+                )}
+                {isGuest && (
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    Guest Mode
+                  </span>
+                )}
               </div>
               <p className="text-xs sm:text-sm text-[#94a3b8] mt-1">
                 {profile?.bio || 'Typing today. Racing meanwhile.'}
@@ -72,20 +97,63 @@ export const ProfileScreen = () => {
             </div>
           </div>
 
-          {/* Edit Profile Button */}
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="px-5 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-[#f8fafc] transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>{isEditing ? 'Cancel' : 'Edit Profile'}</span>
-          </button>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="px-5 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-[#f8fafc] transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>{isEditing ? 'Cancel' : 'Edit Profile'}</span>
+            </button>
+
+            {!isGuest ? (
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-all cursor-pointer"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  soundEngine.playButtonClick();
+                  useGameStore.getState().setAuthModalOpen(true);
+                }}
+                className="px-4 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold transition-all cursor-pointer shadow-md"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Edit Modal / Expandable Form */}
         {isEditing && (
           <div className="p-6 rounded-2xl bg-[#0c1222] border border-amber-400/30 space-y-4">
             <h3 className="text-sm font-bold text-[#f8fafc]">Edit Racer Profile</h3>
+            
+            {/* Avatar Picker */}
+            <div>
+              <label className="text-xs text-[#94a3b8] block mb-2 font-semibold">Choose Avatar</label>
+              <div className="flex items-center gap-2 flex-wrap">
+                {avatarOptions.map(av => (
+                  <button
+                    key={av}
+                    type="button"
+                    onClick={() => setSelectedAvatar(av)}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all cursor-pointer ${
+                      selectedAvatar === av
+                        ? 'bg-amber-400/20 border-2 border-amber-400 scale-110 shadow-lg'
+                        : 'bg-black/40 border border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    {av}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-[#94a3b8] block mb-1">Racer Handle</label>
@@ -108,7 +176,7 @@ export const ProfileScreen = () => {
             </div>
             <button
               onClick={handleSaveProfile}
-              className="px-6 py-2 rounded-full bg-amber-400 text-slate-950 text-xs font-bold hover:bg-amber-300 transition-colors cursor-pointer"
+              className="px-6 py-2 rounded-full bg-amber-400 text-slate-950 text-xs font-bold hover:bg-amber-300 transition-colors cursor-pointer shadow-md"
             >
               Save Profile
             </button>

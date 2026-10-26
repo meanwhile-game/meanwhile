@@ -10,6 +10,7 @@ export const RaceHud = () => {
   const {
     passage,
     typedText,
+    errorText = '',
     wpm,
     accuracy,
     speedKmh,
@@ -161,11 +162,24 @@ export const RaceHud = () => {
                 {completedText}
               </span>
 
-              {/* Current Word Highlighted in Lavender/Indigo Pill Badge with Cursor */}
+              {/* Current Word Highlighted in Lavender/Indigo Pill Badge with Cursor & Error Handling */}
               {currentWord && (
-                <span className="inline-flex items-center bg-[#2d3756] border border-indigo-400/40 px-1.5 py-0.5 rounded-md text-white font-medium shadow-inner mx-0.5">
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-white font-medium shadow-inner mx-0.5 transition-colors ${
+                  errorText.length > 0
+                    ? 'bg-rose-950/80 border border-rose-500/60 shadow-[0_0_14px_rgba(244,63,94,0.4)]'
+                    : 'bg-[#2d3756] border border-indigo-400/40'
+                }`}>
                   <span className="text-emerald-300">{currentWordTypedPart}</span>
-                  <span className="w-0.5 h-6 bg-white animate-cursor-blink mx-[1px]" />
+                  {errorText.length > 0 ? (
+                    <>
+                      <span className="bg-rose-500/40 text-rose-200 border border-rose-400/60 rounded px-1 line-through mx-0.5 text-base">
+                        {errorText}
+                      </span>
+                      <span className="w-0.5 h-6 bg-rose-400 animate-cursor-blink mx-[1px]" />
+                    </>
+                  ) : (
+                    <span className="w-0.5 h-6 bg-white animate-cursor-blink mx-[1px]" />
+                  )}
                   <span className="text-slate-200">{currentWordRemainingPart}</span>
                 </span>
               )}

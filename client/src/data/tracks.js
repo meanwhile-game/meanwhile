@@ -1,12 +1,12 @@
 // Track & Circuit Definitions matching the 4-Circuit Reference Image & Upcoming Locked Maps
 
 export const TRACKS = [
-  // --- 01 MOUNTAIN CIRCUIT (Reference Quadrant 1) ---
+  // --- 01 MOUNTAIN PASS (Reference Quadrant 1) ---
   {
-    id: 'mountain-circuit',
+    id: 'mountain-pass',
     circuitNumber: '01',
-    name: 'MOUNTAIN CIRCUIT',
-    subtitle: 'Lush forests. Sharp turns. Endless views.',
+    name: 'MOUNTAIN PASS',
+    subtitle: 'Lush forests, waterfalls, and winding mountain roads.',
     difficulty: 'Challenging',
     distanceKm: 5.2,
     laps: 2,
@@ -20,23 +20,23 @@ export const TRACKS = [
     fogDensity: 0.0025,
     ambientLight: '#86efac',
     turns: 'Alpine Hairpins',
-    description: 'Winding viaducts cut through emerald pine valleys and towering mountain waterfalls. Demands precision pacing through sharp elevation transitions.',
-    mainImage: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
+    description: 'Dense green forests, towering mountains, waterfalls, mist, winding asphalt roads, bridges, and roadside guardrails.',
+    mainImage: '/tracks/mountain-pass.jpg',
     thumbnails: [
+      '/tracks/mountain-pass.jpg',
       'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=300&q=80'
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80'
     ],
     svgPath: 'M 48 18 C 68 15, 82 28, 80 48 C 78 62, 62 66, 68 80 C 76 96, 62 106, 44 105 C 26 104, 22 84, 30 65 C 36 50, 24 24, 48 18 Z'
   },
 
-  // --- 02 COASTAL CIRCUIT (Reference Quadrant 2) ---
+  // --- 02 COASTAL RUN (Reference Quadrant 2) ---
   {
-    id: 'coastal-circuit',
+    id: 'coastal-run',
     circuitNumber: '02',
-    name: 'COASTAL CIRCUIT',
-    subtitle: 'Ocean breeze. Flowing roads. Pure momentum.',
+    name: 'COASTAL RUN',
+    subtitle: 'Ocean views, cliffs, and breathtaking highway drives.',
     difficulty: 'Flowing',
     distanceKm: 6.1,
     laps: 2,
@@ -50,13 +50,13 @@ export const TRACKS = [
     fogDensity: 0.0018,
     ambientLight: '#fde047',
     turns: 'Oceanic Sweepers',
-    description: 'Sun-drenched sea cliffs overlooking azure waters and distant sailboats. Wide rolling bends designed to unlock peak typing cadence.',
-    mainImage: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=1200&q=80',
+    description: 'A scenic highway following the ocean, coastal cliffs, turquoise water, seaside structures, bridges, and warm sunset lighting.',
+    mainImage: '/tracks/coastal-run.jpg',
     thumbnails: [
+      '/tracks/coastal-run.jpg',
       'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=300&q=80'
+      'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80'
     ],
     svgPath: 'M 35 22 C 55 12, 86 18, 85 45 C 84 65, 62 66, 58 80 C 54 94, 48 106, 32 102 C 18 98, 14 74, 24 54 C 32 38, 16 30, 35 22 Z'
   },
@@ -66,7 +66,7 @@ export const TRACKS = [
     id: 'snow-circuit',
     circuitNumber: '03',
     name: 'SNOW CIRCUIT',
-    subtitle: 'Snowy heights. Icy corners. A different kind of thrill.',
+    subtitle: 'Snowy peaks, frozen landscapes, and icy roads.',
     difficulty: 'Extreme',
     distanceKm: 4.8,
     laps: 2,
@@ -80,23 +80,23 @@ export const TRACKS = [
     fogDensity: 0.0035,
     ambientLight: '#bfdbfe',
     turns: 'Icy Transitions',
-    description: 'Carved through frosty snowbanks and towering frozen peaks. Low-grip sensory feedback and pristine white vistas reward calm focus.',
-    mainImage: 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?auto=format&fit=crop&w=1200&q=80',
+    description: 'Snow-covered mountains, pine forests, icy roads, snow particles, alpine tunnels, and cold atmospheric lighting.',
+    mainImage: '/tracks/snow-circuit.jpg',
     thumbnails: [
+      '/tracks/snow-circuit.jpg',
       'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1517299321609-52687d1bc55a?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1491555103944-7c647fd857e6?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=300&q=80'
+      'https://images.unsplash.com/photo-1491555103944-7c647fd857e6?auto=format&fit=crop&w=300&q=80'
     ],
     svgPath: 'M 50 16 C 72 20, 82 36, 72 54 C 62 70, 72 84, 64 100 C 56 108, 36 108, 28 96 C 20 84, 28 66, 24 50 C 20 36, 30 16, 50 16 Z'
   },
 
-  // --- 04 CITY CIRCUIT (Reference Quadrant 4) ---
+  // --- 04 NEON CITY (Reference Quadrant 4) ---
   {
-    id: 'city-circuit',
+    id: 'neon-city',
     circuitNumber: '04',
-    name: 'CITY CIRCUIT',
-    subtitle: 'Neon lights. High-speed streets. A new pace.',
+    name: 'NEON CITY',
+    subtitle: 'Futuristic skyline, neon lights, and high-speed urban streets.',
     difficulty: 'Fast Pace',
     distanceKm: 5.6,
     laps: 2,
@@ -110,13 +110,13 @@ export const TRACKS = [
     fogDensity: 0.002,
     ambientLight: '#e879f9',
     turns: 'Grid Sprints',
-    description: 'Rain-slicked metropolitan highway cutting beneath illuminated neon towers, cyber billboards, and glowing purple overpasses.',
-    mainImage: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=80',
+    description: 'A futuristic NYC-inspired city with skyscrapers, elevated highways, illuminated billboards, neon signage, and reflective nighttime roads.',
+    mainImage: '/tracks/neon-city.jpg',
     thumbnails: [
+      '/tracks/neon-city.jpg',
       'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=300&q=80'
+      'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=300&q=80'
     ],
     svgPath: 'M 24 24 L 76 24 C 84 24, 86 32, 86 44 C 86 56, 76 56, 76 68 C 76 80, 86 80, 86 92 C 86 102, 80 104, 68 104 L 32 104 C 20 104, 16 98, 16 86 L 16 42 C 16 28, 20 24, 24 24 Z'
   },
@@ -194,4 +194,20 @@ export const TRACKS = [
   }
 ];
 
-export const getTrackById = (id) => TRACKS.find(t => t.id === id) || TRACKS[1]; // defaults to 02 Coastal Circuit
+export const getTrackById = (id) => {
+  if (!id) return TRACKS[1]; // Defaults to 02 Coastal Run
+  const cleanId = String(id).toLowerCase().trim();
+  if (cleanId === 'mountain-pass' || cleanId === 'mountain-circuit' || cleanId === 'mountain') {
+    return TRACKS.find(t => t.id === 'mountain-pass') || TRACKS[0];
+  }
+  if (cleanId === 'coastal-run' || cleanId === 'coastal-circuit' || cleanId === 'coastal-drive' || cleanId === 'coastal') {
+    return TRACKS.find(t => t.id === 'coastal-run') || TRACKS[1];
+  }
+  if (cleanId === 'snow-circuit' || cleanId === 'snow') {
+    return TRACKS.find(t => t.id === 'snow-circuit') || TRACKS[2];
+  }
+  if (cleanId === 'neon-city' || cleanId === 'city-circuit' || cleanId === 'city') {
+    return TRACKS.find(t => t.id === 'neon-city') || TRACKS[3];
+  }
+  return TRACKS.find(t => t.id === cleanId) || TRACKS[1];
+};

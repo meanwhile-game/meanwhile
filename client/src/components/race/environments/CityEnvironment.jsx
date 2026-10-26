@@ -2,37 +2,39 @@ import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-// 04 CITY CIRCUIT ENVIRONMENT (Tokyo / Cyber Night)
-// Midnight metropolis, glowing skyscraper grids, Tokyo neon billboards, illuminated magenta/cyan barrier strips, overhead highway gantries, wet glossy reflective road
+// 04 NEON CITY ENVIRONMENT (Reference Quadrant 4)
+// Futuristic NYC-inspired metropolis, skyscrapers, elevated highways, illuminated billboards, neon signage, and reflective nighttime roads
 export const CityEnvironment = ({ speedKmh = 100 }) => {
   const dashesMatRef = useRef();
   const buildingsGroupRef = useRef();
-  const gantriesGroupRef = useRef();
+  const flyoverGroupRef = useRef();
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
 
     // Road texture animation
     if (dashesMatRef.current && dashesMatRef.current.map) {
-      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 22;
+      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 24;
     }
 
-    // Moving city elements & overhead gantries loop
+    // Moving city skyscrapers loop
     if (buildingsGroupRef.current) {
       buildingsGroupRef.current.position.z = (buildingsGroupRef.current.position.z + moveStep * 0.6) % 100;
     }
-    if (gantriesGroupRef.current) {
-      gantriesGroupRef.current.position.z = (gantriesGroupRef.current.position.z + moveStep * 0.8) % 90;
+
+    // Elevated highway flyovers loop
+    if (flyoverGroupRef.current) {
+      flyoverGroupRef.current.position.z = (flyoverGroupRef.current.position.z + moveStep * 0.75) % 110;
     }
   });
 
-  // Rain-slicked Glossy Road Markings Texture
+  // Rain-Slicked Wet Mirror Road Texture with Neon Markings
   const dashesTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#080c16';
+    ctx.fillStyle = '#060912';
     ctx.fillRect(0, 0, 256, 512);
 
     // Glowing cyan/white dashed lane lines
@@ -42,7 +44,7 @@ export const CityEnvironment = ({ speedKmh = 100 }) => {
     ctx.fillRect(170, 40, 6, 140);
     ctx.fillRect(170, 290, 6, 140);
 
-    // Outer neon glow boundaries
+    // Outer neon purple boundary strips
     ctx.fillStyle = '#c084fc';
     ctx.fillRect(14, 0, 4, 512);
     ctx.fillRect(238, 0, 4, 512);
@@ -56,132 +58,164 @@ export const CityEnvironment = ({ speedKmh = 100 }) => {
 
   return (
     <group>
-      {/* 1. Rain-Slicked Wet Mirror Asphalt */}
+      {/* 1. Rain-Slicked Wet Mirror Asphalt with Deep Specular Reflections */}
       <mesh position={[0, -0.05, 40]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[16, 260]} />
-        <meshStandardMaterial 
-          color="#070a14" 
-          roughness={0.16} 
-          metalness={0.75} 
+        <planeGeometry args={[16.5, 280]} />
+        <meshPhysicalMaterial 
+          color="#060913" 
+          roughness={0.08} 
+          metalness={0.88} 
+          clearcoat={1.0}
+          clearcoatRoughness={0.06}
         />
       </mesh>
 
       {/* Road Markings */}
       <mesh position={[0, -0.04, 40]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[15.6, 260]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.9} />
+        <planeGeometry args={[16.2, 280]} />
+        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.92} />
       </mesh>
 
-      {/* 2. Glowing Neon Highway Guardrail Barrier Strips matching Screenshot */}
+      {/* 2. GLOWING NEON HIGHWAY GUARDRAIL BARRIERS (Matching Reference Image 04) */}
       {/* Left Guardrail: Electric Magenta LED Strip */}
-      <group position={[-8.2, 0.45, 40]}>
+      <group position={[-8.4, 0.45, 40]}>
         <mesh>
-          <boxGeometry args={[0.3, 0.7, 260]} />
+          <boxGeometry args={[0.3, 0.72, 280]} />
           <meshStandardMaterial color="#1e112a" roughness={0.5} />
         </mesh>
         <mesh position={[0.16, 0.15, 0]}>
-          <boxGeometry args={[0.06, 0.12, 260]} />
+          <boxGeometry args={[0.06, 0.14, 280]} />
           <meshBasicMaterial color="#e879f9" />
         </mesh>
-        <pointLight position={[0.8, 0.2, -10]} intensity={2.0} distance={15} color="#e879f9" />
-        <pointLight position={[0.8, 0.2, 50]} intensity={2.0} distance={15} color="#e879f9" />
-        <pointLight position={[0.8, 0.2, 110]} intensity={2.0} distance={15} color="#e879f9" />
+        <pointLight position={[0.8, 0.3, -10]} intensity={2.2} distance={18} color="#e879f9" />
+        <pointLight position={[0.8, 0.3, 50]} intensity={2.2} distance={18} color="#e879f9" />
+        <pointLight position={[0.8, 0.3, 110]} intensity={2.2} distance={18} color="#e879f9" />
       </group>
 
-      {/* Right Guardrail: High-Voltage Cyan / Purple LED Strip */}
-      <group position={[8.2, 0.45, 40]}>
+      {/* Right Guardrail: High-Voltage Cyan / Sky LED Strip */}
+      <group position={[8.4, 0.45, 40]}>
         <mesh>
-          <boxGeometry args={[0.3, 0.7, 260]} />
+          <boxGeometry args={[0.3, 0.72, 280]} />
           <meshStandardMaterial color="#111c2a" roughness={0.5} />
         </mesh>
         <mesh position={[-0.16, 0.15, 0]}>
-          <boxGeometry args={[0.06, 0.12, 260]} />
+          <boxGeometry args={[0.06, 0.14, 280]} />
           <meshBasicMaterial color="#38bdf8" />
         </mesh>
-        <pointLight position={[-0.8, 0.2, -10]} intensity={2.0} distance={15} color="#38bdf8" />
-        <pointLight position={[-0.8, 0.2, 50]} intensity={2.0} distance={15} color="#38bdf8" />
-        <pointLight position={[-0.8, 0.2, 110]} intensity={2.0} distance={15} color="#38bdf8" />
+        <pointLight position={[-0.8, 0.3, -10]} intensity={2.2} distance={18} color="#38bdf8" />
+        <pointLight position={[-0.8, 0.3, 50]} intensity={2.2} distance={18} color="#38bdf8" />
+        <pointLight position={[-0.8, 0.3, 110]} intensity={2.2} distance={18} color="#38bdf8" />
       </group>
 
-      {/* 3. Tokyo Cyber Neon Billboards & Overhead Viaduct Bridge Ahead */}
-      <group position={[0, 8.5, 125]}>
-        {/* Overhead Express Flyover */}
-        <mesh position={[0, 2.5, 0]}>
-          <boxGeometry args={[70, 3, 10]} />
-          <meshStandardMaterial color="#111827" metalness={0.7} />
-        </mesh>
-        {/* Huge Tokyo Kanji Neon Billboard matching Screenshot */}
-        <group position={[18, 7.5, 0]}>
-          <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[14, 7, 0.6]} />
-            <meshStandardMaterial color="#020617" />
-          </mesh>
-          <mesh position={[0, 0, 0.35]}>
-            <boxGeometry args={[13.2, 6.2, 0.05]} />
-            <meshBasicMaterial color="#38bdf8" />
-          </mesh>
-          <pointLight position={[0, 0, 3]} intensity={3.5} distance={25} color="#38bdf8" />
-        </group>
-        {/* Magenta Meanwhile Billboard on Left */}
-        <group position={[-18, 7.5, 0]}>
-          <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[14, 7, 0.6]} />
-            <meshStandardMaterial color="#020617" />
-          </mesh>
-          <mesh position={[0, 0, 0.35]}>
-            <boxGeometry args={[13.2, 6.2, 0.05]} />
-            <meshBasicMaterial color="#d946ef" />
-          </mesh>
-          <pointLight position={[0, 0, 3]} intensity={3.5} distance={25} color="#d946ef" />
-        </group>
-      </group>
-
-      {/* 4. Overhead Highway Sign Gantries Passing Overhead */}
-      <group ref={gantriesGroupRef} position={[0, 0, 0]}>
-        {[-30, 60, 150].map((zPos, idx) => (
+      {/* 3. MULTI-LEVEL ELEVATED HIGHWAY FLYOVER CROSSING OVERHEAD (Matching Reference Image 04) */}
+      <group ref={flyoverGroupRef} position={[0, 0, 0]}>
+        {[-20, 90].map((zPos, idx) => (
           <group key={idx} position={[0, 0, zPos]}>
-            {/* Gantry Arch Truss */}
-            <mesh position={[-8.5, 3.8, 0]}>
-              <cylinderGeometry args={[0.1, 0.1, 7.6]} />
-              <meshStandardMaterial color="#334155" metalness={0.8} />
+            {/* Curved Elevated Highway Deck passing overhead */}
+            <mesh position={[0, 9.5, 0]} rotation={[0, -0.15, 0]}>
+              <boxGeometry args={[75, 2.5, 12]} />
+              <meshStandardMaterial color="#0f172a" metalness={0.8} />
             </mesh>
-            <mesh position={[8.5, 3.8, 0]}>
-              <cylinderGeometry args={[0.1, 0.1, 7.6]} />
-              <meshStandardMaterial color="#334155" metalness={0.8} />
+            {/* Glowing Vehicle Light Trails on the Flyover */}
+            <mesh position={[0, 11.2, -2.5]} rotation={[0, -0.15, 0]}>
+              <boxGeometry args={[75, 0.15, 0.4]} />
+              <meshBasicMaterial color="#ef4444" />
             </mesh>
-            <mesh position={[0, 7.2, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.12, 0.12, 17.5]} />
-              <meshStandardMaterial color="#334155" metalness={0.8} />
+            <mesh position={[0, 11.2, 2.5]} rotation={[0, -0.15, 0]}>
+              <boxGeometry args={[75, 0.15, 0.4]} />
+              <meshBasicMaterial color="#fef08a" />
             </mesh>
-            {/* Overhead LED Green Sign Boards */}
-            <mesh position={[-3.2, 6.5, 0]}>
-              <boxGeometry args={[4.2, 1.8, 0.15]} />
-              <meshStandardMaterial color="#065f46" roughness={0.3} />
+            {/* Flyover Support Columns */}
+            <mesh position={[-16, 4.5, 0]}>
+              <cylinderGeometry args={[0.9, 1.1, 9.5]} />
+              <meshStandardMaterial color="#1e293b" />
             </mesh>
-            <mesh position={[3.2, 6.5, 0]}>
-              <boxGeometry args={[4.2, 1.8, 0.15]} />
-              <meshStandardMaterial color="#1e3a8a" roughness={0.3} />
+            <mesh position={[16, 4.5, 0]}>
+              <cylinderGeometry args={[0.9, 1.1, 9.5]} />
+              <meshStandardMaterial color="#1e293b" />
             </mesh>
-            <pointLight position={[0, 6.5, 1]} intensity={1.8} distance={18} color="#34d399" />
           </group>
         ))}
       </group>
 
-      {/* 5. Looping Cyber Skyscrapers on Left and Right Skyline */}
+      {/* 4. MASSIVE ILLUMINATED NEON BILLBOARDS (Matching Reference Image 04) */}
+      {/* Huge Vertical Cyberpunk Action Billboard on Left Skyscraper */}
+      <group position={[-18, 18, 55]}>
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.8, 22, 14]} />
+          <meshStandardMaterial color="#020617" />
+        </mesh>
+        <mesh position={[0.45, 0, 0]}>
+          <boxGeometry args={[0.05, 20.5, 12.8]} />
+          <meshBasicMaterial color="#a855f7" />
+        </mesh>
+        <pointLight position={[3, 0, 0]} intensity={4.5} distance={32} color="#c084fc" />
+      </group>
+
+      {/* Large Horizontal "MEANWHILE" Cyan Neon Billboard on Right Tower */}
+      <group position={[18, 16, 65]}>
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.8, 12, 22]} />
+          <meshStandardMaterial color="#020617" />
+        </mesh>
+        <mesh position={[-0.45, 0, 0]}>
+          <boxGeometry args={[0.05, 10.8, 20.5]} />
+          <meshBasicMaterial color="#38bdf8" />
+        </mesh>
+        <pointLight position={[-3, 0, 0]} intensity={4.0} distance={32} color="#38bdf8" />
+      </group>
+
+      {/* 5. TOWERING NYC SKYSCRAPERS WITH ILLUMINATED WINDOW MATRICES & EMPIRE SPIRES */}
       <group ref={buildingsGroupRef} position={[0, 0, 0]}>
         {[-70, -20, 30, 80, 130, 180].map((zPos, idx) => (
           <group key={idx} position={[0, 0, zPos]}>
             {/* Left Skyscrapers */}
-            <CyberSkyscraper position={[-20, 0, -10]} width={14} depth={18} height={52} neonColor="#e879f9" />
-            <CyberSkyscraper position={[-32, 0, 12]} width={18} depth={20} height={72} neonColor="#38bdf8" />
-            <CyberSkyscraper position={[-18, 0, 32]} width={12} depth={16} height={40} neonColor="#a855f7" />
-            <CyberSkyscraper position={[-30, 0, 50]} width={20} depth={22} height={85} neonColor="#f43f5e" />
+            <SkyscraperTower 
+              position={[-22, 0, -10]} 
+              width={14} 
+              depth={18} 
+              height={58} 
+              neonColor="#e879f9" 
+              hasEmpireSpire={idx % 2 === 0} 
+            />
+            <SkyscraperTower 
+              position={[-34, 0, 15]} 
+              width={18} 
+              depth={22} 
+              height={78} 
+              neonColor="#38bdf8" 
+            />
+            <SkyscraperTower 
+              position={[-20, 0, 36]} 
+              width={13} 
+              depth={16} 
+              height={46} 
+              neonColor="#a855f7" 
+            />
 
             {/* Right Skyscrapers */}
-            <CyberSkyscraper position={[20, 0, -10]} width={14} depth={18} height={58} neonColor="#38bdf8" />
-            <CyberSkyscraper position={[32, 0, 14]} width={18} depth={20} height={76} neonColor="#e879f9" />
-            <CyberSkyscraper position={[18, 0, 34]} width={13} depth={16} height={44} neonColor="#34d399" />
-            <CyberSkyscraper position={[30, 0, 52]} width={22} depth={24} height={82} neonColor="#f59e0b" />
+            <SkyscraperTower 
+              position={[22, 0, -10]} 
+              width={14} 
+              depth={18} 
+              height={62} 
+              neonColor="#38bdf8" 
+              hasEmpireSpire={idx % 2 !== 0} 
+            />
+            <SkyscraperTower 
+              position={[34, 0, 16]} 
+              width={18} 
+              depth={22} 
+              height={82} 
+              neonColor="#e879f9" 
+            />
+            <SkyscraperTower 
+              position={[20, 0, 38]} 
+              width={13} 
+              depth={16} 
+              height={48} 
+              neonColor="#34d399" 
+            />
           </group>
         ))}
       </group>
@@ -189,29 +223,45 @@ export const CityEnvironment = ({ speedKmh = 100 }) => {
   );
 };
 
-// Cyberpunk Skyscraper with Glowing Window Matrix & Rooftop Neon Spire
-const CyberSkyscraper = ({ position, width = 16, depth = 20, height = 50, neonColor = '#38bdf8' }) => (
+// Skyscraper with illuminated window rows and rooftop spire
+const SkyscraperTower = ({ position, width = 16, depth = 20, height = 50, neonColor = '#38bdf8', hasEmpireSpire = false }) => (
   <group position={position}>
-    {/* Main Tower Mass */}
+    {/* Main Monolith Tower Mass */}
     <mesh position={[0, height / 2, 0]}>
       <boxGeometry args={[width, height, depth]} />
-      <meshStandardMaterial color="#070a14" roughness={0.3} metalness={0.7} />
+      <meshStandardMaterial color="#050812" roughness={0.25} metalness={0.75} />
     </mesh>
+
     {/* Illuminated Window Matrix Band */}
-    <mesh position={[0, height * 0.6, 0]}>
-      <boxGeometry args={[width + 0.1, height * 0.45, depth + 0.1]} />
-      <meshStandardMaterial color="#17122b" roughness={0.2} metalness={0.6} />
+    <mesh position={[0, height * 0.58, 0]}>
+      <boxGeometry args={[width + 0.15, height * 0.65, depth + 0.15]} />
+      <meshStandardMaterial color="#16152b" roughness={0.15} metalness={0.65} />
     </mesh>
-    {/* Glowing Neon Horizontal Ribs */}
-    <mesh position={[0, height * 0.75, 0]}>
-      <boxGeometry args={[width + 0.2, 0.4, depth + 0.2]} />
+
+    {/* Neon Glowing Architectural Accent Ribs */}
+    <mesh position={[0, height * 0.78, 0]}>
+      <boxGeometry args={[width + 0.25, 0.45, depth + 0.25]} />
       <meshBasicMaterial color={neonColor} />
     </mesh>
-    {/* Rooftop Neon Beacon Spire */}
-    <mesh position={[0, height + 4, 0]}>
-      <cylinderGeometry args={[0.08, 0.35, 8]} />
+
+    <mesh position={[0, height * 0.45, 0]}>
+      <boxGeometry args={[width + 0.25, 0.45, depth + 0.25]} />
       <meshBasicMaterial color={neonColor} />
     </mesh>
-    <pointLight position={[0, height + 6, 0]} intensity={1.5} distance={35} color={neonColor} />
+
+    {/* Empire State / Chrysler Style Rooftop Art-Deco Spire */}
+    {hasEmpireSpire && (
+      <group position={[0, height, 0]}>
+        <mesh position={[0, 3, 0]}>
+          <boxGeometry args={[width * 0.5, 6, depth * 0.5]} />
+          <meshStandardMaterial color="#090d1a" metalness={0.8} />
+        </mesh>
+        <mesh position={[0, 8, 0]}>
+          <cylinderGeometry args={[0.1, 0.4, 8, 8]} />
+          <meshBasicMaterial color={neonColor} />
+        </mesh>
+        <pointLight position={[0, 11, 0]} intensity={2.5} distance={40} color={neonColor} />
+      </group>
+    )}
   </group>
 );

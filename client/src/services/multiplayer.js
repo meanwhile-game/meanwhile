@@ -9,8 +9,11 @@ class MultiplayerService {
     this.isHost = false;
     this.localPlayer = null;
     this.players = new Map();
+    this.clientInstanceId = 'cl_' + Math.random().toString(36).substring(2, 9);
+    this.currentTrackId = 'coastal-run';
+    this.currentLaps = 2;
 
-    // Initialize native Cross-Tab BroadcastChannel as zero-latency local/peer transport
+    // Native Cross-Tab BroadcastChannel as zero-latency local/peer transport
     if (typeof window !== 'undefined' && window.BroadcastChannel) {
       try {
         this.broadcastChannel = new BroadcastChannel('meanwhile_multiplayer_bus');
@@ -23,10 +26,14 @@ class MultiplayerService {
     }
   }
 
-  // Generate 6-character room code like MW-4829
-  generateRoomCode() {
-    const num = Math.floor(1000 + Math.random() * 9000);
-    return `MW-${num}`;
+  // Generate unique shareable room code with sufficient randomness (e.g. MW-7E92)
+  generateRoomCode(prefix = 'MW') {
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return `${prefix}-${code}`;
   }
 
   // Subscribe to internal events
@@ -48,15 +55,36 @@ class MultiplayerService {
     });
   }
 
-  // Create room
-  async createRoom(hostPlayer, trackId = 'coastal-drive', laps = 2) {
+  // Create private room
+  async createRoom(hostPlayer, trackId = 'coastal-run', laps = 2, isPublic = false) {
     this.leaveRoom();
-    const code = this.generateRoomCode();
+    const prefix = isPublic ? 'PUB' : 'MW';
+    const code = this.generateRoomCode(prefix);
     this.roomCode = code;
     this.isHost = true;
-    this.localPlayer = { ...hostPlayer, isHost: true, isReady: true };
+    this.currentTrackId = trackId;
+    this.currentLaps = laps;
+    const sessionPlayerId = `${hostPlayer.id || 'host'}_${this.clientInstanceId.slice(-4)}`;
+    this.localPlayer = { ...hostPlayer, id: sessionPlayerId, baseUserId: hostPlayer.id, isHost: true, isReady: true };
     this.players.clear();
-    this.players.set(hostPlayer.id, this.localPlayer);
+    this.players.set(sessionPlayerId, this.localPlayer);
+
+    // Persist room in Supabase if configured
+    if (supabase) {
+      try {
+        await supabase.from('rooms').insert({
+          code,
+          host_id: hostPlayer.id,
+          host_name: hostPlayer.name || hostPlayer.username || 'Host',
+          track_id: trackId,
+          laps,
+          status: 'waiting',
+          max_players: 8
+        });
+      } catch (e) {
+        console.warn('Supabase room creation fallback to local bus:', e);
+      }
+    }
 
     await this.connectChannel(code);
 
@@ -79,19 +107,51 @@ class MultiplayerService {
     return { roomCode: code, isHost: true };
   }
 
-  // Join room
+  // Join room by code
   async joinRoom(code, player) {
     this.leaveRoom();
     const cleanCode = code.trim().toUpperCase();
+
+    if (!cleanCode.match(/^(MW|PUB)-[A-Z0-9]{3,6}$/i)) {
+      throw new Error('Invalid room code format. Please check your code (e.g. MW-7E92).');
+    }
+
+    // Verify room status with Supabase if connected
+    if (supabase) {
+      try {
+        const { data: roomData, error } = await supabase
+          .from('rooms')
+          .select('*')
+          .eq('code', cleanCode)
+          .single();
+
+        if (roomData) {
+          if (roomData.status === 'racing') {
+            throw new Error('This race has already started. Please join another room.');
+          }
+          if (roomData.status === 'finished') {
+            throw new Error('This room has expired. Please create a new room.');
+          }
+          this.currentTrackId = roomData.track_id;
+          this.currentLaps = roomData.laps;
+        }
+      } catch (err) {
+        if (err.message && err.message.includes('race has already started')) {
+          throw err;
+        }
+      }
+    }
+
     this.roomCode = cleanCode;
     this.isHost = false;
-    this.localPlayer = { ...player, isHost: false, isReady: false };
+    const sessionPlayerId = `${player.id || 'challenger'}_${this.clientInstanceId.slice(-4)}`;
+    this.localPlayer = { ...player, id: sessionPlayerId, baseUserId: player.id, isHost: false, isReady: false };
     this.players.clear();
-    this.players.set(player.id, this.localPlayer);
+    this.players.set(sessionPlayerId, this.localPlayer);
 
     await this.connectChannel(cleanCode);
 
-    // Announce join
+    // Announce join to host and peers
     this.broadcastEvent({
       type: 'PLAYER_JOINED',
       roomCode: cleanCode,
@@ -101,10 +161,36 @@ class MultiplayerService {
     this.emit('room_updated', {
       roomCode: cleanCode,
       isHost: false,
+      trackId: this.currentTrackId,
+      laps: this.currentLaps,
       players: Array.from(this.players.values())
     });
 
     return { roomCode: cleanCode, isHost: false };
+  }
+
+  // Public Matchmaking: Find open public room or create a new public grid
+  async joinPublicMatch(player, trackId = 'coastal-run') {
+    if (supabase) {
+      try {
+        const { data: openRooms } = await supabase
+          .from('rooms')
+          .select('*')
+          .eq('status', 'waiting')
+          .like('code', 'PUB-%')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (openRooms && openRooms.length > 0) {
+          return await this.joinRoom(openRooms[0].code, player);
+        }
+      } catch (e) {
+        console.warn('Public matchmaking query fallback:', e);
+      }
+    }
+
+    // If no open room found, create a new public room
+    return await this.createRoom(player, trackId, 2, true);
   }
 
   async connectChannel(code) {
@@ -148,7 +234,8 @@ class MultiplayerService {
 
   handleIncomingMessage(msg) {
     if (!msg || msg.roomCode !== this.roomCode) return;
-    if (msg.senderId === this.localPlayer?.id) return; // Ignore own echoes
+    if (msg.clientInstanceId && msg.clientInstanceId === this.clientInstanceId) return; // Prevent loopback to the same tab
+    if (msg.senderId && msg.senderId === this.localPlayer?.id) return; // Prevent echo
 
     switch (msg.type) {
       case 'PLAYER_JOINED':
@@ -157,11 +244,13 @@ class MultiplayerService {
           this.emit('player_joined', msg.player);
           this.emit('players_changed', Array.from(this.players.values()));
 
-          // If we are host, send state back to newly joined player
+          // If we are host, send current room state back to newly connected player
           if (this.isHost) {
             this.broadcastEvent({
               type: 'ROOM_SYNC',
               roomCode: this.roomCode,
+              trackId: this.currentTrackId,
+              laps: this.currentLaps,
               players: Array.from(this.players.values())
             });
           }
@@ -171,8 +260,20 @@ class MultiplayerService {
       case 'ROOM_SYNC':
         if (Array.isArray(msg.players)) {
           msg.players.forEach(p => this.players.set(p.id, p));
+          if (this.localPlayer) {
+            this.players.set(this.localPlayer.id, this.localPlayer);
+          }
+          if (msg.trackId) this.currentTrackId = msg.trackId;
+          if (msg.laps) this.currentLaps = msg.laps;
           this.emit('players_changed', Array.from(this.players.values()));
+          this.emit('track_changed', { trackId: this.currentTrackId, laps: this.currentLaps });
         }
+        break;
+
+      case 'TRACK_CHANGED':
+        this.currentTrackId = msg.trackId;
+        this.currentLaps = msg.laps;
+        this.emit('track_changed', { trackId: msg.trackId, laps: msg.laps });
         break;
 
       case 'PLAYER_READY':
@@ -222,18 +323,19 @@ class MultiplayerService {
   broadcastEvent(payload) {
     const fullPayload = {
       ...payload,
+      clientInstanceId: this.clientInstanceId,
       senderId: this.localPlayer?.id,
       timestamp: Date.now()
     };
 
-    // 1. Broadcast over local cross-tab bus
+    // 1. Local cross-tab BroadcastChannel
     if (this.broadcastChannel) {
       try {
         this.broadcastChannel.postMessage(fullPayload);
       } catch (e) {}
     }
 
-    // 2. Broadcast over Supabase Realtime channel
+    // 2. Supabase Realtime broadcast channel
     if (this.currentChannel) {
       try {
         this.currentChannel.send({
@@ -243,6 +345,28 @@ class MultiplayerService {
         });
       } catch (e) {}
     }
+  }
+
+  // Host changes the track
+  setTrack(trackId, laps = 2) {
+    if (!this.isHost) return;
+    this.currentTrackId = trackId;
+    this.currentLaps = laps;
+
+    if (supabase && this.roomCode) {
+      try {
+        supabase.from('rooms').update({ track_id: trackId, laps }).eq('code', this.roomCode);
+      } catch (e) {}
+    }
+
+    this.broadcastEvent({
+      type: 'TRACK_CHANGED',
+      roomCode: this.roomCode,
+      trackId,
+      laps
+    });
+
+    this.emit('track_changed', { trackId, laps });
   }
 
   // Toggle ready status
@@ -258,20 +382,27 @@ class MultiplayerService {
     this.emit('players_changed', Array.from(this.players.values()));
   }
 
-  // Host starts the game
+  // Host starts the race with synchronized countdown
   startRace(trackId, passage) {
     if (!this.isHost) return;
-    const startTime = Date.now() + 3500; // 3.5s countdown
+    const startTime = Date.now() + 3500; // Exact 3.5s countdown
+
+    // Update room status in Supabase if configured
+    if (supabase && this.roomCode) {
+      try {
+        supabase.from('rooms').update({ status: 'racing' }).eq('code', this.roomCode);
+      } catch (e) {}
+    }
 
     this.broadcastEvent({
       type: 'START_COUNTDOWN',
       roomCode: this.roomCode,
-      trackId,
+      trackId: trackId || this.currentTrackId,
       passage,
       startTime
     });
 
-    this.emit('start_countdown', { trackId, passage, startTime });
+    this.emit('start_countdown', { trackId: trackId || this.currentTrackId, passage, startTime });
   }
 
   // Throttled progress update (~10Hz)
@@ -297,6 +428,13 @@ class MultiplayerService {
       finalWpm,
       finishTime
     });
+
+    // Mark room finished if host
+    if (this.isHost && supabase) {
+      try {
+        supabase.from('rooms').update({ status: 'finished' }).eq('code', this.roomCode);
+      } catch (e) {}
+    }
   }
 
   leaveRoom() {
