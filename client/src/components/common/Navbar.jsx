@@ -86,7 +86,7 @@ export const Navbar = () => {
             title="Earned Meanwhile Credits"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span className="font-semibold">{profile?.coins?.toLocaleString() || '2,450'}</span>
+            <span className="font-semibold">{Number(profile?.coins || 0).toLocaleString()}</span>
           </button>
 
           {/* User Sign In / Profile Pill with Dropdown */}
@@ -97,7 +97,7 @@ export const Navbar = () => {
                 className="flex items-center gap-2 pl-2.5 pr-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-xs font-medium text-[#f8fafc] transition-all cursor-pointer"
               >
                 <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-xs">
-                  {profile.avatar || '👤'}
+                  {profile.avatar || '🏎️'}
                 </span>
                 <span>{profile.username}</span>
               </button>
@@ -107,7 +107,7 @@ export const Navbar = () => {
                 <div className="rounded-xl bg-[#0c1222] border border-white/10 shadow-2xl p-1.5 text-xs flex flex-col gap-0.5">
                   <div className="px-3 py-2 border-b border-white/[0.06]">
                     <div className="font-bold text-[#f8fafc] truncate">{profile.username}</div>
-                    <div className="text-[10px] text-amber-400 font-mono-num">{profile.coins?.toLocaleString() || '2,450'} CR</div>
+                    <div className="text-[10px] text-amber-400 font-mono-num">{Number(profile.coins || 0).toLocaleString()} CR</div>
                   </div>
                   <button
                     onClick={() => setView('profile')}
@@ -124,8 +124,7 @@ export const Navbar = () => {
                   <button
                     onClick={async () => {
                       soundEngine.playButtonClick();
-                      await api.signOut();
-                      const guestProfile = await api.getProfile();
+                      const guestProfile = await api.signOut();
                       setProfile(guestProfile);
                     }}
                     className="w-full px-3 py-2 text-left rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer border-t border-white/[0.06] mt-0.5"
@@ -143,8 +142,8 @@ export const Navbar = () => {
               }}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#f8fafc] hover:bg-white text-slate-950 text-xs font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
             >
-              <span>Sign In</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <User className="w-3.5 h-3.5 text-slate-950" />
+              <span>Login / Register</span>
             </button>
           )}
         </div>

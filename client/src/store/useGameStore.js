@@ -3,7 +3,7 @@ import { TRACKS, getTrackById } from '../data/tracks.js';
 import { VEHICLES, getVehicleById } from '../data/vehicles.js';
 import { PASSAGES, getRandomPassage } from '../data/passages.js';
 import { soundEngine } from '../sound/soundEngine.js';
-import { api } from '../services/supabase.js';
+import { api, createDefaultGuestProfile } from '../services/supabase.js';
 import { multiplayer } from '../services/multiplayer.js';
 
 // Believable AI Bot Drivers configured strictly within the 50–90 WPM range
@@ -35,20 +35,8 @@ export const useGameStore = create((set, get) => ({
   enableAds: import.meta.env.VITE_ENABLE_ADS === 'true',
   setEnableAds: (enabled) => set({ enableAds: enabled }),
 
-  // User Profile
-  profile: {
-    id: 'user_rishi',
-    username: 'rishi',
-    avatar: '👤',
-    bio: 'Typing today. Racing meanwhile.',
-    coins: 2450,
-    bestWpm: 84,
-    averageWpm: 76,
-    accuracy: 97,
-    totalRaces: 310,
-    globalRank: 4,
-    isGuest: false
-  },
+  // User Profile: Clean Guest by default (no fake stats, no persistent account)
+  profile: createDefaultGuestProfile(),
   setProfile: (newProfile) => set((state) => ({ profile: { ...state.profile, ...newProfile } })),
 
   // Machine & Track Selection
@@ -497,13 +485,13 @@ export const useGameStore = create((set, get) => ({
       date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    api.saveRaceResult(raceResults).then(({ profile }) => {
+    api.saveRaceResult(raceResults, state.profile).then(({ profile }) => {
       if (profile) {
         set({
           profile: {
             ...get().profile,
             ...profile,
-            averageWpm: profile.averageWpm || profile.average_wpm
+            averageWpm: profile.averageWpm ?? profile.average_wpm ?? 0
           }
         });
       }

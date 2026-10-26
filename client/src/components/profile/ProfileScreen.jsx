@@ -2,24 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../../store/useGameStore.js';
 import { api } from '../../services/supabase.js';
 import { soundEngine } from '../../sound/soundEngine.js';
-import { ArrowLeft, Edit3, Sparkles, Check, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Edit3, Sparkles, Check, ChevronRight, UserPlus, LogIn, Trophy } from 'lucide-react';
 
 export const ProfileScreen = () => {
-  const { setView, profile, setProfile } = useGameStore();
+  const { setView, profile, setProfile, setAuthModalOpen } = useGameStore();
   const [recentRaces, setRecentRaces] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [editUsername, setEditUsername] = useState(profile?.username || 'rishi');
+  const [editUsername, setEditUsername] = useState(profile?.username || 'Guest');
   const [editBio, setEditBio] = useState(profile?.bio || 'Typing today. Racing meanwhile.');
-
-  const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatar || '👤');
+  const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatar || '🏎️');
 
   const avatarOptions = ['🏎️', '⚡', '🏁', '👤', '🎌', '🌟', '🔥', '✨', '🚀', '🛸'];
 
-  useEffect(() => {
-    api.getRecentRaces(profile?.id).then(races => setRecentRaces(races));
-  }, [profile?.id]);
+  const isGuest = Boolean(profile?.isGuest || !profile?.id || String(profile.id).startsWith('guest_'));
 
-  const handleSaveProfile = () => {
+  useEffect(() => {
+    if (isGuest) {
+      setRecentRaces([]);
+      return;
+    }
+    api.getRecentRaces(profile?.id).then(races => setRecentRaces(races || []));
+  }, [profile?.id, isGuest]);
+
+  const handleSaveProfile = async () => {
     soundEngine.playButtonClick();
     const updated = {
       ...profile,
@@ -29,23 +34,29 @@ export const ProfileScreen = () => {
       avatar_url: selectedAvatar
     };
     setProfile(updated);
-    api.updateProfile(profile?.id, updated);
+    if (!isGuest) {
+      await api.updateProfile(profile?.id, updated);
+    }
     setIsEditing(false);
   };
 
   const handleSignOut = async () => {
     soundEngine.playButtonClick();
-    await api.signOut();
-    const guestProfile = await api.getProfile();
+    const guestProfile = await api.signOut();
     setProfile(guestProfile);
+    setRecentRaces([]);
   };
 
-  const isGuest = profile?.isGuest || !profile?.email;
+  const totalRaces = Number(profile?.totalRaces ?? profile?.total_races ?? 0);
+  const averageWpm = Number(profile?.averageWpm ?? profile?.average_wpm ?? 0);
+  const bestWpm = Number(profile?.bestWpm ?? profile?.best_wpm ?? 0);
+  const accuracy = Number(profile?.accuracy ?? profile?.average_accuracy ?? 0);
+  const wins = Number(profile?.wins ?? 0);
 
   return (
     <div className="min-h-[calc(100vh-65px)] bg-[#070a13] px-6 lg:px-14 py-8 flex flex-col justify-between">
       <div className="max-w-4xl mx-auto w-full space-y-8">
-        {/* Top Header matching Reference UI */}
+        {/* Top Header */}
         <div className="flex items-center justify-between pb-6 border-b border-white/[0.06]">
           <button
             onClick={() => setView('home')}
@@ -58,36 +69,64 @@ export const ProfileScreen = () => {
           {/* Currency Pill */}
           <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-xs font-mono-num text-amber-300">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span className="font-semibold">{profile?.coins?.toLocaleString() || '2,450'}</span>
+            <span className="font-semibold">{profile?.coins?.toLocaleString() || '0'}</span>
             <ChevronRight className="w-3.5 h-3.5 text-amber-400/60" />
           </div>
         </div>
 
-        {/* Profile Card Header matching Reference UI */}
+        {/* Guest Mode Callout Banner */}
+        {isGuest && (
+          <div className="p-4 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">
+                  Guest Mode
+                </span>
+                <span className="text-xs font-semibold text-[#f8fafc]">Your race records are not being saved.</span>
+              </div>
+              <p className="text-xs text-[#94a3b8] mt-1">
+                Create a free account or log in to persist your best WPM, accuracy, and career leaderboard statistics.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                soundEngine.playButtonClick();
+                setAuthModalOpen(true);
+              }}
+              className="px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-all shadow-md cursor-pointer whitespace-nowrap self-start sm:self-auto"
+            >
+              Login / Create Account
+            </button>
+          </div>
+        )}
+
+        {/* Profile Card Header */}
         <div className="p-6 sm:p-8 rounded-2xl bg-[#0c1222] border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
           <div className="flex items-center gap-5">
             {/* Avatar */}
             <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-white/10 flex items-center justify-center text-3xl shadow-inner">
-              {profile?.avatar || '👤'}
+              {profile?.avatar || '🏎️'}
             </div>
 
             {/* User Meta */}
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold text-[#f8fafc]">
-                  {profile?.username || 'rishi'}
+                  {profile?.username || 'Guest'}
                 </h2>
-                <span className="w-4 h-4 rounded-full bg-sky-400/20 text-sky-400 flex items-center justify-center text-[10px] font-bold">
-                  ✓
-                </span>
-                {!isGuest && (
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    Cloud Synced
-                  </span>
-                )}
-                {isGuest && (
+                {!isGuest ? (
+                  <>
+                    <span className="w-4 h-4 rounded-full bg-sky-400/20 text-sky-400 flex items-center justify-center text-[10px] font-bold">
+                      ✓
+                    </span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      Cloud Synced
+                    </span>
+                  </>
+                ) : (
                   <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                    Guest Mode
+                    Guest Racer
                   </span>
                 )}
               </div>
@@ -100,7 +139,13 @@ export const ProfileScreen = () => {
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                soundEngine.playButtonClick();
+                setEditUsername(profile?.username || '');
+                setEditBio(profile?.bio || '');
+                setSelectedAvatar(profile?.avatar || '🏎️');
+                setIsEditing(!isEditing);
+              }}
               className="px-5 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-[#f8fafc] transition-all flex items-center gap-2 cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5" />
@@ -118,7 +163,7 @@ export const ProfileScreen = () => {
               <button
                 onClick={() => {
                   soundEngine.playButtonClick();
-                  useGameStore.getState().setAuthModalOpen(true);
+                  setAuthModalOpen(true);
                 }}
                 className="px-4 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold transition-all cursor-pointer shadow-md"
               >
@@ -183,9 +228,9 @@ export const ProfileScreen = () => {
           </div>
         )}
 
-        {/* 5 Metric Cards featuring Overall All-Race Ending Average WPM */}
+        {/* 5 Metric Cards: Exact Real Stats (No Fake Data) */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 sm:gap-4">
-          {/* 1. OVERALL ALL-RACE ENDING AVERAGE WPM (HIGHLIGHTED HERO CARD) */}
+          {/* 1. OVERALL ALL-RACE ENDING AVERAGE WPM */}
           <div className="p-5 rounded-2xl bg-[#0c1222] border-2 border-amber-400/40 relative overflow-hidden shadow-[0_0_25px_-5px_rgba(245,158,11,0.25)] text-center group">
             <div className="absolute top-0 right-0 bg-amber-400 text-slate-950 text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg tracking-wider">
               All-Time
@@ -194,7 +239,7 @@ export const ProfileScreen = () => {
               Overall Avg WPM
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-white mt-1">
-              {profile?.averageWpm || api.getOverallAverageWpm()}
+              {totalRaces > 0 ? averageWpm : 0}
             </div>
             <span className="text-[10px] text-amber-300/80 mt-0.5 block font-medium">
               Race Ending Mean
@@ -207,7 +252,7 @@ export const ProfileScreen = () => {
               Best WPM
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-[#f8fafc] mt-1">
-              {profile?.bestWpm || 134}
+              {totalRaces > 0 ? bestWpm : 0}
             </div>
             <span className="text-[10px] text-emerald-400 mt-0.5 block font-medium">
               Peak Record
@@ -220,7 +265,7 @@ export const ProfileScreen = () => {
               Accuracy
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-[#f8fafc] mt-1">
-              {profile?.accuracy || 96}%
+              {totalRaces > 0 && accuracy > 0 ? `${accuracy}%` : '—'}
             </div>
             <span className="text-[10px] text-[#94a3b8] mt-0.5 block">
               Precision Rate
@@ -233,10 +278,10 @@ export const ProfileScreen = () => {
               Total Races
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-[#f8fafc] mt-1">
-              {profile?.totalRaces || 310}
+              {totalRaces}
             </div>
             <span className="text-[10px] text-sky-400 mt-0.5 block font-medium">
-              Finishes
+              Finishes ({wins} {wins === 1 ? 'Win' : 'Wins'})
             </span>
           </div>
 
@@ -246,46 +291,63 @@ export const ProfileScreen = () => {
               Global Rank
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-amber-400 mt-1">
-              #{profile?.globalRank || 4}
+              {totalRaces > 0 && profile?.globalRank && profile.globalRank !== '—'
+                ? `#${profile.globalRank}`
+                : '—'}
             </div>
             <span className="text-[10px] text-amber-300/80 mt-0.5 block font-medium">
-              Top Tier
+              {totalRaces > 0 ? 'Leaderboard' : 'Unranked'}
             </span>
           </div>
         </div>
 
-        {/* Recent Races List matching Reference UI */}
+        {/* Recent Races List */}
         <div className="p-6 sm:p-8 rounded-2xl bg-[#0c1222] border border-white/[0.08] shadow-2xl space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/[0.06] gap-2">
             <div>
               <h3 className="text-base font-bold text-[#f8fafc]">Recent Race Finishes</h3>
               <p className="text-xs text-[#94a3b8] mt-0.5">
-                Overall ending average: <span className="text-amber-400 font-bold font-mono-num">{profile?.averageWpm || api.getOverallAverageWpm()} WPM</span> across all completed tracks.
+                {totalRaces > 0
+                  ? `Overall ending average: ${averageWpm} WPM across ${totalRaces} completed races.`
+                  : 'Your completed races will appear here once you finish a race.'}
               </p>
             </div>
-            <span className="text-xs text-amber-400/90 hover:text-amber-300 cursor-pointer font-semibold">
-              Live Synced
-            </span>
+            {!isGuest && totalRaces > 0 && (
+              <span className="text-xs text-amber-400/90 font-semibold">
+                Live Synced
+              </span>
+            )}
           </div>
 
-          <div className="divide-y divide-white/[0.04]">
-            {recentRaces.map((race) => (
-              <div key={race.id} className="py-3.5 flex items-center justify-between text-xs sm:text-sm">
-                <div className="flex items-center gap-3">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  <span className="font-semibold text-[#f8fafc]">{race.track}</span>
-                </div>
+          {recentRaces.length > 0 ? (
+            <div className="divide-y divide-white/[0.04]">
+              {recentRaces.map((race) => (
+                <div key={race.id} className="py-3.5 flex items-center justify-between text-xs sm:text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    <span className="font-semibold text-[#f8fafc]">{race.track}</span>
+                  </div>
 
-                <div className="flex items-center gap-6 font-mono-num">
-                  <span className={`font-bold ${race.position === '1st' ? 'text-amber-400' : 'text-slate-300'}`}>
-                    {race.position}
-                  </span>
-                  <span className="text-amber-300 font-bold">{race.wpm} WPM</span>
-                  <span className="text-[#64748b]">{race.time}</span>
+                  <div className="flex items-center gap-6 font-mono-num">
+                    <span className={`font-bold ${race.position === '1st' ? 'text-amber-400' : 'text-slate-300'}`}>
+                      {race.position}
+                    </span>
+                    <span className="text-amber-300 font-bold">{race.wpm} WPM</span>
+                    <span className="text-[#64748b]">{race.time}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center space-y-2">
+              <Trophy className="w-8 h-8 text-[#64748b]/60 mx-auto" />
+              <p className="text-xs text-[#94a3b8]">
+                {isGuest
+                  ? 'No race history in Guest Mode. Log in or create an account to record your race history.'
+                  : 'No races completed yet. Start a race to set your first records!'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

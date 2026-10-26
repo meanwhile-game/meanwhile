@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { useGameStore } from '../../store/useGameStore.js';
 import { api } from '../../services/supabase.js';
 import { soundEngine } from '../../sound/soundEngine.js';
-import { X, Lock, Mail, User, ArrowRight, ShieldCheck } from 'lucide-react';
+import { X, Lock, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export const AuthModal = () => {
   const { authModalOpen, setAuthModalOpen, setProfile } = useGameStore();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -22,19 +21,26 @@ export const AuthModal = () => {
     setLoading(true);
 
     try {
+      let result;
       if (isSignUp) {
-        await api.signUp(email, password, username);
+        result = await api.signUp(username, password);
       } else {
-        await api.signIn(email, password);
+        result = await api.signIn(username, password);
       }
 
-      const activeProfile = await api.getProfile();
-      if (username) activeProfile.username = username;
-      setProfile(activeProfile);
+      if (result?.profile) {
+        setProfile(result.profile);
+      } else {
+        const activeProfile = await api.getProfile();
+        setProfile(activeProfile);
+      }
 
+      // Reset form fields
+      setUsername('');
+      setPassword('');
       setAuthModalOpen(false);
     } catch (err) {
-      setErrorMsg(err.message || 'Authentication error. Please check your credentials.');
+      setErrorMsg(err.message || 'Authentication error. Please verify your credentials.');
     } finally {
       setLoading(false);
     }
@@ -69,52 +75,44 @@ export const AuthModal = () => {
             {isSignUp ? 'Create Racer Account' : 'Welcome Back'}
           </h2>
           <p className="text-xs text-[#94a3b8] mt-1">
-            Persist your best WPM, unlock machines, and climb the leaderboard.
+            {isSignUp
+              ? 'Choose a unique username and password to track your records.'
+              : 'Log in with your username and password to access your stats.'}
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400">
-            {errorMsg}
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Input Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
-            <div>
-              <label className="text-xs font-semibold text-[#94a3b8] block mb-1">
-                Racer Handle (Username)
-              </label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748b]" />
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. SpeedRacer"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-xs text-[#f8fafc] focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-          )}
-
           <div>
             <label className="text-xs font-semibold text-[#94a3b8] block mb-1">
-              Email Address
+              Username
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748b]" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748b]" />
               <input
-                type="email"
+                type="text"
                 required
-                placeholder="driver@meanwhile.racing"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+                minLength={3}
+                maxLength={20}
+                placeholder="e.g. ApexHunter"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-xs text-[#f8fafc] focus:outline-none focus:border-amber-400"
               />
             </div>
+            {isSignUp && (
+              <span className="text-[10px] text-[#64748b] mt-1 block">
+                3–20 characters. Letters, numbers, and underscores only.
+              </span>
+            )}
           </div>
 
           <div>
@@ -126,6 +124,7 @@ export const AuthModal = () => {
               <input
                 type="password"
                 required
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 minLength={6}
                 placeholder="••••••••"
                 value={password}
@@ -133,6 +132,11 @@ export const AuthModal = () => {
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-xs text-[#f8fafc] focus:outline-none focus:border-amber-400"
               />
             </div>
+            {isSignUp && (
+              <span className="text-[10px] text-[#64748b] mt-1 block">
+                Minimum 6 characters. Passwords are securely hashed with Supabase.
+              </span>
+            )}
           </div>
 
           <button
@@ -140,7 +144,7 @@ export const AuthModal = () => {
             disabled={loading}
             className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50 mt-2"
           >
-            {loading ? 'Authenticating...' : isSignUp ? 'Create Profile' : 'Sign In'}
+            {loading ? 'Authenticating...' : isSignUp ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
@@ -149,10 +153,13 @@ export const AuthModal = () => {
           <span>{isSignUp ? 'Already have an account? ' : "Don't have an account? "}</span>
           <button
             type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => {
+              setErrorMsg('');
+              setIsSignUp(!isSignUp);
+            }}
             className="text-amber-400 font-bold hover:underline cursor-pointer"
           >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
+            {isSignUp ? 'Log In' : 'Create Account'}
           </button>
         </div>
 
@@ -163,7 +170,7 @@ export const AuthModal = () => {
             onClick={handleContinueGuest}
             className="text-xs text-[#64748b] hover:text-[#f8fafc] transition-colors cursor-pointer"
           >
-            Continue as Guest Racer →
+            Continue as Guest Racer (No account needed) →
           </button>
         </div>
       </div>
