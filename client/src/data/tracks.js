@@ -23,10 +23,10 @@ export const TRACKS = [
     description: 'Dense green forests, towering mountains, waterfalls, mist, winding asphalt roads, bridges, and roadside guardrails.',
     mainImage: '/tracks/mountain-pass.jpg',
     thumbnails: [
-      '/tracks/mountain-pass.jpg',
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80'
+      '/tracks/mp-thumb-1.jpg',
+      '/tracks/mp-thumb-2.jpg',
+      '/tracks/mp-thumb-3.jpg',
+      '/tracks/mp-thumb-4.jpg'
     ],
     svgPath: 'M 48 18 C 68 15, 82 28, 80 48 C 78 62, 62 66, 68 80 C 76 96, 62 106, 44 105 C 26 104, 22 84, 30 65 C 36 50, 24 24, 48 18 Z'
   },
@@ -53,10 +53,10 @@ export const TRACKS = [
     description: 'A scenic highway following the ocean, coastal cliffs, turquoise water, seaside structures, bridges, and warm sunset lighting.',
     mainImage: '/tracks/coastal-run.jpg',
     thumbnails: [
-      '/tracks/coastal-run.jpg',
-      'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80'
+      '/tracks/cr-thumb-1.jpg',
+      '/tracks/cr-thumb-2.jpg',
+      '/tracks/cr-thumb-3.jpg',
+      '/tracks/cr-thumb-4.jpg'
     ],
     svgPath: 'M 35 22 C 55 12, 86 18, 85 45 C 84 65, 62 66, 58 80 C 54 94, 48 106, 32 102 C 18 98, 14 74, 24 54 C 32 38, 16 30, 35 22 Z'
   },
@@ -83,10 +83,10 @@ export const TRACKS = [
     description: 'Snow-covered mountains, pine forests, icy roads, snow particles, alpine tunnels, and cold atmospheric lighting.',
     mainImage: '/tracks/snow-circuit.jpg',
     thumbnails: [
-      '/tracks/snow-circuit.jpg',
-      'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1517299321609-52687d1bc55a?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1491555103944-7c647fd857e6?auto=format&fit=crop&w=300&q=80'
+      '/tracks/sc-thumb-1.jpg',
+      '/tracks/sc-thumb-2.jpg',
+      '/tracks/sc-thumb-3.jpg',
+      '/tracks/sc-thumb-4.jpg'
     ],
     svgPath: 'M 50 16 C 72 20, 82 36, 72 54 C 62 70, 72 84, 64 100 C 56 108, 36 108, 28 96 C 20 84, 28 66, 24 50 C 20 36, 30 16, 50 16 Z'
   },
@@ -113,10 +113,10 @@ export const TRACKS = [
     description: 'A futuristic NYC-inspired city with skyscrapers, elevated highways, illuminated billboards, neon signage, and reflective nighttime roads.',
     mainImage: '/tracks/neon-city.jpg',
     thumbnails: [
-      '/tracks/neon-city.jpg',
-      'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=300&q=80',
-      'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=300&q=80'
+      '/tracks/nc-thumb-1.jpg',
+      '/tracks/nc-thumb-2.jpg',
+      '/tracks/nc-thumb-3.jpg',
+      '/tracks/nc-thumb-4.jpg'
     ],
     svgPath: 'M 24 24 L 76 24 C 84 24, 86 32, 86 44 C 86 56, 76 56, 76 68 C 76 80, 86 80, 86 92 C 86 102, 80 104, 68 104 L 32 104 C 20 104, 16 98, 16 86 L 16 42 C 16 28, 20 24, 24 24 Z'
   },

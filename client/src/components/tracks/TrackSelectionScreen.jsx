@@ -13,7 +13,8 @@ import {
   Sparkles, 
   AlertCircle,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Check
 } from 'lucide-react';
 
 export const TrackSelectionScreen = () => {
@@ -137,75 +138,83 @@ export const TrackSelectionScreen = () => {
                   onClick={() => handleSelectTrack(track)}
                   className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col justify-between border ${
                     isSelected
-                      ? 'border-sky-400 ring-2 ring-sky-400/30 shadow-[0_0_35px_-5px_rgba(56,189,248,0.3)] scale-[1.01]'
-                      : 'border-white/[0.08] hover:border-white/[0.22] bg-[#0c1222]'
+                      ? 'border-sky-400 ring-2 ring-sky-400/30 shadow-[0_0_35px_-5px_rgba(56,189,248,0.35)] scale-[1.01]'
+                      : 'border-white/[0.08] hover:border-white/[0.22] bg-[#0c1222] hover:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]'
                   }`}
                 >
                   {/* Hero Image Stage */}
-                  <div className="relative aspect-[16/9] w-full overflow-hidden">
-                    <div
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-                      style={{ backgroundImage: `url('${track.mainImage}')` }}
+                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-950">
+                    <img
+                      src={track.mainImage}
+                      alt={track.name}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      onError={(e) => {
+                        e.currentTarget.src = '/tracks/circuits-reference.jpg';
+                      }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c1222] via-[#0c1222]/40 to-black/30" />
+                    {/* Subtle aesthetic gradient that lets the artwork shine without darkening */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none" />
 
-                    {/* Circuit Header Overlay matching Reference Quadrant */}
-                    <div className="absolute top-5 left-5 right-5 flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-mono-num font-bold text-sky-400 border-b-2 border-sky-400 pb-0.5">
-                            {track.circuitNumber}
-                          </span>
-                          <h2 className="text-xl sm:text-2xl font-black text-[#f8fafc] tracking-tight">
-                            {track.name}
-                          </h2>
-                        </div>
-                        <p className="text-xs text-slate-300 drop-shadow">
-                          {track.subtitle}
-                        </p>
+                    {/* Top Bar: Circuit Badge & Selection Indicator */}
+                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-mono font-bold text-sky-400 shadow-md">
+                          CIRCUIT {track.circuitNumber}
+                        </span>
                       </div>
 
-                      {isSelected && (
-                        <span className="px-3 py-1 rounded-full bg-sky-400 text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-md">
-                          Selected
+                      {isSelected ? (
+                        <span className="px-3.5 py-1 rounded-full bg-sky-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-sky-400/30 flex items-center gap-1.5 animate-pulse">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>Selected</span>
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-semibold text-slate-300 group-hover:border-sky-400/40 group-hover:text-white transition-all shadow-md">
+                          Select
                         </span>
                       )}
                     </div>
 
-                    {/* Minimap Contour Floating Card on the Left matching Reference */}
-                    <div className="absolute bottom-4 left-5 flex items-center gap-3">
-                      <div className="w-16 h-20 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 p-2 flex items-center justify-center shadow-lg">
-                        <svg viewBox="0 0 100 120" className="w-full h-full fill-none stroke-sky-400 stroke-[4]">
+                    {/* Minimap Contour Floating Card on the Right (keeping the bottom-left text clear) */}
+                    <div className="absolute bottom-4 right-4 flex items-center gap-3 bg-black/65 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl shadow-2xl pointer-events-none">
+                      <div className="w-11 h-13 flex items-center justify-center">
+                        <svg viewBox="0 0 100 120" className="w-full h-full fill-none stroke-sky-400 stroke-[3.5]">
                           <path d={track.svgPath} />
                         </svg>
                       </div>
-                      <div className="text-xs font-mono-num space-y-0.5 text-white drop-shadow">
-                        <div className="font-bold text-sm">{track.distanceKm} KM</div>
-                        <div className="text-[11px] text-slate-300 font-semibold">{track.laps} LAPS</div>
+                      <div className="text-xs font-mono-num space-y-0.5 text-white">
+                        <div className="font-bold text-sm tracking-tight">{track.distanceKm} KM</div>
+                        <div className="text-[10px] text-slate-300 font-semibold tracking-wider uppercase">{track.laps} LAPS</div>
                       </div>
                     </div>
                   </div>
 
                   {/* 4 Gallery Thumbnails Strip matching Reference Image Bottom */}
-                  <div className="p-4 bg-[#0a0f1d] border-t border-white/[0.06] flex items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-2 overflow-hidden flex-1">
+                  <div className="p-4 bg-[#0a0f1d] border-t border-white/[0.06] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 overflow-hidden flex-1">
                       {track.thumbnails?.map((thumb, idx) => (
                         <div
                           key={idx}
-                          className="w-16 h-10 rounded-md overflow-hidden border border-white/10 flex-shrink-0"
+                          className="w-16 sm:w-20 h-11 rounded-lg overflow-hidden border border-white/10 flex-shrink-0 relative group/thumb hover:border-sky-400/80 transition-all duration-200 shadow-sm"
                         >
                           <img 
                             src={thumb} 
-                            alt={`preview-${idx}`} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            alt={`${track.name} detail ${idx + 1}`} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover/thumb:scale-115"
+                            onError={(e) => {
+                              e.currentTarget.src = track.mainImage;
+                            }}
                           />
                         </div>
                       ))}
                     </div>
 
-                    <span className="text-[11px] text-[#64748b] font-medium pl-2">
-                      {track.difficulty}
-                    </span>
+                    <div className="flex flex-col items-end flex-shrink-0 pl-2">
+                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Pace</span>
+                      <span className="text-xs text-sky-400 font-semibold">
+                        {track.difficulty}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
