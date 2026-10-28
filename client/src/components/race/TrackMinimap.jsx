@@ -32,17 +32,25 @@ export const TrackMinimap = ({ racers = [], playerProgress = 0, track = null }) 
 
     // Mathematical parametric fallback tailored to circuit
     const t = normProg * Math.PI * 2;
-    if (currentTrack.id === 'city-circuit') {
+    if (currentTrack.id === 'city-circuit' || currentTrack.id === 'neon-city') {
       const x = 50 + 32 * Math.sign(Math.sin(t)) * Math.pow(Math.abs(Math.sin(t)), 0.6);
       const y = 60 - 36 * Math.sign(Math.cos(t)) * Math.pow(Math.abs(Math.cos(t)), 0.6);
       return { x, y };
-    } else if (currentTrack.id === 'mountain-circuit') {
+    } else if (currentTrack.id === 'mountain-circuit' || currentTrack.id === 'mountain-pass') {
       const x = 50 + 26 * Math.sin(t) + 8 * Math.sin(2 * t);
       const y = 60 - 40 * Math.cos(t) + 6 * Math.cos(2 * t);
       return { x, y };
     } else if (currentTrack.id === 'snow-circuit') {
       const x = 50 + 24 * Math.sin(t) - 10 * Math.sin(3 * t);
       const y = 60 - 38 * Math.cos(t) + 8 * Math.cos(2 * t);
+      return { x, y };
+    } else if (currentTrack.id === 'chennai-circuit' || currentTrack.id === 'chennai-marina') {
+      const x = 50 + 32 * Math.sin(t) + 12 * Math.sin(2 * t);
+      const y = 60 - 38 * Math.cos(t) + 6 * Math.sin(t);
+      return { x, y };
+    } else if (currentTrack.id === 'delhi-circuit' || currentTrack.id === 'new-delhi-rajpath') {
+      const x = 50 + 28 * Math.sin(t) - 8 * Math.sin(3 * t);
+      const y = 60 - 42 * Math.cos(t) + 6 * Math.cos(2 * t);
       return { x, y };
     }
     // Default coastal

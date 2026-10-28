@@ -121,28 +121,70 @@ export const TRACKS = [
     svgPath: 'M 24 24 L 76 24 C 84 24, 86 32, 86 44 C 86 56, 76 56, 76 68 C 76 80, 86 80, 86 92 C 86 102, 80 104, 68 104 L 32 104 C 20 104, 16 98, 16 86 L 16 42 C 16 28, 20 24, 24 24 Z'
   },
 
-  // --- 05 CHENNAI CIRCUIT (Locked - Under Development) ---
+  // --- 05 CHENNAI — MARINA DRIVE (Reference Image Left Panel) ---
   {
     id: 'chennai-circuit',
     circuitNumber: '05',
-    name: 'CHENNAI GRAND PRIX',
-    subtitle: 'Coastal speedway, Marina sea breeze, high-velocity straights.',
-    difficulty: 'Grand Prix',
-    distanceKm: 5.8,
+    name: 'CHENNAI MARINA DRIVE',
+    subtitle: 'Coastal highways, iconic landmarks, and the spirit of Chennai.',
+    difficulty: 'Sweeping Coastal',
+    distanceKm: 6.4,
     laps: 2,
-    isLocked: true,
-    statusBadge: 'Under Development',
-    releaseSeason: 'Season 2 Expansion',
+    isLocked: false,
     skyTheme: 'chennai',
-    accentColor: '#f59e0b',
-    mainImage: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80',
-    description: 'Inspired by the historic Madras Motor Race Track and the sweeping Marina coastline. High-speed endurance layout currently in active 3D track modeling.'
+    accentColor: '#fb923c',
+    skyColorTop: '#162238',
+    skyColorBottom: '#ea580c',
+    roadColor: '#171a24',
+    fogColor: '#2c1a24',
+    fogDensity: 0.0022,
+    ambientLight: '#fed7aa',
+    turns: 'Marina Sweepers',
+    description: 'A wide coastal expressway along Marina Beach, historic Indo-Saracenic red-brick clock tower, swaying palms, Bay of Bengal sunset, and golden ocean reflections.',
+    mainImage: '/tracks/chennai-circuit.jpg',
+    thumbnails: [
+      '/tracks/ch-thumb-1.jpg',
+      '/tracks/ch-thumb-2.jpg',
+      '/tracks/ch-thumb-3.jpg',
+      '/tracks/ch-thumb-4.jpg'
+    ],
+    svgPath: 'M 25 35 C 35 20, 75 16, 85 30 C 95 44, 90 70, 85 92 C 80 106, 60 110, 42 104 C 28 98, 22 85, 26 70 C 30 55, 18 45, 25 35 Z'
   },
 
-  // --- 06 HYDERABAD STREET CIRCUIT (Locked - Under Development) ---
+  // --- 06 NEW DELHI — RAJPATH CIRCUIT (Reference Image Right Panel) ---
+  {
+    id: 'delhi-circuit',
+    circuitNumber: '06',
+    name: 'NEW DELHI RAJPATH',
+    subtitle: 'Iconic landmarks, grand avenues, and a high-speed city experience.',
+    difficulty: 'Ceremonial Sprint',
+    distanceKm: 5.8,
+    laps: 2,
+    isLocked: false,
+    skyTheme: 'delhi',
+    accentColor: '#f59e0b',
+    skyColorTop: '#080c1e',
+    skyColorBottom: '#2b123a',
+    roadColor: '#090c14',
+    fogColor: '#160e28',
+    fogDensity: 0.0020,
+    ambientLight: '#fde047',
+    turns: 'Hexagon Sprints',
+    description: 'Ceremonial avenues of Kartavya Path, towering India Gate landmark ahead, illuminated Rashtrapati Bhavan dome, water fountains, and rain-slicked twilight road reflections in amber and midnight blue.',
+    mainImage: '/tracks/delhi-circuit.jpg',
+    thumbnails: [
+      '/tracks/dl-thumb-1.jpg',
+      '/tracks/dl-thumb-2.jpg',
+      '/tracks/dl-thumb-3.jpg',
+      '/tracks/dl-thumb-4.jpg'
+    ],
+    svgPath: 'M 50 16 C 62 16, 75 25, 78 40 C 80 55, 72 65, 82 82 C 88 92, 78 106, 62 105 C 50 104, 45 92, 38 92 C 30 92, 22 104, 18 96 C 14 86, 22 70, 24 55 C 26 40, 38 16, 50 16 Z'
+  },
+
+  // --- 07 HYDERABAD STREET CIRCUIT (Locked - Under Development) ---
   {
     id: 'hyderabad-circuit',
-    circuitNumber: '06',
+    circuitNumber: '07',
     name: 'HYDERABAD STREET CIRCUIT',
     subtitle: 'Hussain Sagar lakefront loop, elevated flyovers, night lights.',
     difficulty: 'Street Circuit',
@@ -157,10 +199,10 @@ export const TRACKS = [
     description: 'A technical city circuit tracing the contours of the historic lake and illuminated urban expressways. Under procedural lighting pass.'
   },
 
-  // --- 07 BANGALORE SILICON EXPRESSWAY (Locked - Under Development) ---
+  // --- 08 BANGALORE SILICON EXPRESSWAY (Locked - Under Development) ---
   {
     id: 'bangalore-circuit',
-    circuitNumber: '07',
+    circuitNumber: '08',
     name: 'BANGALORE EXPRESSWAY',
     subtitle: 'Elevated tech corridors, rain-slicked flyovers, cool evening mist.',
     difficulty: 'Endurance',
@@ -175,10 +217,10 @@ export const TRACKS = [
     description: 'Sweeping multi-level flyovers through the tech capital. High sustained cadence challenge scheduled for post-launch drop.'
   },
 
-  // --- 08 MUMBAI SEA LINK (Locked - Under Development) ---
+  // --- 09 MUMBAI SEA LINK (Locked - Under Development) ---
   {
     id: 'mumbai-circuit',
-    circuitNumber: '08',
+    circuitNumber: '09',
     name: 'MUMBAI SEA LINK',
     subtitle: 'Vast cable-stayed bridge slicing across the Arabian Sea.',
     difficulty: 'High Speed',
@@ -208,6 +250,12 @@ export const getTrackById = (id) => {
   }
   if (cleanId === 'neon-city' || cleanId === 'city-circuit' || cleanId === 'city') {
     return TRACKS.find(t => t.id === 'neon-city') || TRACKS[3];
+  }
+  if (cleanId === 'chennai-circuit' || cleanId === 'chennai-marina' || cleanId === 'chennai' || cleanId === 'marina-drive') {
+    return TRACKS.find(t => t.id === 'chennai-circuit') || TRACKS[4];
+  }
+  if (cleanId === 'delhi-circuit' || cleanId === 'new-delhi-rajpath' || cleanId === 'delhi' || cleanId === 'new-delhi' || cleanId === 'rajpath') {
+    return TRACKS.find(t => t.id === 'delhi-circuit') || TRACKS[5];
   }
   return TRACKS.find(t => t.id === cleanId) || TRACKS[1];
 };

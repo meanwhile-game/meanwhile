@@ -8,6 +8,8 @@ import { MountainEnvironment } from './environments/MountainEnvironment.jsx';
 import { CoastalEnvironment } from './environments/CoastalEnvironment.jsx';
 import { SnowEnvironment } from './environments/SnowEnvironment.jsx';
 import { CityEnvironment } from './environments/CityEnvironment.jsx';
+import { ChennaiEnvironment } from './environments/ChennaiEnvironment.jsx';
+import { DelhiEnvironment } from './environments/DelhiEnvironment.jsx';
 
 // High-fidelity 3D Racing Car matching the exact rear view in the reference screenshot
 const RealisticRaceCar = ({ 
@@ -184,6 +186,14 @@ const SceneEnvironmentConfig = ({ track }) => {
     } else if (track.skyTheme === 'city') {
       scene.background = new THREE.Color(track.skyColorTop || '#04060f');
       scene.fog = new THREE.FogExp2(track.fogColor || '#160826', track.fogDensity || 0.0024);
+    } else if (track.skyTheme === 'chennai') {
+      // Warm golden Chennai Marina sunset
+      scene.background = new THREE.Color(track.skyColorTop || '#162238');
+      scene.fog = new THREE.FogExp2(track.fogColor || '#2c1a24', track.fogDensity || 0.0022);
+    } else if (track.skyTheme === 'delhi') {
+      // Midnight blue & amber twilight over Rajpath
+      scene.background = new THREE.Color(track.skyColorTop || '#080c1e');
+      scene.fog = new THREE.FogExp2(track.fogColor || '#160e28', track.fogDensity || 0.0020);
     } else {
       // Coastal sunset default
       scene.background = new THREE.Color(track.skyColorTop || '#2d1838');
@@ -300,6 +310,34 @@ export const RaceCanvas = () => {
           </>
         )}
 
+        {track.skyTheme === 'chennai' && (
+          <>
+            <ambientLight intensity={0.75} color="#fed7aa" />
+            <directionalLight 
+              position={[-15, 16, 32]} 
+              intensity={2.6} 
+              color="#fb923c" 
+              castShadow 
+              shadow-mapSize={[1024, 1024]} 
+            />
+            <directionalLight position={[20, 8, -15]} intensity={0.65} color="#38bdf8" />
+          </>
+        )}
+
+        {track.skyTheme === 'delhi' && (
+          <>
+            <ambientLight intensity={0.65} color="#c084fc" />
+            <directionalLight 
+              position={[-18, 22, 28]} 
+              intensity={2.4} 
+              color="#f59e0b" 
+              castShadow 
+              shadow-mapSize={[1024, 1024]} 
+            />
+            <directionalLight position={[18, 14, -20]} intensity={1.2} color="#6366f1" />
+          </>
+        )}
+
         {/* Ambient Twilight Stars */}
         <Stars radius={200} depth={50} count={900} factor={3} saturation={0} fade speed={1} />
 
@@ -316,9 +354,15 @@ export const RaceCanvas = () => {
         {(track.skyTheme === 'city' || track.id === 'neon-city' || track.id === 'city-circuit') && (
           <CityEnvironment speedKmh={speedKmh} />
         )}
+        {(track.skyTheme === 'chennai' || track.id === 'chennai-circuit' || track.id === 'chennai-marina') && (
+          <ChennaiEnvironment speedKmh={speedKmh} />
+        )}
+        {(track.skyTheme === 'delhi' || track.id === 'delhi-circuit' || track.id === 'new-delhi-rajpath') && (
+          <DelhiEnvironment speedKmh={speedKmh} />
+        )}
 
         {/* Fallback for any other custom circuit */}
-        {!['mountain', 'coastal', 'snow', 'city'].includes(track.skyTheme) && (
+        {!['mountain', 'coastal', 'snow', 'city', 'chennai', 'delhi'].includes(track.skyTheme) && (
           <CoastalEnvironment speedKmh={speedKmh} />
         )}
 

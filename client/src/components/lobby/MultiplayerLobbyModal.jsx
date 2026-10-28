@@ -83,6 +83,9 @@ export const MultiplayerLobbyModal = () => {
         // Synchronized race start received from host!
         soundEngine.playCountdownBeep(true);
         setMultiplayerModalOpen(false);
+        if (raceConfig?.trackId) {
+          setSelectedTrackId(raceConfig.trackId);
+        }
         const currentPlayers = Array.from(multiplayer.players.values());
         initRace(raceConfig.passage, currentPlayers);
       })

@@ -177,6 +177,32 @@ export const PASSAGES = [
     difficulty: 'easy',
     context: 'On the meditative phenomenon of empty freeway driving beneath city skyline illumination.',
     text: "The city lights blurred past as the night opened into possibilities. High above the viaduct, the air cooled and the engine note settled into a comforting, hypnotic cadence that erased the weight of the afternoon."
+  },
+
+  // --- INDIAN GRAND PRIX CIRCUITS ---
+  {
+    id: 'chennai-marina-drive',
+    title: 'Marina Coastal Symphony',
+    author: 'meanwhile journal',
+    sourceType: 'article',
+    sourceName: 'The Coastal Chronicles (Chennai Special)',
+    year: 2026,
+    category: 'Automotive Journal',
+    difficulty: 'easy',
+    context: 'Inspired by the sweeping golden sunsets of Marina Beach and the timeless Indo-Saracenic coastal avenues of Chennai.',
+    text: "The golden sunset melted into the Bay of Bengal as the Marina highway curved along the shore, palm trees whispering in the warm evening breeze."
+  },
+  {
+    id: 'delhi-rajpath-avenue',
+    title: 'Rajpath Twilight Grandeur',
+    author: 'meanwhile journal',
+    sourceType: 'article',
+    sourceName: 'Capital Boulevards (New Delhi Special)',
+    year: 2026,
+    category: 'Automotive Journal',
+    difficulty: 'easy',
+    context: 'Inspired by the majestic ceremonial avenues of Kartavya Path and India Gate bathed in evening amber light.',
+    text: "Under the deep indigo twilight, the ceremonial avenue opened toward India Gate, reflecting golden monument lights across the rain-slicked asphalt."
   }
 ];
 

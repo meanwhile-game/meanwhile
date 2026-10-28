@@ -37,7 +37,7 @@ export const TrackSelectionScreen = () => {
   const handleSelectTrack = (track) => {
     soundEngine.playButtonClick();
     if (track.isLocked) {
-      setLockedNotification(`${track.name} is currently under development for Season 2! Please choose one of the 4 active circuits.`);
+      setLockedNotification(`${track.name} is currently under development for Season 2! Please choose one of the ${activeTracks.length} active circuits.`);
       setTimeout(() => setLockedNotification(null), 3500);
       return;
     }
@@ -87,7 +87,7 @@ export const TrackSelectionScreen = () => {
                   : 'text-[#94a3b8] hover:text-[#f8fafc]'
               }`}
             >
-              Active Circuits (4)
+              Active Circuits ({activeTracks.length})
             </button>
             <button
               onClick={() => {
@@ -101,7 +101,7 @@ export const TrackSelectionScreen = () => {
               }`}
             >
               <Lock className="w-3 h-3 text-amber-400" />
-              <span>Upcoming & Locked (4)</span>
+              <span>Upcoming & Locked ({lockedTracks.length})</span>
             </button>
           </div>
         </div>
@@ -114,8 +114,8 @@ export const TrackSelectionScreen = () => {
             </h1>
             <p className="text-sm sm:text-base text-[#94a3b8] mt-1.5">
               {activeTab === 'active' 
-                ? '4 curated roads for different driving moods. Select your asphalt.'
-                : 'Upcoming Indian circuits scheduled for Season 2: Chennai, Hyderabad, Bangalore, Mumbai.'}
+                ? `${activeTracks.length} curated circuits for different driving moods. Select your asphalt.`
+                : 'Upcoming expansion circuits scheduled for Season 2: Hyderabad, Bangalore, Mumbai.'}
             </p>
           </div>
 
@@ -127,7 +127,7 @@ export const TrackSelectionScreen = () => {
           )}
         </div>
 
-        {/* --- ACTIVE 4 CIRCUITS GRID (Matching Reference Image Layout) --- */}
+        {/* --- ACTIVE CIRCUITS GRID (Matching Reference Image Layout) --- */}
         {activeTab === 'active' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
             {activeTracks.map((track) => {
@@ -152,8 +152,8 @@ export const TrackSelectionScreen = () => {
                         e.currentTarget.src = '/tracks/circuits-reference.jpg';
                       }}
                     />
-                    {/* Subtle aesthetic gradient that lets the artwork shine without darkening */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none" />
+                    {/* Aesthetic gradient for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30 pointer-events-none" />
 
                     {/* Top Bar: Circuit Badge & Selection Indicator */}
                     <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
@@ -175,8 +175,18 @@ export const TrackSelectionScreen = () => {
                       )}
                     </div>
 
-                    {/* Minimap Contour Floating Card on the Right (keeping the bottom-left text clear) */}
-                    <div className="absolute bottom-4 right-4 flex items-center gap-3 bg-black/65 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl shadow-2xl pointer-events-none">
+                    {/* Bottom-Left Track Title & Subtitle matching Reference Artwork */}
+                    <div className="absolute bottom-4 left-4 max-w-[62%] pointer-events-none z-10">
+                      <h2 className="text-xl sm:text-2xl font-black text-[#f8fafc] tracking-tight uppercase drop-shadow-lg">
+                        {track.name}
+                      </h2>
+                      <p className="text-xs text-[#cbd5e1] font-medium drop-shadow-md line-clamp-1 mt-0.5">
+                        {track.subtitle}
+                      </p>
+                    </div>
+
+                    {/* Minimap Contour Floating Card on the Right */}
+                    <div className="absolute bottom-4 right-4 flex items-center gap-3 bg-black/75 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl shadow-2xl pointer-events-none z-10">
                       <div className="w-11 h-13 flex items-center justify-center">
                         <svg viewBox="0 0 100 120" className="w-full h-full fill-none stroke-sky-400 stroke-[3.5]">
                           <path d={track.svgPath} />

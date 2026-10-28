@@ -145,7 +145,7 @@ Once your frontend is deployed to Vercel or Netlify:
 Once your deployment finishes, open your live URL and verify:
 
 - [ ] **Homepage & 3D WebGL:** Page loads smoothly with midnight automotive palette, refined typography, and 0 console errors.
-- [ ] **Circuit Selection:** Click **Tracks**. Verify the 4 active circuits (Mountain, Coastal, Snow, City) and the locked Season 2 expansion circuits (Chennai, Hyderabad, Bangalore, Mumbai) with development badges.
+- [ ] **Circuit Selection:** Click **Tracks**. Verify the 6 active circuits (Mountain, Coastal, Snow, City, Chennai Marina Drive, New Delhi Rajpath) and the locked Season 2 expansion circuits (Hyderabad, Bangalore, Mumbai) with development badges.
 - [ ] **Garage 3D View:** Click **Garage**. Rotate the 3D car on the turntable showroom and select different paint lacquer finishes (White, Red, Blue, Purple).
 - [ ] **Typing & Racing Simulation:** Click **Start Race**.
   - Check that the player begins in **4th position** (`4/8`) on the starting grid.

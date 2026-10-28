@@ -128,6 +128,10 @@ export const useGameStore = create((set, get) => ({
     if (!passage) {
       if (get().selectedTrackId === 'coastal-run' || get().selectedTrackId === 'coastal-circuit') {
         passage = PASSAGES[0];
+      } else if (get().selectedTrackId === 'chennai-circuit' || get().selectedTrackId === 'chennai-marina') {
+        passage = PASSAGES.find(p => p.id === 'chennai-marina-drive') || getRandomPassage();
+      } else if (get().selectedTrackId === 'delhi-circuit' || get().selectedTrackId === 'new-delhi-rajpath') {
+        passage = PASSAGES.find(p => p.id === 'delhi-rajpath-avenue') || getRandomPassage();
       } else {
         passage = getRandomPassage();
       }

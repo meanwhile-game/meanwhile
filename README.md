@@ -20,17 +20,18 @@
 - **Continuous Cadence & Idle Decay:** If you pause or hesitate (> 450ms), your car smoothly decelerates and live WPM coasts down naturally, eliminating abrupt cliff drops.
 - **Dynamic 6-Speed Transmission:** Speeds scale up to 300+ KM/H with responsive gear shifting (1st–6th) and speed-adaptive camera FOV.
 
-### 2. 4 Active Grand Prix Circuits (Matching UI Reference)
+### 2. 6 Active Grand Prix Circuits (Matching UI Reference)
 - ⛰️ **01 Mountain Circuit:** *5.2 KM · 2 Laps* — Alpine switchbacks, lush pine forests, and elevation hairpin turns.
 - 🌊 **02 Coastal Circuit** *(Default):* *6.1 KM · 2 Laps* — Mediterranean cliffside causeway, tunnel bridge, and sunset ocean views.
 - ❄️ **03 Snow Circuit:** *4.8 KM · 2 Laps* — Snowy mountain peaks, icy asphalt reflections, and frosty mist.
 - 🌃 **04 City Circuit:** *5.6 KM · 2 Laps* — High-speed metropolitan grid beneath glowing cyber billboards and purple neon overpasses.
+- 🌅 **05 Chennai Marina Drive:** *6.4 KM · 2 Laps* — Wide coastal highway along Marina Beach, historic Indo-Saracenic red-brick clock tower, swaying palms, Bay of Bengal sunset, and golden ocean reflections.
+- 🏛️ **06 New Delhi Rajpath:** *5.8 KM · 2 Laps* — Ceremonial avenues of Kartavya Path, towering India Gate landmark ahead, illuminated Rashtrapati Bhavan dome, water fountains, and rain-slicked twilight road reflections in amber and midnight blue.
 
 ### 3. Expansion Circuits (Season 2 — Under Development)
-- 🏎️ **05 Chennai Grand Prix:** Coastal speedway, Marina sea breeze, high-velocity straights.
-- 🏙️ **06 Hyderabad Street Circuit:** Hussain Sagar lakefront loop, elevated flyovers, night lights.
-- 🌿 **07 Bangalore Expressway:** Elevated tech corridor, rain-slicked flyovers, cool evening mist.
-- 🌉 **08 Mumbai Sea Link:** 8-lane cable-stayed bridge slicing across the Arabian Sea.
+- 🏙️ **07 Hyderabad Street Circuit:** Hussain Sagar lakefront loop, elevated flyovers, night lights.
+- 🌿 **08 Bangalore Expressway:** Elevated tech corridor, rain-slicked flyovers, cool evening mist.
+- 🌉 **09 Mumbai Sea Link:** 8-lane cable-stayed bridge slicing across the Arabian Sea.
 
 ### 4. Real-time Multiplayer & Private Rooms
 - **Instant Room Generation:** Generate shareable 6-character room codes (`MW-XXXX`).
@@ -114,7 +115,7 @@ meanwhile/
 │   │   │   └── tracks/         # Circuit selection grid & locked cards
 │   │   ├── data/
 │   │   │   ├── passages.js     # Curated literary corpus with provenance
-│   │   │   ├── tracks.js       # 4 active + 4 locked expansion circuits
+│   │   │   ├── tracks.js       # 6 active + 3 locked expansion circuits
 │   │   │   └── vehicles.js     # Performance car specs & paint palettes
 │   │   ├── services/
 │   │   │   ├── multiplayer.js  # BroadcastChannel + Supabase Realtime sync
