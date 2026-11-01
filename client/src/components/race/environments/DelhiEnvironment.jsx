@@ -83,28 +83,10 @@ export const DelhiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   return (
     <group>
-      {/* 1. RAIN-SLICKED WET MIRROR CEREMONIAL ASPHALT WITH DEEP SPECULAR REFLECTIONS */}
-      <mesh position={[0, -0.05, 40]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[18.5, 280]} />
-        <meshPhysicalMaterial 
-          color="#080b13" 
-          roughness={0.08} 
-          metalness={0.88} 
-          clearcoat={1.0} 
-          clearcoatRoughness={0.05} 
-        />
-      </mesh>
-
-      {/* Road Markings Layer */}
-      <mesh position={[0, -0.04, 40]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[18.2, 280]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.94} />
-      </mesh>
-
       {/* Wet Road Mirror Taillight & Monument Glow Reflection Streaks */}
-      <mesh position={[0, -0.035, 25]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 0.035, 25]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[2.5, 70]} />
-        <meshBasicMaterial color="#ef4444" transparent opacity={0.28} depthWrite={false} />
+        <meshBasicMaterial color="#ef4444" transparent opacity={0.22} depthWrite={false} />
       </mesh>
       <mesh position={[0, -0.038, 75]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8.0, 150]} />

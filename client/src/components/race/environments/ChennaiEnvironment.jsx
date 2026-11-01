@@ -94,28 +94,14 @@ export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   return (
     <group>
-      {/* 1. WIDE 4-LANE COASTAL ASPHALT WITH WET SUNSET SPECULAR REFLECTION */}
-      <mesh position={[0, -0.05, 40]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[18.5, 280]} />
-        <meshPhysicalMaterial 
-          color="#161922" 
-          roughness={0.22} 
-          metalness={0.7} 
-          clearcoat={0.9} 
-          clearcoatRoughness={0.12} 
-        />
+      {/* Promenade Sand & Pavement Verges */}
+      <mesh position={[-25, -0.12, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[32, 340]} />
+        <meshStandardMaterial color="#334155" roughness={0.88} />
       </mesh>
-
-      {/* Road Markings Layer */}
-      <mesh position={[0, -0.04, 40]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[18.2, 280]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.94} />
-      </mesh>
-
-      {/* Roadside Wet Specular Sun Reflection Ribbon */}
-      <mesh position={[2, -0.035, 50]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[8, 260]} />
-        <meshBasicMaterial color="#fb923c" transparent opacity={0.15} depthWrite={false} />
+      <mesh position={[25, -0.12, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[32, 340]} />
+        <meshStandardMaterial color="#d4a373" roughness={0.92} />
       </mesh>
 
       {/* Left Roadside: Sidewalk, Curb & Barrier */}

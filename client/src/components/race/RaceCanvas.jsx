@@ -7,6 +7,7 @@ import { getTrackById } from '../../data/tracks.js';
 import { RealisticRaceCar } from './RealisticRaceCar.jsx';
 import { RealisticSkyDome } from './RealisticSkyDome.jsx';
 import { RealisticEnvironmentMap } from './RealisticEnvironmentMap.jsx';
+import { CurvedHighway, getTrackCurvature } from './CurvedHighway.jsx';
 import { MountainEnvironment } from './environments/MountainEnvironment.jsx';
 import { CoastalEnvironment } from './environments/CoastalEnvironment.jsx';
 import { SnowEnvironment } from './environments/SnowEnvironment.jsx';
@@ -21,9 +22,9 @@ const SpeedWindStreaks = ({ speedKmh = 100 }) => {
   const streakLines = useMemo(() => {
     const lines = [];
     for (let i = 0; i < 40; i++) {
-      const x = (Math.random() - 0.5) * 14;
+      const x = (Math.random() - 0.5) * 16;
       const y = Math.random() * 3.5 + 0.5;
-      const z = (Math.random() - 0.5) * 60 + 10;
+      const z = (Math.random() - 0.5) * 70 + 10;
       lines.push(x, y, z);
     }
     return new Float32Array(lines);
@@ -32,7 +33,7 @@ const SpeedWindStreaks = ({ speedKmh = 100 }) => {
   useFrame((state, delta) => {
     if (streaksRef.current && speedKmh > 70) {
       const move = (speedKmh / 3.6) * delta * 2.5;
-      streaksRef.current.position.z = ((streaksRef.current.position.z - move) % 60);
+      streaksRef.current.position.z = ((streaksRef.current.position.z - move) % 70);
     }
   });
 
@@ -59,8 +60,8 @@ const SpeedWindStreaks = ({ speedKmh = 100 }) => {
   );
 };
 
-// Dynamic Chase Camera with Spring Physics, Speed FOV & Dynamic Curve Banking
-const DynamicChaseCamera = ({ speedKmh = 100, progress = 0 }) => {
+// Dynamic Chase Camera with Curve Anticipation, Spring Physics & Velocity Banking
+const DynamicChaseCamera = ({ speedKmh = 100, progress = 0, skyTheme = 'mountain', distanceTraveled = 0 }) => {
   const { camera } = useThree();
 
   useFrame((state, delta) => {
@@ -82,11 +83,18 @@ const DynamicChaseCamera = ({ speedKmh = 100, progress = 0 }) => {
       rumbleY = (Math.random() - 0.5) * shakeIntensity;
     }
 
-    // Dynamic Road Curve Sway (gives real feeling of the road turning and taking the driver)
-    const curveFactor = Math.sin(state.clock.elapsedTime * 0.4 + progress * 8) * 0.35;
-    camera.position.x = curveFactor * 0.6 + rumbleX;
-    camera.position.y = 2.05 + rumbleY;
-    camera.lookAt(curveFactor * 0.3, 0.95, 22);
+    // Road curve anticipation: Camera smoothly leads the turn looking toward the upcoming apex
+    const curveApex = getTrackCurvature(skyTheme, 28, distanceTraveled);
+    const curveOrigin = getTrackCurvature(skyTheme, 0, distanceTraveled);
+
+    const targetCamX = curveOrigin.x * 0.85 + rumbleX;
+    const targetCamY = 2.05 + curveOrigin.y + rumbleY;
+
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCamX, delta * 6.0);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetCamY, delta * 6.0);
+    
+    // Look ahead into the curve
+    camera.lookAt(curveApex.x, 1.1 + curveApex.y, 24);
   });
 
   return null;
@@ -121,11 +129,86 @@ const SceneEnvironmentConfig = ({ track }) => {
     }
 
     scene.background = new THREE.Color(topColor);
-    // Realistic linear atmospheric fog from 70m to 380m
-    scene.fog = new THREE.Fog(fogCol, 70, 380);
+    // Smooth atmospheric fog distance: 75m to 380m
+    scene.fog = new THREE.Fog(fogCol, 75, 380);
   }, [track.id, track.skyTheme, track.skyColorTop, track.fogColor, scene]);
 
   return null;
+};
+
+// Wrapper for Player Car that positions, steers, and banks along the Road Curve
+const CurveFollowerCar = ({ 
+  speedKmh = 100, 
+  color = '#161d28', 
+  skyTheme = 'mountain',
+  distanceTraveled = 0,
+  vehicleId = 'vortex'
+}) => {
+  const groupRef = useRef();
+
+  useFrame((state, delta) => {
+    if (groupRef.current) {
+      const curve = getTrackCurvature(skyTheme, 0, distanceTraveled);
+      groupRef.current.position.x = curve.x;
+      groupRef.current.position.y = curve.y;
+      groupRef.current.position.z = 0;
+      
+      // Dynamic steering rotation matching road heading
+      groupRef.current.rotation.y = curve.yaw * 0.95;
+      // Dynamic chassis banking matching centrifugal roll
+      groupRef.current.rotation.z = curve.roll;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      <RealisticRaceCar 
+        position={[0, 0, 0]} 
+        color={color} 
+        speed={speedKmh}
+        isPlayer={true}
+        vehicleId={vehicleId}
+      />
+    </group>
+  );
+};
+
+// Wrapper for Opponents that bend along the Road Curve at their respective forward distances
+const CurveFollowerOpponent = ({ 
+  opponent, 
+  skyTheme = 'mountain', 
+  distanceTraveled = 0 
+}) => {
+  const groupRef = useRef();
+
+  useFrame(() => {
+    if (groupRef.current) {
+      const zPos = opponent.position[2];
+      const curve = getTrackCurvature(skyTheme, zPos, distanceTraveled);
+      const cosYaw = Math.cos(curve.yaw);
+      const sinYaw = Math.sin(curve.yaw);
+
+      // Offset by lane width perpendicular to curve
+      const laneOffset = opponent.position[0];
+      groupRef.current.position.x = curve.x + laneOffset * cosYaw;
+      groupRef.current.position.y = curve.y;
+      groupRef.current.position.z = zPos - laneOffset * sinYaw;
+      groupRef.current.rotation.y = curve.yaw * 0.95;
+      groupRef.current.rotation.z = curve.roll;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      <RealisticRaceCar
+        position={[0, 0, 0]}
+        color={opponent.color}
+        isPlayer={false}
+        speed={opponent.speed}
+        driverTag={{ rank: opponent.rank, name: opponent.name }}
+      />
+    </group>
+  );
 };
 
 export const RaceCanvas = () => {
@@ -139,6 +222,7 @@ export const RaceCanvas = () => {
   } = useGameStore();
 
   const track = getTrackById(selectedTrackId);
+  const distanceRef = useRef(0);
 
   // Position opponent cars ahead on the road with driver tags
   const visibleOpponents = useMemo(() => {
@@ -152,8 +236,8 @@ export const RaceCanvas = () => {
       const racerProg = racer.progress || 0;
       const deltaProg = racerProg - playerProg;
       const laneX = racer.lane !== undefined ? racer.lane * 3.2 : (idx % 2 === 0 ? 3.1 : -3.1);
-      const baseZ = (8 - (racer.gridPosition || (idx < 3 ? idx + 1 : idx + 2))) * 4 + 10;
-      const zPos = Math.max(-15, Math.min(90, baseZ + deltaProg * 320));
+      const baseZ = (8 - (racer.gridPosition || (idx < 3 ? idx + 1 : idx + 2))) * 4 + 12;
+      const zPos = Math.max(-12, Math.min(100, baseZ + deltaProg * 320));
 
       return {
         id: racer.id || `opp-${idx}`,
@@ -166,6 +250,24 @@ export const RaceCanvas = () => {
     });
   }, [racers, progress]);
 
+  // Track Road Properties based on Track Type
+  const roadProps = useMemo(() => {
+    if (track.skyTheme === 'mountain') {
+      return { lanes: 3, doubleCenter: true, isWet: true, dashedColor: '#f8fafc', edgeColor: '#f8fafc', roadWidth: 16.8 };
+    } else if (track.skyTheme === 'coastal') {
+      return { lanes: 3, doubleCenter: false, isWet: false, dashedColor: '#f8fafc', edgeColor: '#f59e0b', roadWidth: 16.8 };
+    } else if (track.skyTheme === 'snow') {
+      return { lanes: 2, doubleCenter: false, isWet: true, dashedColor: '#f1f5f9', edgeColor: '#e2e8f0', roadWidth: 16.5 };
+    } else if (track.skyTheme === 'city') {
+      return { lanes: 4, doubleCenter: false, isWet: true, dashedColor: '#38bdf8', edgeColor: '#c084fc', roadWidth: 17.5 };
+    } else if (track.skyTheme === 'chennai') {
+      return { lanes: 4, doubleCenter: false, isWet: true, dashedColor: '#f8fafc', edgeColor: '#fbbf24', roadWidth: 18.0 };
+    } else {
+      // Delhi
+      return { lanes: 4, doubleCenter: false, isWet: true, dashedColor: '#f8fafc', edgeColor: '#fbbf24', roadWidth: 18.2 };
+    }
+  }, [track.skyTheme]);
+
   return (
     <div className="absolute inset-0 w-full h-full">
       <Canvas
@@ -176,7 +278,7 @@ export const RaceCanvas = () => {
           alpha: false, 
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.22
+          toneMappingExposure: 1.24
         }}
       >
         {/* Dynamic Sky Background and Fog */}
@@ -186,8 +288,26 @@ export const RaceCanvas = () => {
         {/* Procedural High-Dynamic-Range Environment Reflection Map (IBL) */}
         <RealisticEnvironmentMap skyTheme={track.skyTheme} />
 
-        <DynamicChaseCamera speedKmh={speedKmh} progress={progress} />
+        <DynamicChaseCamera 
+          speedKmh={speedKmh} 
+          progress={progress} 
+          skyTheme={track.skyTheme} 
+          distanceTraveled={distanceRef.current} 
+        />
+        
         <SpeedWindStreaks speedKmh={speedKmh} />
+
+        {/* --- High-Performance Dynamic 3D Curving Highway Ribbon --- */}
+        <CurvedHighway 
+          speedKmh={speedKmh} 
+          track={track}
+          roadWidth={roadProps.roadWidth}
+          lanes={roadProps.lanes}
+          dashedColor={roadProps.dashedColor}
+          edgeColor={roadProps.edgeColor}
+          isWet={roadProps.isWet}
+          doubleCenter={roadProps.doubleCenter}
+        />
 
         {/* --- Track-Specific Realistic Lighting with High-Resolution Shadows --- */}
         {track.skyTheme === 'mountain' && (
@@ -344,24 +464,22 @@ export const RaceCanvas = () => {
           <CoastalEnvironment speedKmh={speedKmh} progress={progress} />
         )}
 
-        {/* Player's Car (Hyper-Realistic GT Supercar with 'meanwhile' plate) */}
-        <RealisticRaceCar 
-          position={[0, 0, 0]} 
-          color={selectedPaint || '#161d28'} 
-          speed={speedKmh}
-          isPlayer={true}
+        {/* Player's Car (Bends and banks dynamically along the Curve) */}
+        <CurveFollowerCar
+          speedKmh={speedKmh}
+          color={selectedPaint || '#161d28'}
+          skyTheme={track.skyTheme}
+          distanceTraveled={distanceRef.current}
           vehicleId={selectedVehicleId}
         />
 
-        {/* Opponent Cars with Floating Driver Badges */}
+        {/* Opponent Cars (Follow the curve ahead on their lanes) */}
         {visibleOpponents.map(opp => (
-          <RealisticRaceCar
+          <CurveFollowerOpponent
             key={opp.id}
-            position={opp.position}
-            color={opp.color}
-            isPlayer={false}
-            speed={opp.speed}
-            driverTag={{ rank: opp.rank, name: opp.name }}
+            opponent={opp}
+            skyTheme={track.skyTheme}
+            distanceTraveled={distanceRef.current}
           />
         ))}
 
