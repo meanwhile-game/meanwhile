@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
 
+const roadTextureCache = new Map();
+
 /**
  * Creates high-fidelity procedural road textures with authentic asphalt aggregate,
  * rubbered-in tire wear racing lines, weathered thermoplastic lines, and reflective road studs.
@@ -12,6 +14,11 @@ export const createPhotorealisticRoadTexture = ({
   isWet = false,
   doubleCenter = false
 }) => {
+  const cacheKey = `${lanes}-${dashedColor}-${edgeColor}-${isWet}-${doubleCenter}`;
+  if (roadTextureCache.has(cacheKey)) {
+    return roadTextureCache.get(cacheKey);
+  }
+
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = 1024;
@@ -77,6 +84,7 @@ export const createPhotorealisticRoadTexture = ({
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(1, 14);
+  roadTextureCache.set(cacheKey, tex);
   return tex;
 };
 

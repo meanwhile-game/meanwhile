@@ -1,14 +1,16 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
 
 /**
- * 04 NEON CITY ENVIRONMENT (Cinematic Cyber Metropolis)
+ * 04 NEON CITY ENVIRONMENT (Photorealistic Cyber Metropolis)
  * Matching Reference Image: Elevated expressway flyovers, towering modern
  * skyscrapers with thousands of glowing office windows, vibrant neon signage,
  * Times Square high-res billboards, and cyber finish gantry.
  */
 export const CityEnvironment = ({ speedKmh = 100, progress = 0 }) => {
+  const dashesMatRef = useRef();
   const buildingsGroupRef = useRef();
   const flyoverGroupRef = useRef();
   const billboardPortalRef = useRef();
@@ -17,6 +19,11 @@ export const CityEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
+
+    // Road texture animation
+    if (dashesMatRef.current && dashesMatRef.current.map) {
+      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 26;
+    }
 
     // Moving city skyscrapers loop
     if (buildingsGroupRef.current) {
@@ -60,19 +67,69 @@ export const CityEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
+  // Rain-Slicked High-Definition City Road Texture
+  const dashesTexture = useMemo(() => {
+    return createPhotorealisticRoadTexture({
+      lanes: 4,
+      dashedColor: '#38bdf8',
+      edgeColor: '#c084fc',
+      isWet: true
+    });
+  }, []);
+
   return (
     <group>
-      {/* 1. Wet Sidewalk Pavement Verges Flanking Roadway on Left & Right */}
-      <mesh position={[-25, -0.12, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[32, 340]} />
-        <meshPhysicalMaterial color="#0b0f1a" roughness={0.3} metalness={0.7} />
-      </mesh>
-      <mesh position={[25, -0.12, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[32, 340]} />
-        <meshPhysicalMaterial color="#0b0f1a" roughness={0.3} metalness={0.7} />
+      {/* 1. Rain-Slicked Wet Mirror Asphalt with Deep Specular Reflections & Puddle Sheen */}
+      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[17.5, 300]} />
+        <meshPhysicalMaterial 
+          color="#080c16" 
+          roughness={0.22} 
+          metalness={0.7} 
+          clearcoat={1.0}
+          clearcoatRoughness={0.06}
+          reflectivity={0.96}
+        />
       </mesh>
 
-      {/* 2. APPROACHING MULTI-LEVEL ELEVATED HIGHWAY FLYOVER (Matching Reference Image) */}
+      {/* Road Markings Layer */}
+      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[17.2, 300]} />
+        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
+      </mesh>
+
+      {/* 2. GLOWING HIGH-TECH HIGHWAY GUARDRAIL BARRIERS */}
+      {/* Left Guardrail: Electric Magenta LED Strip */}
+      <group position={[-8.8, 0.45, 50]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[0.22, 0.65, 300]} />
+          <meshStandardMaterial color="#1e1329" metalness={0.88} roughness={0.3} />
+        </mesh>
+        <mesh position={[0.12, 0.12, 0]}>
+          <boxGeometry args={[0.04, 0.12, 300]} />
+          <meshBasicMaterial color="#e879f9" />
+        </mesh>
+        <pointLight position={[0.6, 0.2, -10]} intensity={1.8} distance={16} color="#e879f9" />
+        <pointLight position={[0.6, 0.2, 50]} intensity={1.8} distance={16} color="#e879f9" />
+        <pointLight position={[0.6, 0.2, 110]} intensity={1.8} distance={16} color="#e879f9" />
+      </group>
+
+      {/* Right Guardrail: High-Voltage Cyan LED Strip */}
+      <group position={[8.8, 0.45, 50]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[0.22, 0.65, 300]} />
+          <meshStandardMaterial color="#111c29" metalness={0.88} roughness={0.3} />
+        </mesh>
+        <mesh position={[-0.12, 0.12, 0]}>
+          <boxGeometry args={[0.04, 0.12, 300]} />
+          <meshBasicMaterial color="#38bdf8" />
+        </mesh>
+        <pointLight position={[-0.6, 0.2, -10]} intensity={1.8} distance={16} color="#38bdf8" />
+        <pointLight position={[-0.6, 0.2, 50]} intensity={1.8} distance={16} color="#38bdf8" />
+        <pointLight position={[-0.6, 0.2, 110]} intensity={1.8} distance={16} color="#38bdf8" />
+      </group>
+
+      {/* 3. APPROACHING MULTI-LEVEL ELEVATED HIGHWAY FLYOVER */}
       <group ref={flyoverGroupRef} position={[0, 0, 240]}>
         <mesh position={[0, 9.8, 0]} rotation={[0, -0.15, 0]} castShadow>
           <boxGeometry args={[78, 2.4, 14]} />
@@ -106,7 +163,7 @@ export const CityEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 3. TIMES SQUARE CYBER BILLBOARD PORTAL (Sector 2-3) */}
+      {/* 4. TIMES SQUARE CYBER BILLBOARD PORTAL (Sector 2-3) */}
       <group ref={billboardPortalRef} position={[0, 0, 250]}>
         <group position={[-19, 16, 0]}>
           <mesh>
@@ -132,12 +189,12 @@ export const CityEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </group>
       </group>
 
-      {/* 4. CYBER METROPOLIS FINISH GANTRY */}
+      {/* 5. CYBER METROPOLIS FINISH GANTRY */}
       <group ref={finishGantryRef} position={[0, 0, 240]}>
         <CityFinishGantry />
       </group>
 
-      {/* 5. TOWERING SKYSCRAPERS WITH ILLUMINATED WINDOW MATRICES (Matching Reference Image) */}
+      {/* 6. TOWERING SKYSCRAPERS WITH ILLUMINATED WINDOW MATRICES (Matching Reference Image) */}
       <group ref={buildingsGroupRef} position={[0, 0, 0]}>
         {[-70, -20, 30, 80, 130, 180].map((zPos, idx) => (
           <group key={idx} position={[0, 0, zPos]}>

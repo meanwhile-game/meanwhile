@@ -94,6 +94,24 @@ export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   return (
     <group>
+      {/* 1. WIDE 4-LANE COASTAL ASPHALT WITH WET SUNSET SPECULAR REFLECTION */}
+      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[18.5, 300]} />
+        <meshPhysicalMaterial 
+          color="#161922" 
+          roughness={0.22} 
+          metalness={0.7} 
+          clearcoat={0.9} 
+          clearcoatRoughness={0.12} 
+        />
+      </mesh>
+
+      {/* Road Markings Layer */}
+      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[18.2, 300]} />
+        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
+      </mesh>
+
       {/* Promenade Sand & Pavement Verges */}
       <mesh position={[-25, -0.12, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[32, 340]} />

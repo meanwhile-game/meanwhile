@@ -371,17 +371,50 @@ export const RaceHud = () => {
       </div>
 
       {/* =========================================================================
-          3. COUNTDOWN OVERLAY
+          3. MOTORSPORT GRAND PRIX COUNTDOWN OVERLAY
           ========================================================================= */}
       {isCountdown && (
-        <div className="absolute inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="text-center">
-            <div className="text-8xl sm:text-9xl font-black font-mono-num text-amber-400 drop-shadow-[0_0_50px_rgba(245,158,11,0.7)] animate-pulse">
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-all pointer-events-none">
+          <div className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+            {/* Grand Prix Starting Lights Gantry */}
+            <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-neutral-950/90 border border-white/20 shadow-2xl mb-8">
+              {[1, 2, 3, 4, 5].map((lightIdx) => {
+                const isActive = countdown === 0 ? false : (4 - countdown) >= Math.ceil(lightIdx * 0.6);
+                const isGo = countdown === 0;
+                return (
+                  <div key={lightIdx} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg bg-black/80 border border-white/10">
+                    <div className={`w-5 h-5 rounded-full transition-all duration-150 ${
+                      isGo 
+                        ? 'bg-emerald-400 shadow-[0_0_20px_#10b981]' 
+                        : isActive 
+                          ? 'bg-red-500 shadow-[0_0_20px_#ef4444]' 
+                          : 'bg-neutral-800'
+                    }`} />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Huge Dynamic Countdown Counter */}
+            <div className={`text-9xl sm:text-[11rem] font-black font-mono-num tracking-tighter transition-all duration-150 select-none ${
+              countdown === 3 
+                ? 'text-red-500 drop-shadow-[0_0_60px_rgba(239,68,68,0.9)] scale-100'
+                : countdown === 2
+                  ? 'text-amber-400 drop-shadow-[0_0_60px_rgba(245,158,11,0.9)] scale-105'
+                  : countdown === 1
+                    ? 'text-cyan-400 drop-shadow-[0_0_60px_rgba(6,182,212,0.9)] scale-110'
+                    : 'text-emerald-400 drop-shadow-[0_0_80px_rgba(16,185,129,1.0)] scale-125 animate-pulse'
+            }`}>
               {countdown > 0 ? countdown : 'GO!'}
             </div>
-            <p className="text-xs sm:text-sm font-bold tracking-widest text-[#94a3b8] uppercase mt-4">
-              Type Passage to Accelerate
-            </p>
+
+            {/* High-Octane Subtitle Prompt */}
+            <div className="mt-6 flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15">
+              <span className={`w-2 h-2 rounded-full animate-ping ${countdown === 0 ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              <span className="text-xs sm:text-sm font-black tracking-widest uppercase text-white">
+                {countdown === 0 ? 'FULL THROTTLE — TYPE PASSAGE TO WIN!' : 'READY ENGINES — FOCUS ON FIRST WORD'}
+              </span>
+            </div>
           </div>
         </div>
       )}

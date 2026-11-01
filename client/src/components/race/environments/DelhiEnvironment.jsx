@@ -83,6 +83,25 @@ export const DelhiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   return (
     <group>
+      {/* 1. CEREMONIAL 4-LANE RAJPATH ASPHALT WITH WET TWILIGHT SPECULAR REFLECTIONS */}
+      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[18.5, 300]} />
+        <meshPhysicalMaterial 
+          color="#131722" 
+          roughness={0.24} 
+          metalness={0.65} 
+          clearcoat={0.92} 
+          clearcoatRoughness={0.1}
+          reflectivity={0.95} 
+        />
+      </mesh>
+
+      {/* Road Markings Layer */}
+      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[18.2, 300]} />
+        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
+      </mesh>
+
       {/* Wet Road Mirror Taillight & Monument Glow Reflection Streaks */}
       <mesh position={[0, 0.035, 25]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[2.5, 70]} />

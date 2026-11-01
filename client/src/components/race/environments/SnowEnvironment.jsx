@@ -1,14 +1,16 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
 
 /**
- * 03 SNOW CIRCUIT ENVIRONMENT (Cinematic Alpine Winter)
+ * 03 SNOW CIRCUIT ENVIRONMENT (Photorealistic Alpine Winter)
  * Matching Reference Image: Road curving into an arched stone mountain tunnel,
  * deep snowdrifts blanketing the verges, heavily snow-laden fir trees,
  * turquoise frozen glacier lake, swirling 3D snow flurries, and summit finish.
  */
 export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
+  const dashesMatRef = useRef();
   const snowTreesGroupRef = useRef();
   const snowFlurriesRef = useRef();
   const tunnelGroupRef = useRef();
@@ -17,6 +19,11 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
+
+    // Road texture animation
+    if (dashesMatRef.current && dashesMatRef.current.map) {
+      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 26;
+    }
 
     // Moving roadside snow trees & hazard stakes loop
     if (snowTreesGroupRef.current) {
@@ -29,7 +36,7 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
       snowFlurriesRef.current.rotation.y += delta * 0.15;
     }
 
-    // --- PROGRESSION OF LANDMARKS ---
+    // --- LANDMARK PROGRESSION ---
     // 1. ALPINE ROCK TUNNEL: Approaches from distance and car drives straight inside (progress 20% -> 60%)
     if (tunnelGroupRef.current) {
       const tunnelTargetZ = 240 - ((progress - 0.18) / 0.42) * 300;
@@ -61,6 +68,16 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
+  // Wet Icy Road Surface Texture with Frost Markings
+  const dashesTexture = useMemo(() => {
+    return createPhotorealisticRoadTexture({
+      lanes: 2,
+      dashedColor: '#f1f5f9',
+      edgeColor: '#e2e8f0',
+      isWet: true
+    });
+  }, []);
+
   // 3D Snow Flurry Particles
   const snowParticles = useMemo(() => {
     const positions = [];
@@ -75,7 +92,26 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   return (
     <group>
-      {/* 1. Deep Pure White Snowpack Verges Flanking Roadway on Left & Right */}
+      {/* 1. Wet, Highly Reflective Icy Road Surface */}
+      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[16.8, 300]} />
+        <meshPhysicalMaterial 
+          color="#141a24" 
+          roughness={0.16} 
+          metalness={0.7} 
+          clearcoat={1.0}
+          clearcoatRoughness={0.08}
+          reflectivity={0.96}
+        />
+      </mesh>
+
+      {/* Frost-Dusted Road Markings */}
+      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[16.5, 300]} />
+        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.94} />
+      </mesh>
+
+      {/* 2. Deep Pure White Snowpack Verges Flanking Roadway on Left & Right */}
       <mesh position={[-25, -0.1, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[32, 340]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.95} />
@@ -95,12 +131,22 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         <meshStandardMaterial color="#f1f5f9" roughness={0.92} />
       </mesh>
 
-      {/* 2. APPROACHING ALPINE STONE TUNNEL (Matching Reference Image) */}
+      {/* Galvanized Metal Guardrails embedded in snow */}
+      <mesh position={[-8.3, 0.55, 50]} castShadow>
+        <boxGeometry args={[0.22, 0.65, 300]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.88} roughness={0.28} />
+      </mesh>
+      <mesh position={[8.3, 0.55, 50]} castShadow>
+        <boxGeometry args={[0.22, 0.65, 300]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.88} roughness={0.28} />
+      </mesh>
+
+      {/* 3. APPROACHING ALPINE STONE TUNNEL (Matching Reference Image) */}
       <group ref={tunnelGroupRef} position={[0, 0, 240]}>
         <AlpineRoadTunnel />
       </group>
 
-      {/* 3. FROZEN GLACIER LAKE RIDGE VISTA (Right Side) */}
+      {/* 4. FROZEN GLACIER LAKE RIDGE VISTA (Right Side) */}
       <group ref={glacierVistaRef} position={[42, 0, 250]}>
         <mesh position={[0, -1.8, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[70, 180]} />
@@ -121,12 +167,12 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         ))}
       </group>
 
-      {/* 4. ALPINE SUMMIT FINISH GANTRY */}
+      {/* 5. ALPINE SUMMIT FINISH GANTRY */}
       <group ref={finishGantryRef} position={[0, 0, 240]}>
         <SnowFinishGantry />
       </group>
 
-      {/* 5. TOWERING JAGGED SNOW-COVERED MOUNTAIN PEAKS */}
+      {/* 6. TOWERING JAGGED SNOW-COVERED MOUNTAIN PEAKS */}
       <group position={[-52, 30, 110]}>
         <mesh rotation={[0, 0.35, 0]}>
           <coneGeometry args={[55, 82, 6]} />
@@ -144,7 +190,7 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 6. LOOPING SNOW-COVERED PINES & ALPINE HAZARD STAKES */}
+      {/* 7. LOOPING SNOW-COVERED PINES & ALPINE HAZARD STAKES */}
       <group ref={snowTreesGroupRef} position={[0, 0, 0]}>
         {[-45, -15, 15, 45, 75, 105, 135].map((zPos, idx) => (
           <group key={idx} position={[0, 0, zPos]}>
@@ -160,7 +206,7 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         ))}
       </group>
 
-      {/* 7. SWIRLING 3D SNOW FLURRY PARTICLES */}
+      {/* 8. SWIRLING 3D SNOW FLURRY PARTICLES */}
       <points ref={snowFlurriesRef}>
         <bufferGeometry>
           <bufferAttribute

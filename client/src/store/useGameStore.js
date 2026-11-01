@@ -27,11 +27,18 @@ export const BOT_DRIVERS = [
   { id: 'bot-7', name: 'arlo', avatar: '🔥', targetWpm: 52, baseWpm: 52, lane: -1, consistency: 0.80 }
 ];
 
+// Active Countdown Timer Handle
+let activeCountdownTimer = null;
+
 export const useGameStore = create((set, get) => ({
   // Navigation & Views
   view: 'home', // 'home' | 'tracks' | 'garage' | 'racing' | 'results' | 'leaderboard' | 'profile'
   setView: (newView) => {
     soundEngine.playButtonClick();
+    if (newView !== 'racing' && activeCountdownTimer) {
+      clearInterval(activeCountdownTimer);
+      activeCountdownTimer = null;
+    }
     set({ view: newView });
   },
 
@@ -301,27 +308,39 @@ export const useGameStore = create((set, get) => ({
       racers: allRacers
     });
 
-    // Countdown timer & audio
+    // Cancel any existing countdown timer
+    if (activeCountdownTimer) {
+      clearInterval(activeCountdownTimer);
+      activeCountdownTimer = null;
+    }
+
+    // Initial 3-second countdown beep
     soundEngine.playCountdownBeep(false);
 
     let count = 3;
-    const interval = setInterval(() => {
+    activeCountdownTimer = setInterval(() => {
       count -= 1;
       if (count > 0) {
         soundEngine.playCountdownBeep(false);
-        set({ countdown: count });
+        set({ countdown: count, isCountdown: true });
       } else if (count === 0) {
         soundEngine.playCountdownBeep(true);
         soundEngine.startEngine();
         const startMono = typeof performance !== 'undefined' ? performance.now() : Date.now();
         set({
           countdown: 0,
-          isCountdown: false,
+          isCountdown: true, // Display 'GO!' prominently
           isRacing: true,
           startTime: Date.now(),
           startMonotonicTime: startMono
         });
-        clearInterval(interval);
+        clearInterval(activeCountdownTimer);
+        activeCountdownTimer = null;
+
+        // Dismiss the GO! overlay smoothly after 650ms
+        setTimeout(() => {
+          set({ isCountdown: false });
+        }, 650);
       }
     }, 1000);
   },

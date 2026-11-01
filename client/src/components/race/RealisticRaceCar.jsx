@@ -3,6 +3,66 @@ import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 
+let sharedTireTreadTexture = null;
+const getSharedTireTexture = () => {
+  if (sharedTireTreadTexture) return sharedTireTreadTexture;
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#11141a';
+  ctx.fillRect(0, 0, 128, 256);
+  
+  // Tire grooves
+  ctx.fillStyle = '#080a0f';
+  for (let y = 0; y < 256; y += 16) {
+    ctx.fillRect(10, y, 108, 4);
+    ctx.fillRect(36, y + 8, 56, 4);
+  }
+  // Lateral drainage channels
+  ctx.fillRect(30, 0, 4, 256);
+  ctx.fillRect(94, 0, 4, 256);
+
+  sharedTireTreadTexture = new THREE.CanvasTexture(canvas);
+  sharedTireTreadTexture.wrapS = THREE.RepeatWrapping;
+  sharedTireTreadTexture.wrapT = THREE.RepeatWrapping;
+  sharedTireTreadTexture.repeat.set(1, 4);
+  return sharedTireTreadTexture;
+};
+
+let sharedRotorTexture = null;
+const getSharedRotorTexture = () => {
+  if (sharedRotorTexture) return sharedRotorTexture;
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  
+  // Steel disc brushed metallic circle
+  const grad = ctx.createRadialGradient(128, 128, 30, 128, 128, 128);
+  grad.addColorStop(0, '#334155');
+  grad.addColorStop(0.3, '#94a3b8');
+  grad.addColorStop(0.7, '#64748b');
+  grad.addColorStop(1, '#475569');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 256);
+
+  // Drilled cross-cooling holes
+  ctx.fillStyle = '#1e293b';
+  for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+    for (let r = 50; r < 115; r += 18) {
+      const x = 128 + Math.cos(a + r * 0.02) * r;
+      const y = 128 + Math.sin(a + r * 0.02) * r;
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  sharedRotorTexture = new THREE.CanvasTexture(canvas);
+  return sharedRotorTexture;
+};
+
 /**
  * Hyper-Realistic AAA GT Supercar 3D Model
  * Designed with authentic supercar curves, sculpted aerodynamics,
@@ -64,63 +124,9 @@ export const RealisticRaceCar = ({
   // Physically accurate multi-layer automotive paint color
   const bodyColor = useMemo(() => new THREE.Color(color), [color]);
   
-  // Tire tread canvas texture
-  const tireTreadTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#11141a';
-    ctx.fillRect(0, 0, 128, 256);
-    
-    // Tire grooves
-    ctx.fillStyle = '#080a0f';
-    for (let y = 0; y < 256; y += 16) {
-      ctx.fillRect(10, y, 108, 4);
-      ctx.fillRect(36, y + 8, 56, 4);
-    }
-    // Lateral drainage channels
-    ctx.fillRect(30, 0, 4, 256);
-    ctx.fillRect(94, 0, 4, 256);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(1, 4);
-    return tex;
-  }, []);
-
-  // Brake disc rotor texture with drilled radial holes
-  const rotorTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-    
-    // Steel disc brushed metallic circle
-    const grad = ctx.createRadialGradient(128, 128, 30, 128, 128, 128);
-    grad.addColorStop(0, '#334155');
-    grad.addColorStop(0.3, '#94a3b8');
-    grad.addColorStop(0.7, '#64748b');
-    grad.addColorStop(1, '#475569');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 256, 256);
-
-    // Drilled cross-cooling holes
-    ctx.fillStyle = '#1e293b';
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
-      for (let r = 50; r < 115; r += 18) {
-        const x = 128 + Math.cos(a + r * 0.02) * r;
-        const y = 128 + Math.sin(a + r * 0.02) * r;
-        ctx.beginPath();
-        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    const tex = new THREE.CanvasTexture(canvas);
-    return tex;
-  }, []);
+  // Shared high-performance textures
+  const tireTreadTexture = useMemo(() => getSharedTireTexture(), []);
+  const rotorTexture = useMemo(() => getSharedRotorTexture(), []);
 
   return (
     <group ref={rootRef} position={position}>

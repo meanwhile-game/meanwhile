@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
 
+const skyDomeCache = new Map();
+
 /**
  * Photorealistic Multi-Layered Atmospheric Sky Dome
  * Features natural atmospheric light scattering, glowing sun disk with corona,
@@ -8,6 +10,9 @@ import * as THREE from 'three';
  */
 export const RealisticSkyDome = ({ track }) => {
   const texture = useMemo(() => {
+    if (skyDomeCache.has(track.skyTheme)) {
+      return skyDomeCache.get(track.skyTheme);
+    }
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 1024;
@@ -145,6 +150,7 @@ export const RealisticSkyDome = ({ track }) => {
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.ClampToEdgeWrapping;
+    skyDomeCache.set(track.skyTheme, tex);
     return tex;
   }, [track.skyTheme]);
 

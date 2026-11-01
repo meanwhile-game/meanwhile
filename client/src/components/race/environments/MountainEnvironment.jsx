@@ -1,14 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { createPhotorealisticRoadTexture, RealisticGuardrails, RealisticRumbleKerbs } from '../RealisticRoadElements.jsx';
 
 /**
- * 01 MOUNTAIN PASS ENVIRONMENT (Cinematic Alpine Canyon)
+ * 01 MOUNTAIN PASS ENVIRONMENT (Photorealistic Alpine Canyon)
  * Matching Reference Image: Dense pine forests framing the winding road,
  * stratified granite canyon walls, roaring cascading waterfall gorge,
  * alpine stone viaduct, and distant snow-dusted peaks.
  */
 export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
+  const dashesMatRef = useRef();
   const treesGroupRef = useRef();
   const mistGroupRef = useRef();
   const waterfallGroupRef = useRef();
@@ -19,6 +21,11 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
+
+    // Road texture animation
+    if (dashesMatRef.current && dashesMatRef.current.map) {
+      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 28;
+    }
 
     // Roadside pine trees streaming past with multi-layer depth
     if (treesGroupRef.current) {
@@ -40,7 +47,7 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
       waterfallSprayRef.current.scale.x = 1 + Math.cos(state.clock.elapsedTime * 8) * 0.14;
     }
 
-    // --- PROGRESSION OF LANDMARKS ---
+    // --- LANDMARK PROGRESSION ---
     // 1. The Great Waterfall Gorge (progress 0% -> 50%)
     if (waterfallGroupRef.current) {
       const waterfallZ = 220 - (progress / 0.45) * 300;
@@ -72,9 +79,44 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
+  // Photorealistic Mountain Asphalt Texture with Double Yellow Center Lines & Tire Tracks
+  const dashesTexture = useMemo(() => {
+    return createPhotorealisticRoadTexture({
+      lanes: 3,
+      doubleCenter: true,
+      edgeColor: '#f8fafc',
+      isWet: true
+    });
+  }, []);
+
   return (
     <group>
-      {/* 1. Lush Green Mountain Earth Verges on Left & Right */}
+      {/* 1. Mountain Asphalt Road Surface with Natural PBR Roughness */}
+      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[16.8, 300]} />
+        <meshPhysicalMaterial 
+          color="#161e27" 
+          roughness={0.28} 
+          metalness={0.55}
+          clearcoat={0.9}
+          clearcoatRoughness={0.08}
+          reflectivity={0.94}
+        />
+      </mesh>
+
+      {/* Road Markings Layer */}
+      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[16.5, 300]} />
+        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
+      </mesh>
+
+      {/* FIA Red & White Rumble Kerbs */}
+      <RealisticRumbleKerbs length={300} xLeft={-8.35} xRight={8.35} />
+
+      {/* Realistic Corrugated Galvanized Steel Guardrails with I-Beams & Reflectors */}
+      <RealisticGuardrails length={300} xLeft={-8.85} xRight={8.85} />
+
+      {/* 2. Lush Green Mountain Earth Verges on Left & Right */}
       <mesh position={[-25, -0.15, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[32, 340]} />
         <meshStandardMaterial color="#1b3824" roughness={0.92} />
@@ -84,7 +126,7 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         <meshStandardMaterial color="#1b3824" roughness={0.92} />
       </mesh>
 
-      {/* 2. DYNAMIC LANDMARK: CASCADING WATERFALL GORGE (Right Side) */}
+      {/* 3. DYNAMIC LANDMARK: CASCADING WATERFALL GORGE (Right Side) */}
       <group ref={waterfallGroupRef} position={[28, 18, 220]}>
         {/* Massive Granite Rock Cliff Face */}
         <mesh position={[0, 0, 0]} castShadow receiveShadow>
@@ -118,7 +160,7 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         <pointLight position={[-9, -8, 2]} intensity={2.5} distance={38} color="#7dd3fc" />
       </group>
 
-      {/* 3. DYNAMIC LANDMARK: HIGH ALPINE STONE VIADUCT ARCH BRIDGE */}
+      {/* 4. DYNAMIC LANDMARK: HIGH ALPINE STONE VIADUCT ARCH BRIDGE */}
       <group ref={viaductGroupRef} position={[0, 12, 280]}>
         <mesh position={[0, 5.2, 0]} castShadow>
           <boxGeometry args={[78, 4.2, 13]} />
@@ -150,7 +192,7 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         ))}
       </group>
 
-      {/* 4. DYNAMIC LANDMARK: MOUNTAIN SUMMIT FINISH GANTRY */}
+      {/* 5. DYNAMIC LANDMARK: MOUNTAIN SUMMIT FINISH GANTRY */}
       <group ref={summitGroupRef} position={[0, 6, 260]}>
         <mesh position={[0, 5.6, 0]} castShadow>
           <boxGeometry args={[22.5, 1.9, 1.4]} />
@@ -170,7 +212,7 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 5. DISTANT ALPINE PEAKS WITH SNOW CAPS */}
+      {/* 6. DISTANT ALPINE PEAKS WITH SNOW CAPS */}
       <group position={[-58, 34, 170]}>
         <mesh rotation={[0, 0.4, 0]}>
           <coneGeometry args={[55, 85, 6]} />
@@ -192,7 +234,7 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 6. MIST DRIFT */}
+      {/* 7. MIST DRIFT */}
       <group ref={mistGroupRef} position={[0, 6, 80]}>
         <mesh position={[-20, 2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[48, 32]} />
@@ -204,7 +246,7 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 7. LOOPING DENSE ALPINE FIR / PINE FOREST */}
+      {/* 8. LOOPING DENSE ALPINE FIR / PINE FOREST */}
       <group ref={treesGroupRef} position={[0, 0, 0]}>
         {[-45, -15, 15, 45, 75, 105, 135].map((zPos, idx) => (
           <group key={idx} position={[0, 0, zPos]}>

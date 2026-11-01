@@ -1,14 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { createPhotorealisticRoadTexture, RealisticGuardrails, RealisticRumbleKerbs } from '../RealisticRoadElements.jsx';
 
 /**
- * 02 COASTAL RUN ENVIRONMENT (Cinematic Riviera Landscape)
+ * 02 COASTAL RUN ENVIRONMENT (Photorealistic Riviera Landscape)
  * Matching Reference Image: Scenic ocean highway along rocky coast,
  * shimmering turquoise sea with golden sunset path, iconic white headland lighthouse,
  * Roman stone viaduct, classical Italian arcade with Tuscan colonnade, and cypress trees.
  */
 export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
+  const dashesMatRef = useRef();
   const oceanRef = useRef();
   const oceanWavesRef = useRef();
   const cliffsGroupRef = useRef();
@@ -19,6 +21,11 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
+
+    // Road texture animation
+    if (dashesMatRef.current && dashesMatRef.current.map) {
+      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 26;
+    }
 
     // Moving roadside cypress trees loop
     if (cypressGroupRef.current) {
@@ -75,15 +82,50 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
+  // Photorealistic Coastal Asphalt Texture
+  const dashesTexture = useMemo(() => {
+    return createPhotorealisticRoadTexture({
+      lanes: 3,
+      dashedColor: '#f8fafc',
+      edgeColor: '#f59e0b',
+      isWet: false
+    });
+  }, []);
+
   return (
     <group>
-      {/* 1. Rocky Shoreline Terrain Verge on Left */}
+      {/* 1. Coastal 3-Lane Asphalt Road Surface with Clearcoat Sheen */}
+      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[16.8, 300]} />
+        <meshPhysicalMaterial 
+          color="#141a26" 
+          roughness={0.42} 
+          metalness={0.3} 
+          clearcoat={0.65}
+          clearcoatRoughness={0.15}
+          reflectivity={0.92}
+        />
+      </mesh>
+
+      {/* Road Markings Layer */}
+      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[16.6, 300]} />
+        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
+      </mesh>
+
+      {/* 3D Raised Beveled Racing Kerbs */}
+      <RealisticRumbleKerbs length={300} xLeft={-8.4} xRight={8.4} />
+
+      {/* Steel Guardrails with Reflectors */}
+      <RealisticGuardrails length={300} xLeft={-8.8} xRight={8.8} />
+
+      {/* 2. Rocky Shoreline Terrain Verge on Left */}
       <mesh position={[-25, -0.15, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[32, 340]} />
         <meshStandardMaterial color="#334155" roughness={0.92} />
       </mesh>
 
-      {/* 2. MEDITERRANEAN OCEAN WITH SUNSET SPECULAR SHIMMER (Left Side) */}
+      {/* 3. MEDITERRANEAN OCEAN WITH SUNSET SPECULAR SHIMMER (Left Side) */}
       <group position={[-50, -2.4, 60]} ref={oceanRef}>
         <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[140, 340]} />
@@ -94,7 +136,6 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
             clearcoat={1.0}
             clearcoatRoughness={0.05}
             reflectivity={0.98}
-            envMapIntensity={2.5}
           />
         </mesh>
         {/* Shimmering Sun Light Path on Water */}
@@ -104,24 +145,20 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 3. ICONIC HEADLAND COASTAL LIGHTHOUSE (Matching Reference Image) */}
+      {/* 4. ICONIC HEADLAND COASTAL LIGHTHOUSE (Matching Reference Image) */}
       <group ref={lighthouseGroupRef} position={[-38, 0, 280]}>
-        {/* Rocky Promontory Cliff */}
         <mesh position={[0, 8, 0]} castShadow receiveShadow>
           <cylinderGeometry args={[14, 18, 16, 12]} />
           <meshStandardMaterial color="#475569" roughness={0.94} />
         </mesh>
-        {/* White Tapered Lighthouse Tower */}
         <mesh position={[0, 24, 0]} castShadow>
           <cylinderGeometry args={[2.0, 3.2, 16, 16]} />
           <meshStandardMaterial color="#f8fafc" roughness={0.5} />
         </mesh>
-        {/* Red Observation Gallery Ring */}
         <mesh position={[0, 32.5, 0]} castShadow>
           <cylinderGeometry args={[2.8, 2.8, 0.8, 16]} />
           <meshStandardMaterial color="#dc2626" roughness={0.4} />
         </mesh>
-        {/* Glass Lantern Housing with Glowing Beacon */}
         <mesh position={[0, 34.5, 0]}>
           <cylinderGeometry args={[1.8, 1.8, 3.2, 16]} />
           <meshBasicMaterial color="#fef08a" />
@@ -129,7 +166,7 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         <pointLight position={[0, 34.5, 0]} intensity={4.5} distance={60} color="#fef08a" />
       </group>
 
-      {/* 4. CLIFFSIDE MEDITERRANEAN VILLA & STONE ARCADE (Right Side) */}
+      {/* 5. CLIFFSIDE MEDITERRANEAN VILLA & STONE ARCADE (Right Side) */}
       <group ref={cliffsGroupRef} position={[26, 0, 250]}>
         <mesh position={[0, 10, 0]} castShadow receiveShadow>
           <boxGeometry args={[18, 26, 75]} />
@@ -153,7 +190,7 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </group>
       </group>
 
-      {/* 5. OVERHEAD CLASSICAL ROMAN AQUEDUCT VIADUCT */}
+      {/* 6. OVERHEAD CLASSICAL ROMAN AQUEDUCT VIADUCT */}
       <group ref={viaductGroupRef} position={[0, 12, 260]}>
         <mesh position={[0, 5.2, 0]} castShadow>
           <boxGeometry args={[78, 3.8, 12]} />
@@ -177,7 +214,7 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         ))}
       </group>
 
-      {/* 6. RIVIERA GRAND PRIX FINISH GANTRY */}
+      {/* 7. RIVIERA GRAND PRIX FINISH GANTRY */}
       <group ref={finishGantryRef} position={[0, 6, 240]}>
         <mesh position={[0, 5.6, 0]} castShadow>
           <boxGeometry args={[22, 1.8, 1.4]} />
@@ -197,7 +234,7 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 7. LOOPING MEDITERRANEAN CYPRESS TREES & SEASIDE BALUSTRADE */}
+      {/* 8. LOOPING MEDITERRANEAN CYPRESS TREES & SEASIDE BALUSTRADE */}
       <group ref={cypressGroupRef} position={[0, 0, 0]}>
         {[-45, -15, 15, 45, 75, 105, 135].map((zPos, idx) => (
           <group key={idx} position={[0, 0, zPos]}>
