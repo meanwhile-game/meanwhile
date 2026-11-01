@@ -115,3 +115,4 @@ export const RealisticEnvironmentMap = ({ skyTheme = 'mountain' }) => {
 
   return null;
 };
+

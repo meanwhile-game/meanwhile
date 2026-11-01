@@ -1,6 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
 
 // 06 NEW DELHI — RAJPATH CIRCUIT (Reference Right Panel)
 // Ceremonial avenues of Kartavya Path, towering India Gate landmark ahead,
@@ -72,52 +73,12 @@ export const DelhiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   // Rain-Slicked Ceremonial Avenue Road Texture with 4 Lanes & Red Sandstone Curbs
   const dashesTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#080c14';
-    ctx.fillRect(0, 0, 512, 1024);
-
-    // Wet asphalt stochastic aggregate noise
-    for (let i = 0; i < 2800; i++) {
-      const gX = Math.random() * 512;
-      const gY = Math.random() * 1024;
-      const gR = Math.random() * 2 + 1;
-      ctx.fillStyle = Math.random() > 0.6 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.3)';
-      ctx.fillRect(gX, gY, gR, gR);
-    }
-
-    // Lane wear gloss sheen
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
-    [85, 175, 335, 425].forEach(x => {
-      ctx.fillRect(x - 20, 0, 40, 1024);
+    return createPhotorealisticRoadTexture({
+      lanes: 4,
+      dashedColor: '#f8fafc',
+      edgeColor: '#fbbf24',
+      isWet: true
     });
-
-    // Crisp white dashed lane divider lines
-    ctx.fillStyle = '#f8fafc';
-    [128, 256, 384].forEach((x) => {
-      ctx.fillRect(x - 3, 60, 6, 260);
-      ctx.fillRect(x - 3, 580, 6, 260);
-    });
-
-    // Solid amber outer edge boundary lines
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(16, 0, 6, 1024);
-    ctx.fillRect(490, 0, 6, 1024);
-
-    // Reflective cats-eyes / road studs along lane dividers
-    ctx.fillStyle = '#fef08a';
-    [128, 256, 384].forEach((x) => {
-      ctx.fillRect(x - 4, 330, 8, 12);
-      ctx.fillRect(x - 4, 850, 8, 12);
-    });
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(1, 14);
-    return tex;
   }, []);
 
   return (

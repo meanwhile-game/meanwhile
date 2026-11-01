@@ -1,6 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
 
 // 05 CHENNAI — MARINA DRIVE CIRCUIT (Reference Left Panel)
 // Coastal highway, Bay of Bengal sunset, historic Indo-Saracenic red-brick clock tower,
@@ -81,54 +82,14 @@ export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
-  // Coastal 4-Lane Highway Markings with Warm Wet Asphalt Sheen
+  // Photorealistic Coastal 4-Lane Highway Markings with Warm Wet Asphalt Sheen
   const dashesTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#141822';
-    ctx.fillRect(0, 0, 512, 1024);
-
-    // Warm asphalt aggregate grain
-    for (let i = 0; i < 2600; i++) {
-      const gX = Math.random() * 512;
-      const gY = Math.random() * 1024;
-      const gR = Math.random() * 2 + 1;
-      ctx.fillStyle = Math.random() > 0.6 ? 'rgba(255, 235, 200, 0.05)' : 'rgba(0, 0, 0, 0.3)';
-      ctx.fillRect(gX, gY, gR, gR);
-    }
-
-    // Lane wear gloss sheen
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
-    [85, 175, 335, 425].forEach(x => {
-      ctx.fillRect(x - 20, 0, 40, 1024);
+    return createPhotorealisticRoadTexture({
+      lanes: 4,
+      dashedColor: '#f8fafc',
+      edgeColor: '#fbbf24',
+      isWet: true
     });
-
-    // White dashed lane divider lines (3 dividers for 4 lanes)
-    ctx.fillStyle = '#f8fafc';
-    [128, 256, 384].forEach((x) => {
-      ctx.fillRect(x - 3, 60, 6, 260);
-      ctx.fillRect(x - 3, 580, 6, 260);
-    });
-
-    // Solid outer shoulder lines
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(16, 0, 6, 1024);
-    ctx.fillRect(490, 0, 6, 1024);
-
-    // Reflective road studs
-    ctx.fillStyle = '#fef08a';
-    [128, 256, 384].forEach((x) => {
-      ctx.fillRect(x - 4, 330, 8, 12);
-      ctx.fillRect(x - 4, 850, 8, 12);
-    });
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(1, 14);
-    return tex;
   }, []);
 
   return (
