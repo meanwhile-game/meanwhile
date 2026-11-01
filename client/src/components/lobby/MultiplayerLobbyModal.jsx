@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { TRACKS, getTrackById } from '../../data/tracks.js';
 import { getRandomPassage } from '../../data/passages.js';
+import { selectPassage } from '../../services/passageSelector.js';
 
 export const MultiplayerLobbyModal = () => {
   const { 
@@ -172,7 +173,7 @@ export const MultiplayerLobbyModal = () => {
   const handleHostStart = () => {
     soundEngine.playButtonClick();
     const track = getTrackById(lobbyTrackId);
-    const passage = getRandomPassage();
+    const passage = selectPassage({ trackId: track.id, seed: roomCode });
     multiplayer.startRace(track.id, passage);
   };
 

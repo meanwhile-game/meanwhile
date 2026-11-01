@@ -3,6 +3,7 @@ import { useGameStore } from '../../store/useGameStore.js';
 import { soundEngine } from '../../sound/soundEngine.js';
 import { AdSlot } from '../common/AdSlot.jsx';
 import { getRandomPassage } from '../../data/passages.js';
+import { selectPassage } from '../../services/passageSelector.js';
 import confetti from 'canvas-confetti';
 import { 
   Trophy, 
@@ -43,7 +44,7 @@ export const ResultsScreen = () => {
 
   const handleNextPassage = () => {
     soundEngine.playButtonClick();
-    const nextP = getRandomPassage();
+    const nextP = selectPassage({ trackId: results?.trackId });
     initRace(nextP);
   };
 
@@ -112,7 +113,7 @@ export const ResultsScreen = () => {
           </p>
         </div>
 
-        {/* 2. PROPER TEXT SHOWCASE & ATTRIBUTION (User Request) */}
+        {/* 2. PROPER TEXT SHOWCASE & ATTRIBUTION */}
         <div className="rounded-2xl bg-gradient-to-b from-[#0e1628] to-[#0a0f1d] border border-white/[0.12] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 via-indigo-500 to-amber-400" />
 
@@ -169,29 +170,39 @@ export const ResultsScreen = () => {
           </div>
         </div>
 
-        {/* 3. PERFORMANCE KPI CARDS */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
-              Final Speed
+        {/* 3. PERFORMANCE KPI CARDS WITH NET WPM & GROSS WPM */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          <div className="p-4 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-400">
+              Net WPM
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-[#f8fafc] mt-1">
-              {results?.wpm || 105}
-              <span className="text-sm font-medium text-amber-400 ml-1">WPM</span>
+              {results?.netWpm || results?.wpm || 105}
+              <span className="text-xs font-medium text-amber-400 ml-1">NET</span>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
+          <div className="p-4 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-[#94a3b8]">
+              Gross WPM
+            </span>
+            <div className="text-3xl sm:text-4xl font-black font-mono-num text-slate-300 mt-1">
+              {results?.grossWpm || results?.wpm || 105}
+              <span className="text-xs font-medium text-slate-400 ml-1">RAW</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-[#94a3b8]">
               Accuracy
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-emerald-400 mt-1">
-              {results?.accuracy || 97}%
+              {results?.accuracy || 98}%
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
+          <div className="p-4 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-[#94a3b8]">
               Finish Time
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-[#f8fafc] mt-1">
@@ -199,8 +210,8 @@ export const ResultsScreen = () => {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#94a3b8]">
+          <div className="p-4 rounded-2xl bg-[#0c1222] border border-white/[0.08] text-center shadow-lg col-span-2 sm:col-span-1">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-[#94a3b8]">
               Credits Earned
             </span>
             <div className="text-3xl sm:text-4xl font-black font-mono-num text-amber-300 mt-1 flex items-center justify-center gap-1">

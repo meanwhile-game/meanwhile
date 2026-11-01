@@ -168,57 +168,48 @@ export const HeroSection = () => {
           A typing game for your <span className="text-amber-400 font-semibold">meanwhile</span>.
         </p>
 
-        {/* Interactive Tactile Mechanical Switch Bar with Live Keystroke Feedback */}
-        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.1] backdrop-blur-md shadow-xl select-none">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-          <Keyboard className="w-3.5 h-3.5 text-amber-400" />
-          <span className="text-xs text-slate-300 font-medium hidden sm:inline">Tactile Switches:</span>
-          <div className="flex items-center gap-1.5">
-            {['W', 'P', 'M', 'SPACE', '⚡'].map((k) => {
-              const isThisActive = activeKey === k;
-              return (
-                <button
-                  key={k}
-                  onClick={() => {
-                    setActiveKey(k);
-                    soundEngine.playKeypress(k === 'SPACE' || k === '⚡');
-                    setTimeout(() => setActiveKey(null), 250);
-                  }}
-                  title="Click or press key on physical keyboard"
-                  className={`h-7 px-2.5 rounded-md border text-[11px] font-mono font-bold flex items-center justify-center transition-all cursor-pointer ${
-                    isThisActive
-                      ? 'bg-amber-400 text-slate-950 border-amber-300 scale-95 shadow-[0_0_15px_rgba(251,191,36,0.7)]'
-                      : 'bg-black/50 border-white/20 text-white hover:border-amber-400 hover:text-amber-300 active:scale-95'
-                  }`}
-                >
-                  {k === 'SPACE' ? '␣' : k}
-                </button>
-              );
-            })}
-          </div>
-          <span className="text-[11px] text-slate-400 font-mono hidden md:inline pl-1">
-            {activeKey ? `Key: ${activeKey}` : 'press any key to test sound'}
-          </span>
+        {/* High-End Grand Prix Circuits & GT Supercar Badge */}
+        <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/[0.04] border border-white/[0.1] backdrop-blur-md shadow-xl select-none">
+          <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
+          <Compass className="w-4 h-4 text-sky-400" />
+          <span className="text-xs text-slate-200 font-semibold tracking-wide">6 Grand Prix Circuits</span>
+          <span className="text-white/25">·</span>
+          <Car className="w-4 h-4 text-amber-400" />
+          <span className="text-xs text-slate-200 font-semibold tracking-wide">GT Supercar Engineering</span>
         </div>
 
         {/* Primary Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3.5 pt-1">
+        <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
           <button
-            onClick={handlePlayNow}
-            className="px-8 py-3.5 rounded-full bg-[#f8fafc] hover:bg-white text-slate-950 font-bold text-sm tracking-wide shadow-xl shadow-white/10 hover:shadow-white/25 hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer group"
+            onClick={() => {
+              soundEngine.playButtonClick();
+              initRace();
+            }}
+            className="px-9 py-4 rounded-full bg-[#f8fafc] hover:bg-white text-slate-950 font-bold text-sm tracking-wide shadow-2xl shadow-white/10 hover:shadow-white/25 hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2.5 cursor-pointer group"
           >
-            <span>Play Now</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span>Race Now</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+          </button>
+
+          <button
+            onClick={() => {
+              soundEngine.playButtonClick();
+              setView('tracks');
+            }}
+            className="px-6 py-4 rounded-full glass-pill text-[#f8fafc] font-medium text-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2.5 cursor-pointer"
+          >
+            <Compass className="w-4 h-4 text-sky-400" />
+            <span>Select Circuit</span>
           </button>
 
           <button
             onClick={() => setShowTrailerModal(true)}
-            className="px-6 py-3.5 rounded-full glass-pill text-[#f8fafc] font-medium text-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2.5 cursor-pointer"
+            className="px-6 py-4 rounded-full glass-pill text-[#f8fafc] font-medium text-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2.5 cursor-pointer"
           >
             <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
               <Play className="w-2.5 h-2.5 fill-current text-[#f8fafc] ml-0.5" />
             </div>
-            <span>Watch Trailer</span>
+            <span>Watch Cinematic</span>
           </button>
 
           <button
@@ -226,21 +217,10 @@ export const HeroSection = () => {
               soundEngine.playButtonClick();
               setMultiplayerModalOpen(true);
             }}
-            className="px-6 py-3.5 rounded-full glass-pill border border-amber-400/25 text-amber-300 font-medium text-sm hover:bg-amber-400/10 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+            className="px-6 py-4 rounded-full glass-pill border border-amber-400/25 text-amber-300 font-medium text-sm hover:bg-amber-400/10 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
           >
             <Users className="w-4 h-4 text-amber-400" />
             <span>Multiplayer Rooms</span>
-          </button>
-        </div>
-
-        {/* Quick Launch Subtext */}
-        <div>
-          <button
-            onClick={handleQuickLaunch}
-            className="inline-flex items-center gap-1.5 text-xs text-[#94a3b8] hover:text-amber-400 transition-colors cursor-pointer group"
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>Instant Quick Race · Jump straight to asphalt</span>
           </button>
         </div>
       </div>

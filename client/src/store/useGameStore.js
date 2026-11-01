@@ -2,6 +2,16 @@ import { create } from 'zustand';
 import { TRACKS, getTrackById } from '../data/tracks.js';
 import { VEHICLES, getVehicleById } from '../data/vehicles.js';
 import { PASSAGES, getRandomPassage } from '../data/passages.js';
+import { selectPassage } from '../services/passageSelector.js';
+import {
+  calculateGrossWpm,
+  calculateNetWpm,
+  calculateCorrectCharsWpm,
+  calculateAccuracy,
+  calculateRollingWpm,
+  calculateVehicleDynamics,
+  formatRaceTime
+} from '../services/typingEngine.js';
 import { soundEngine } from '../sound/soundEngine.js';
 import { api, createDefaultGuestProfile } from '../services/supabase.js';
 import { multiplayer } from '../services/multiplayer.js';
@@ -68,6 +78,10 @@ export const useGameStore = create((set, get) => ({
   botDifficulty: 'standard', // 'casual' (50-65) | 'standard' (52-88) | 'pro' (70-90)
   setBotDifficulty: (diff) => set({ botDifficulty: diff }),
 
+  // Tactical GPS Real Map Mode
+  gpsNavMode: 'compact', // 'compact' | 'split' | 'fullscreen'
+  setGpsNavMode: (mode) => set({ gpsNavMode: mode }),
+
   // Active Race Simulation State
   isRacing: false,
   isCountdown: false,
@@ -75,9 +89,14 @@ export const useGameStore = create((set, get) => ({
   passage: PASSAGES[0],
   typedText: '',
   errorText: '', // Mistyped characters currently blocking progression
+  cursorIndex: 0,
   totalAttempted: 0,
   errorsCount: 0,
-  rawWpm: 0,
+  correctChars: 0,
+  incorrectChars: 0,
+  remainingChars: 0,
+  grossWpm: 0,
+  netWpm: 0,
   wpm: 0,
   rollingWpm: 0,
   accuracy: 100,
@@ -89,9 +108,10 @@ export const useGameStore = create((set, get) => ({
   totalLaps: 2,
   elapsedSeconds: 0,
   startTime: null,
-  firstKeystrokeTime: null,
-  lastKeystrokeTime: null,
-  keystrokeHistory: [], // Rolling window keystrokes: [{ time, chars }]
+  startMonotonicTime: null,
+  firstKeystrokeMonotonic: null,
+  lastKeystrokeMonotonic: null,
+  keystrokeHistory: [], // Rolling window keystrokes: [{ time, count }]
   isFinished: false,
   finalRank: 4,
   results: null,
@@ -122,19 +142,11 @@ export const useGameStore = create((set, get) => ({
     }).map((r, idx) => ({ ...r, position: idx + 1 }));
   },
 
-  // Start new race
+  // Start new race with intelligent non-repeating passage selection
   initRace: (customPassage = null, multiplayerPlayers = null) => {
     let passage = customPassage;
     if (!passage) {
-      if (get().selectedTrackId === 'coastal-run' || get().selectedTrackId === 'coastal-circuit') {
-        passage = PASSAGES[0];
-      } else if (get().selectedTrackId === 'chennai-circuit' || get().selectedTrackId === 'chennai-marina') {
-        passage = PASSAGES.find(p => p.id === 'chennai-marina-drive') || getRandomPassage();
-      } else if (get().selectedTrackId === 'delhi-circuit' || get().selectedTrackId === 'new-delhi-rajpath') {
-        passage = PASSAGES.find(p => p.id === 'delhi-rajpath-avenue') || getRandomPassage();
-      } else {
-        passage = getRandomPassage();
-      }
+      passage = selectPassage({ trackId: get().selectedTrackId });
     }
     const track = getTrackById(get().selectedTrackId);
     const userProfile = get().profile;
@@ -260,9 +272,14 @@ export const useGameStore = create((set, get) => ({
       passage,
       typedText: '',
       errorText: '',
+      cursorIndex: 0,
       totalAttempted: 0,
       errorsCount: 0,
-      rawWpm: 0,
+      correctChars: 0,
+      incorrectChars: 0,
+      remainingChars: passage.text.length,
+      grossWpm: 0,
+      netWpm: 0,
       wpm: 0,
       rollingWpm: 0,
       accuracy: 100,
@@ -274,8 +291,9 @@ export const useGameStore = create((set, get) => ({
       totalLaps: track.laps || 2,
       elapsedSeconds: 0,
       startTime: null,
-      firstKeystrokeTime: null,
-      lastKeystrokeTime: null,
+      startMonotonicTime: null,
+      firstKeystrokeMonotonic: null,
+      lastKeystrokeMonotonic: null,
       keystrokeHistory: [],
       isFinished: false,
       finalRank: 4,
@@ -295,11 +313,13 @@ export const useGameStore = create((set, get) => ({
       } else if (count === 0) {
         soundEngine.playCountdownBeep(true);
         soundEngine.startEngine();
+        const startMono = typeof performance !== 'undefined' ? performance.now() : Date.now();
         set({
           countdown: 0,
           isCountdown: false,
           isRacing: true,
-          startTime: Date.now()
+          startTime: Date.now(),
+          startMonotonicTime: startMono
         });
         clearInterval(interval);
       }
@@ -316,12 +336,13 @@ export const useGameStore = create((set, get) => ({
     const errorText = state.errorText;
     const nextIndex = currentTyped.length;
 
-    if (nextIndex >= targetText.length) return;
+    if (nextIndex >= targetText.length && errorText.length === 0) return;
 
-    const now = Date.now();
-    const firstKeyTime = state.firstKeystrokeTime || now;
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const firstKeyTime = state.firstKeystrokeMonotonic || now;
+    const elapsedSec = Math.max(0.1, (now - firstKeyTime) / 1000);
 
-    // If no existing typo, test expected character
+    // If no existing typo, validate expected character
     if (errorText.length === 0) {
       const expectedChar = targetText[nextIndex];
       const isCorrect = char === expectedChar;
@@ -331,30 +352,28 @@ export const useGameStore = create((set, get) => ({
         const newTyped = currentTyped + char;
         const newProgress = Math.min(1, newTyped.length / targetText.length);
         const newAttempted = state.totalAttempted + 1;
+        const correctChars = newTyped.length;
+        const remainingChars = Math.max(0, targetText.length - newTyped.length);
 
-        // Rolling 3.0-second keystroke window
-        const updatedHistory = [...state.keystrokeHistory, { time: now, count: 1 }]
-          .filter(k => now - k.time <= 3000);
+        // Update rolling keystroke window (2.5s)
+        const { rollingWpm, prunedHistory } = calculateRollingWpm(
+          [...state.keystrokeHistory, { time: now, count: 1 }],
+          now,
+          2500,
+          state.rollingWpm
+        );
 
-        const charsInWindow = updatedHistory.length;
-        // Rolling WPM: (charsInWindow / 5) / (3.0s / 60s) = (charsInWindow / 5) * 20
-        const rollingWpm = Math.round((charsInWindow / 5) * 20);
+        // Standard Gross & Net WPM calculations
+        const grossWpm = calculateGrossWpm(newAttempted, elapsedSec);
+        const netWpm = calculateNetWpm(newTyped.length, 0, elapsedSec);
+        const accuracy = calculateAccuracy(newAttempted, state.errorsCount);
 
-        // Standard cumulative WPM: (totalChars / 5) / activeMinutes
-        const activeMinutes = Math.max(0.033, (now - firstKeyTime) / 60000);
-        const cumulativeWpm = Math.round((newTyped.length / 5) / activeMinutes);
+        // Responsive displayed WPM: blends 60% responsive rolling cadence with 40% steady cumulative pace
+        const liveWpm = Math.max(0, Math.min(260, Math.round(0.6 * rollingWpm + 0.4 * netWpm)));
 
-        // Smooth live display WPM: 65% responsive rolling window, 35% cumulative anchor
-        const liveWpm = Math.max(0, Math.min(240, Math.round(0.65 * rollingWpm + 0.35 * cumulativeWpm)));
-
-        // Standard Accuracy convention
-        const accuracy = Math.max(0, Math.min(100, Math.round(((newAttempted - state.errorsCount) / newAttempted) * 100)));
-
-        // Frame-rate independent vehicle speed target based on pace and accuracy
-        const targetSpeed = Math.min(320, Math.max(35, liveWpm * 1.95 * (accuracy / 100)));
-        const gear = targetSpeed < 50 ? 1 : targetSpeed < 90 ? 2 : targetSpeed < 140 ? 3 : targetSpeed < 190 ? 4 : targetSpeed < 250 ? 5 : 6;
-
-        soundEngine.updateEngineSpeed(targetSpeed);
+        // Vehicle speed & gear dynamics
+        const { targetSpeedKmh, gear } = calculateVehicleDynamics(liveWpm, accuracy);
+        soundEngine.updateEngineSpeed(targetSpeedKmh);
 
         const isDone = newTyped.length === targetText.length;
         const updatedRacers = state.racers.map(r => {
@@ -363,9 +382,9 @@ export const useGameStore = create((set, get) => ({
               ...r,
               progress: newProgress,
               wpm: liveWpm,
-              speed: targetSpeed,
+              speed: targetSpeedKmh,
               isFinished: isDone,
-              finishTime: isDone ? (now - state.startTime) / 1000 : null
+              finishTime: isDone ? elapsedSec : null
             };
           }
           return r;
@@ -376,17 +395,22 @@ export const useGameStore = create((set, get) => ({
 
         set({
           typedText: newTyped,
+          cursorIndex: newTyped.length,
+          correctChars,
+          remainingChars,
+          grossWpm,
+          netWpm,
           wpm: liveWpm,
           rollingWpm,
           accuracy,
           totalAttempted: newAttempted,
-          speedKmh: Math.round(targetSpeed),
-          targetSpeedKmh: targetSpeed,
+          speedKmh: targetSpeedKmh,
+          targetSpeedKmh,
           gear,
           progress: newProgress,
-          firstKeystrokeTime: firstKeyTime,
-          lastKeystrokeTime: now,
-          keystrokeHistory: updatedHistory,
+          firstKeystrokeMonotonic: firstKeyTime,
+          lastKeystrokeMonotonic: now,
+          keystrokeHistory: prunedHistory,
           racers: rankedRacers,
           finalRank: playerRank
         });
@@ -395,31 +419,42 @@ export const useGameStore = create((set, get) => ({
           get().finishRace();
         }
       } else {
-        // First typo on this character: append to errorText
+        // Typo: record mistake and block further typing until corrected
         soundEngine.playError();
         const newAttempted = state.totalAttempted + 1;
         const newErrors = state.errorsCount + 1;
-        const accuracy = Math.max(0, Math.min(100, Math.round(((newAttempted - newErrors) / newAttempted) * 100)));
+        const accuracy = calculateAccuracy(newAttempted, newErrors);
+        const grossWpm = calculateGrossWpm(newAttempted, elapsedSec);
+        const netWpm = calculateNetWpm(currentTyped.length, 1, elapsedSec);
 
         set(s => ({
           errorText: char,
           totalAttempted: newAttempted,
           errorsCount: newErrors,
+          incorrectChars: s.incorrectChars + 1,
           accuracy,
-          lastKeystrokeTime: now,
-          speedKmh: Math.max(25, s.speedKmh * 0.90) // Modest mistake penalty
+          grossWpm,
+          netWpm,
+          lastKeystrokeMonotonic: now,
+          speedKmh: Math.max(25, Math.round(s.speedKmh * 0.90))
         }));
       }
     } else {
-      // Existing typo: append more error chars (up to 6)
-      if (errorText.length < 6) {
+      // Existing typo: allow typing up to 5 error characters before hard block
+      if (errorText.length < 5) {
         soundEngine.playError();
+        const newAttempted = state.totalAttempted + 1;
+        const newErrors = state.errorsCount + 1;
+        const accuracy = calculateAccuracy(newAttempted, newErrors);
+
         set(s => ({
           errorText: s.errorText + char,
-          totalAttempted: s.totalAttempted + 1,
-          errorsCount: s.errorsCount + 1,
-          lastKeystrokeTime: now,
-          speedKmh: Math.max(25, s.speedKmh * 0.92)
+          totalAttempted: newAttempted,
+          errorsCount: newErrors,
+          incorrectChars: s.incorrectChars + 1,
+          accuracy,
+          lastKeystrokeMonotonic: now,
+          speedKmh: Math.max(25, Math.round(s.speedKmh * 0.92))
         }));
       }
     }
@@ -433,7 +468,7 @@ export const useGameStore = create((set, get) => ({
     if (state.errorText.length > 0) {
       set({
         errorText: state.errorText.slice(0, -1),
-        lastKeystrokeTime: Date.now()
+        lastKeystrokeMonotonic: typeof performance !== 'undefined' ? performance.now() : Date.now()
       });
       return;
     }
@@ -444,8 +479,11 @@ export const useGameStore = create((set, get) => ({
 
       set({
         typedText: newTyped,
+        cursorIndex: newTyped.length,
+        correctChars: newTyped.length,
+        remainingChars: Math.max(0, state.passage.text.length - newTyped.length),
         progress: newProgress,
-        lastKeystrokeTime: Date.now()
+        lastKeystrokeMonotonic: typeof performance !== 'undefined' ? performance.now() : Date.now()
       });
     }
   },
@@ -458,28 +496,27 @@ export const useGameStore = create((set, get) => ({
     soundEngine.stopEngine();
     soundEngine.playFinishFanfare();
 
-    const now = Date.now();
-    const elapsed = state.startTime ? (now - state.startTime) / 1000 : 42;
-    const mins = Math.floor(elapsed / 60);
-    const secs = (elapsed % 60).toFixed(2);
-    const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(5, '0')}`;
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const activeStart = state.firstKeystrokeMonotonic || state.startMonotonicTime || now;
+    const elapsedSec = Math.max(0.6, (now - activeStart) / 1000);
+    const formattedTime = formatRaceTime(elapsedSec);
 
     // Compute mathematically exact ending WPM based on active typing time: (words / minutes)
-    const activeStart = state.firstKeystrokeTime || state.startTime || now;
-    const activeElapsedMin = Math.max(0.04, (now - activeStart) / 60000);
-    const targetWords = (state.passage?.text?.length || 100) / 5;
-    const finalEndingWpm = Math.max(1, Math.round(targetWords / activeElapsedMin));
-    const finalAccuracy = state.totalAttempted > 0
-      ? Math.max(0, Math.min(100, Math.round(((state.totalAttempted - state.errorsCount) / state.totalAttempted) * 100)))
-      : 100;
+    const finalGrossWpm = calculateGrossWpm(state.totalAttempted, elapsedSec);
+    const finalNetWpm = calculateNetWpm(state.typedText.length, 0, elapsedSec);
+    const finalAccuracy = calculateAccuracy(state.totalAttempted, state.errorsCount);
 
     const track = getTrackById(state.selectedTrackId);
 
     const raceResults = {
-      wpm: finalEndingWpm,
+      wpm: finalNetWpm,
+      grossWpm: finalGrossWpm,
+      netWpm: finalNetWpm,
       accuracy: finalAccuracy,
-      timeSeconds: elapsed,
+      timeSeconds: elapsedSec,
       timeFormatted: formattedTime,
+      correctChars: state.typedText.length,
+      incorrectChars: state.errorsCount,
       position: state.finalRank,
       totalRacers: 8,
       trackId: track.id,
@@ -504,7 +541,9 @@ export const useGameStore = create((set, get) => ({
     set({
       isRacing: false,
       isFinished: true,
-      wpm: finalEndingWpm,
+      wpm: finalNetWpm,
+      grossWpm: finalGrossWpm,
+      netWpm: finalNetWpm,
       results: raceResults,
       view: 'results'
     });
@@ -548,8 +587,8 @@ export const useGameStore = create((set, get) => ({
     const state = get();
     if (!state.isRacing || state.isFinished) return;
 
-    const now = Date.now();
-    const currentElapsed = state.startTime ? (now - state.startTime) / 1000 : 0;
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const currentElapsed = state.startMonotonicTime ? Math.max(0, (now - state.startMonotonicTime) / 1000) : 0;
     const targetLength = state.passage?.text?.length || 100;
 
     // 1. Prune rolling keystroke window and decay player speed when pausing
@@ -557,23 +596,22 @@ export const useGameStore = create((set, get) => ({
     let playerLiveSpeed = state.speedKmh;
     let playerLiveGear = state.gear;
 
-    // Prune keystrokes older than 3 seconds
-    const activeKeystrokes = state.keystrokeHistory.filter(k => now - k.time <= 3000);
+    // Prune keystrokes older than 2.5 seconds
+    const cutoff = now - 2500;
+    const activeKeystrokes = state.keystrokeHistory.filter(k => k.time >= cutoff);
 
-    if (state.firstKeystrokeTime && state.lastKeystrokeTime) {
-      const idleMs = now - state.lastKeystrokeTime;
-      if (idleMs > 400) {
-        // Keystroke decay in rolling window
-        const charsInWindow = activeKeystrokes.length;
-        const currentRollingWpm = Math.round((charsInWindow / 5) * 20);
-
-        const activeMinutes = (now - state.firstKeystrokeTime) / 60000;
+    if (state.firstKeystrokeMonotonic && state.lastKeystrokeMonotonic) {
+      const idleMs = now - state.lastKeystrokeMonotonic;
+      if (idleMs > 450) {
+        // Player is pausing: smoothly decay rolling WPM and speed
+        const activeMinutes = Math.max(0.01, (now - state.firstKeystrokeMonotonic) / 60000);
         const cumulativeWpm = Math.round((state.typedText.length / 5) / activeMinutes);
+        const { rollingWpm } = calculateRollingWpm(activeKeystrokes, now, 2500, state.rollingWpm);
 
-        // Smoothly decay displayed WPM towards real-time pace
-        playerLiveWpm = Math.max(0, Math.round(0.7 * currentRollingWpm + 0.3 * cumulativeWpm));
+        playerLiveWpm = Math.max(0, Math.round(0.5 * rollingWpm + 0.5 * cumulativeWpm));
         playerLiveSpeed = Math.max(25, Math.round(state.speedKmh * 0.94));
-        playerLiveGear = playerLiveSpeed < 50 ? 1 : playerLiveSpeed < 90 ? 2 : playerLiveSpeed < 140 ? 3 : playerLiveSpeed < 190 ? 4 : 5;
+        const dyn = calculateVehicleDynamics(playerLiveWpm, state.accuracy);
+        playerLiveGear = dyn.gear;
 
         soundEngine.updateEngineSpeed(playerLiveSpeed);
       }

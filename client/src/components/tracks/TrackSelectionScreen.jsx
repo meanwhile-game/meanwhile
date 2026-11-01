@@ -14,8 +14,11 @@ import {
   AlertCircle,
   Layers,
   ChevronRight,
-  Check
+  Check,
+  MapPin,
+  Navigation
 } from 'lucide-react';
+
 
 export const TrackSelectionScreen = () => {
   const { 
@@ -127,23 +130,24 @@ export const TrackSelectionScreen = () => {
           )}
         </div>
 
-        {/* --- ACTIVE CIRCUITS GRID (Matching Reference Image Layout) --- */}
+        {/* --- ACTIVE CIRCUITS GRID (Matching 3x2 Reference Image Layout) --- */}
         {activeTab === 'active' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {activeTracks.map((track) => {
               const isSelected = selectedTrackId === track.id;
               return (
                 <div
                   key={track.id}
                   onClick={() => handleSelectTrack(track)}
+                  onDoubleClick={handleStartRace}
                   className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col justify-between border ${
                     isSelected
-                      ? 'border-sky-400 ring-2 ring-sky-400/30 shadow-[0_0_35px_-5px_rgba(56,189,248,0.35)] scale-[1.01]'
-                      : 'border-white/[0.08] hover:border-white/[0.22] bg-[#0c1222] hover:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]'
+                      ? 'border-sky-400 ring-2 ring-sky-400/40 shadow-[0_0_35px_-5px_rgba(56,189,248,0.4)] scale-[1.01]'
+                      : 'border-white/[0.08] hover:border-white/[0.25] bg-[#0c1222] hover:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]'
                   }`}
                 >
-                  {/* Hero Image Stage */}
-                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-950">
+                  {/* Hero Artwork Stage */}
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-950">
                     <img
                       src={track.mainImage}
                       alt={track.name}
@@ -152,79 +156,89 @@ export const TrackSelectionScreen = () => {
                         e.currentTarget.src = '/tracks/circuits-reference.jpg';
                       }}
                     />
-                    {/* Aesthetic gradient for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30 pointer-events-none" />
+                    {/* Cinematic Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/35 pointer-events-none" />
 
-                    {/* Top Bar: Circuit Badge & Selection Indicator */}
-                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-mono font-bold text-sky-400 shadow-md">
-                          CIRCUIT {track.circuitNumber}
-                        </span>
+                    {/* TOP ROW: Track Number, Name & Subtitle on Left | Distance & Elevation on Right */}
+                    <div className="absolute top-3.5 left-3.5 right-3.5 flex items-start justify-between pointer-events-none z-10">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm sm:text-base font-mono font-bold text-slate-200 drop-shadow-md">
+                            {track.circuitNumber}
+                          </span>
+                          {track.locationName && (
+                            <span className="flex items-center gap-1 text-[10px] font-mono font-semibold text-sky-400 bg-black/60 px-2 py-0.5 rounded-full border border-sky-400/30 backdrop-blur-sm shadow">
+                              <MapPin className="w-2.5 h-2.5" />
+                              <span>{track.locationName}</span>
+                            </span>
+                          )}
+                        </div>
+                        <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase drop-shadow-lg leading-tight">
+                          {track.name}
+                        </h2>
+                        <p className="text-[11px] text-slate-300 font-medium drop-shadow-md line-clamp-1">
+                          {track.primaryRoad ? `${track.primaryRoad} · ${track.subtitle}` : track.subtitle}
+                        </p>
                       </div>
 
-                      {isSelected ? (
-                        <span className="px-3.5 py-1 rounded-full bg-sky-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-sky-400/30 flex items-center gap-1.5 animate-pulse">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                          <span>Selected</span>
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-semibold text-slate-300 group-hover:border-sky-400/40 group-hover:text-white transition-all shadow-md">
-                          Select
-                        </span>
-                      )}
+                      {/* Distance & Elevation Badge */}
+                      <div className="px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-md border border-white/15 text-right font-mono-num shadow-lg">
+                        <div className="text-xs sm:text-sm font-black text-white tracking-tight">
+                          {track.distanceKm} <span className="text-[10px] text-slate-300 font-normal">KM</span>
+                        </div>
+                        {track.elevationM && (
+                          <div className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase">
+                            ELEVATION {track.elevationM.toLocaleString()} M
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Bottom-Left Track Title & Subtitle matching Reference Artwork */}
-                    <div className="absolute bottom-4 left-4 max-w-[62%] pointer-events-none z-10">
-                      <h2 className="text-xl sm:text-2xl font-black text-[#f8fafc] tracking-tight uppercase drop-shadow-lg">
-                        {track.name}
-                      </h2>
-                      <p className="text-xs text-[#cbd5e1] font-medium drop-shadow-md line-clamp-1 mt-0.5">
-                        {track.subtitle}
-                      </p>
-                    </div>
+                    {/* Selection Indicator Banner & Race Button */}
+                    {isSelected ? (
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartRace();
+                          }}
+                          className="px-5 py-2.5 rounded-full bg-sky-400 hover:bg-sky-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-2xl backdrop-blur-md flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                        >
+                          <Zap className="w-3.5 h-3.5 fill-current" />
+                          <span>Race This Circuit</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-15 pointer-events-none">
+                        <span className="px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-semibold tracking-wide border border-white/20">
+                          Click to Select
+                        </span>
+                      </div>
+                    )}
 
-                    {/* Minimap Contour Floating Card on the Right */}
-                    <div className="absolute bottom-4 right-4 flex items-center gap-3 bg-black/75 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl shadow-2xl pointer-events-none z-10">
-                      <div className="w-11 h-13 flex items-center justify-center">
-                        <svg viewBox="0 0 100 120" className="w-full h-full fill-none stroke-sky-400 stroke-[3.5]">
+                    {/* BOTTOM-LEFT: Glowing Circuit Minimap Outline & GPS Badge */}
+                    <div className="absolute bottom-3 left-3.5 z-10 pointer-events-none flex items-end gap-2">
+                      <div className="w-16 h-12 flex items-center justify-center p-1 rounded-lg bg-black/65 backdrop-blur-sm border border-white/15 shadow-md">
+                        <svg viewBox="0 0 100 120" className="w-full h-full fill-none stroke-sky-400 stroke-[3.5] drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]">
                           <path d={track.svgPath} />
                         </svg>
                       </div>
-                      <div className="text-xs font-mono-num space-y-0.5 text-white">
-                        <div className="font-bold text-sm tracking-tight">{track.distanceKm} KM</div>
-                        <div className="text-[10px] text-slate-300 font-semibold tracking-wider uppercase">{track.laps} LAPS</div>
-                      </div>
+                      {track.gpsCenter && (
+                        <div className="px-2 py-1 rounded-md bg-black/70 backdrop-blur-md border border-white/10 text-[9px] font-mono text-slate-300 shadow">
+                          <div className="text-[7.5px] uppercase text-sky-400 font-bold">REAL GPS ROUTE</div>
+                          <div>{track.gpsCenter[0].toFixed(2)}°N, {track.gpsCenter[1].toFixed(2)}°E</div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* 4 Gallery Thumbnails Strip matching Reference Image Bottom */}
-                  <div className="p-4 bg-[#0a0f1d] border-t border-white/[0.06] flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 overflow-hidden flex-1">
-                      {track.thumbnails?.map((thumb, idx) => (
-                        <div
-                          key={idx}
-                          className="w-16 sm:w-20 h-11 rounded-lg overflow-hidden border border-white/10 flex-shrink-0 relative group/thumb hover:border-sky-400/80 transition-all duration-200 shadow-sm"
-                        >
-                          <img 
-                            src={thumb} 
-                            alt={`${track.name} detail ${idx + 1}`} 
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover/thumb:scale-115"
-                            onError={(e) => {
-                              e.currentTarget.src = track.mainImage;
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-col items-end flex-shrink-0 pl-2">
-                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Pace</span>
-                      <span className="text-xs text-sky-400 font-semibold">
-                        {track.difficulty}
-                      </span>
-                    </div>
+                  {/* BOTTOM ROW: Feature Tags matching Reference Image */}
+                  <div className="px-4 py-3 bg-[#080d1a] border-t border-white/[0.06] flex items-center justify-between text-[10px] font-mono tracking-wider text-slate-400 uppercase">
+                    <span>{track.featureTags?.[0] || track.turns}</span>
+                    <span className="text-white/20">/</span>
+                    <span>{track.featureTags?.[1] || `${track.laps} LAPS`}</span>
+                    <span className="text-white/20">/</span>
+                    <span className="text-amber-400 font-semibold">{track.featureTags?.[2] || track.difficulty}</span>
                   </div>
                 </div>
               );

@@ -5,13 +5,16 @@ import * as THREE from 'three';
 // 05 CHENNAI — MARINA DRIVE CIRCUIT (Reference Left Panel)
 // Coastal highway, Bay of Bengal sunset, historic Indo-Saracenic red-brick clock tower,
 // Marina beach, swaying palm trees, stone balustrade, and warm golden reflections.
-export const ChennaiEnvironment = ({ speedKmh = 100 }) => {
+export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
   const dashesMatRef = useRef();
   const streetGroupRef = useRef();
   const oceanRef = useRef();
   const sunGlowRef = useRef();
   const trafficGroupRef = useRef();
   const lighthouseBeamRef = useRef();
+  const heritageGroupRef = useRef();
+  const lighthouseGroupRef = useRef();
+  const finishGantryRef = useRef();
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
@@ -45,40 +48,86 @@ export const ChennaiEnvironment = ({ speedKmh = 100 }) => {
     if (lighthouseBeamRef.current) {
       lighthouseBeamRef.current.rotation.y = state.clock.elapsedTime * 1.2;
     }
+
+    // --- LANDMARK PROGRESSION (Marina coastal landscape takes the driver!) ---
+    // 1. INDO-SARACENIC CLOCK TOWER COMPLEX: Approaches and looms on the left (Z=260 -> -40) during progress 20% -> 60%
+    if (heritageGroupRef.current) {
+      const heritageTargetZ = 260 - ((progress - 0.18) / 0.42) * 300;
+      heritageGroupRef.current.position.z = THREE.MathUtils.lerp(
+        heritageGroupRef.current.position.z,
+        heritageTargetZ,
+        delta * 3.5
+      );
+    }
+
+    // 2. CHENNAI MARINA LIGHTHOUSE: Approaches on the coastal side (Z=250 -> -20) during progress 48% -> 85%
+    if (lighthouseGroupRef.current) {
+      const lighthouseTargetZ = 250 - ((progress - 0.48) / 0.38) * 270;
+      lighthouseGroupRef.current.position.z = THREE.MathUtils.lerp(
+        lighthouseGroupRef.current.position.z,
+        lighthouseTargetZ,
+        delta * 3.5
+      );
+    }
+
+    // 3. MARINA BEACH GRAND PRIX FINISH GANTRY: Approaches during final stretch (progress 78% -> 100%)
+    if (finishGantryRef.current) {
+      const gantryTargetZ = 240 - ((progress - 0.78) / 0.22) * 255;
+      finishGantryRef.current.position.z = THREE.MathUtils.lerp(
+        finishGantryRef.current.position.z,
+        gantryTargetZ,
+        delta * 3.5
+      );
+    }
   });
 
   // Coastal 4-Lane Highway Markings with Warm Wet Asphalt Sheen
   const dashesTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 512;
+    canvas.width = 512;
+    canvas.height = 1024;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#171a24';
-    ctx.fillRect(0, 0, 256, 512);
+    ctx.fillStyle = '#141822';
+    ctx.fillRect(0, 0, 512, 1024);
 
     // Warm asphalt aggregate grain
-    ctx.fillStyle = 'rgba(255, 235, 200, 0.04)';
-    for (let i = 0; i < 450; i++) {
-      ctx.fillRect(Math.random() * 256, Math.random() * 512, 2, 2);
+    for (let i = 0; i < 2600; i++) {
+      const gX = Math.random() * 512;
+      const gY = Math.random() * 1024;
+      const gR = Math.random() * 2 + 1;
+      ctx.fillStyle = Math.random() > 0.6 ? 'rgba(255, 235, 200, 0.05)' : 'rgba(0, 0, 0, 0.3)';
+      ctx.fillRect(gX, gY, gR, gR);
     }
+
+    // Lane wear gloss sheen
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+    [85, 175, 335, 425].forEach(x => {
+      ctx.fillRect(x - 20, 0, 40, 1024);
+    });
 
     // White dashed lane divider lines (3 dividers for 4 lanes)
     ctx.fillStyle = '#f8fafc';
-    [64, 128, 192].forEach((x) => {
-      ctx.fillRect(x - 2, 35, 5, 145);
-      ctx.fillRect(x - 2, 285, 5, 145);
+    [128, 256, 384].forEach((x) => {
+      ctx.fillRect(x - 3, 60, 6, 260);
+      ctx.fillRect(x - 3, 580, 6, 260);
     });
 
     // Solid outer shoulder lines
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(16, 0, 6, 1024);
+    ctx.fillRect(490, 0, 6, 1024);
+
+    // Reflective road studs
     ctx.fillStyle = '#fef08a';
-    ctx.fillRect(10, 0, 4, 512);
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(242, 0, 4, 512);
+    [128, 256, 384].forEach((x) => {
+      ctx.fillRect(x - 4, 330, 8, 12);
+      ctx.fillRect(x - 4, 850, 8, 12);
+    });
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(1, 16);
+    tex.repeat.set(1, 14);
     return tex;
   }, []);
 
@@ -232,8 +281,8 @@ export const ChennaiEnvironment = ({ speedKmh = 100 }) => {
         </group>
       </group>
 
-      {/* Distant Iconic Chennai Marina Lighthouse */}
-      <group position={[52, 0, 155]}>
+      {/* 3. APPROACHING CHENNAI MARINA LIGHTHOUSE (Coastal landmark with revolving beam) */}
+      <group ref={lighthouseGroupRef} position={[42, 0, 250]}>
         {/* Lighthouse Base */}
         <mesh position={[0, 4, 0]}>
           <boxGeometry args={[6, 8, 6]} />
@@ -272,9 +321,16 @@ export const ChennaiEnvironment = ({ speedKmh = 100 }) => {
         </group>
       </group>
 
-      {/* 4. LEFT SIDE: HISTORIC INDO-SARACENIC RED-BRICK CLOCK TOWER ARCHITECTURE (Reference Matching) */}
-      <IndoSaracenicClockTower position={[-28, 0, 65]} />
-      <ColonialHeritageHall position={[-32, 0, 135]} />
+      {/* 4. APPROACHING HISTORIC INDO-SARACENIC RED-BRICK CLOCK TOWER COMPLEX */}
+      <group ref={heritageGroupRef} position={[0, 0, 260]}>
+        <IndoSaracenicClockTower position={[-26, 0, 0]} />
+        <ColonialHeritageHall position={[-30, 0, 50]} />
+      </group>
+
+      {/* 5. MARINA BEACH GRAND PRIX FINISH GANTRY */}
+      <group ref={finishGantryRef} position={[0, 0, 240]}>
+        <ChennaiFinishGantry />
+      </group>
 
       {/* Distant Urban Chennai Skyline Silhouettes */}
       <group position={[-50, 0, 160]}>
@@ -549,3 +605,61 @@ const ChennaiPalmTree = ({ position, scale = 1, rotationSeed = 0 }) => (
     </group>
   </group>
 );
+
+// Marina Beach Grand Prix Finish Line Gantry
+const ChennaiFinishGantry = () => (
+  <group>
+    {/* Left Tropical Wood & Steel Pillar */}
+    <mesh position={[-10.5, 5.5, 0]}>
+      <boxGeometry args={[1.2, 11, 1.2]} />
+      <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.3} />
+    </mesh>
+    {/* Right Tropical Wood & Steel Pillar */}
+    <mesh position={[10.5, 5.5, 0]}>
+      <boxGeometry args={[1.2, 11, 1.2]} />
+      <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.3} />
+    </mesh>
+
+    {/* Overhead Grand Prix Bridge Truss */}
+    <mesh position={[0, 10.5, 0]}>
+      <boxGeometry args={[22.5, 1.6, 2.2]} />
+      <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.25} />
+    </mesh>
+
+    {/* Checkered Finish Line Banner */}
+    <mesh position={[0, 9.2, 0.2]}>
+      <boxGeometry args={[19, 1.4, 0.1]} />
+      <meshStandardMaterial color="#ffffff" roughness={0.4} />
+    </mesh>
+
+    {/* Digital Sunset Amber Timing Display */}
+    <mesh position={[0, 9.2, 0.3]}>
+      <boxGeometry args={[10, 0.9, 0.05]} />
+      <meshBasicMaterial color="#fb923c" />
+    </mesh>
+
+    {/* Green Finish Flashers */}
+    {[-8, -4, 0, 4, 8].map((fx, i) => (
+      <group key={i} position={[fx, 8.2, 0]}>
+        <mesh>
+          <sphereGeometry args={[0.22, 10, 10]} />
+          <meshBasicMaterial color="#22c55e" />
+        </mesh>
+        <pointLight position={[0, -0.5, 0]} intensity={3.5} distance={22} color="#22c55e" />
+      </group>
+    ))}
+
+    {/* Golden Rim Accent on Truss Edge */}
+    <mesh position={[0, 11.4, 0]}>
+      <boxGeometry args={[22.8, 0.15, 0.15]} />
+      <meshBasicMaterial color="#fef08a" />
+    </mesh>
+
+    {/* Road Finish Line Stripe on Wet Asphalt */}
+    <mesh position={[0, -0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[18.5, 2.8]} />
+      <meshStandardMaterial color="#ffffff" roughness={0.4} metalness={0.6} />
+    </mesh>
+  </group>
+);
+

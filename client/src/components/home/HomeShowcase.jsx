@@ -88,18 +88,54 @@ export const HomeShowcase = () => {
                 setSelectedTrackId(track.id);
                 setView('tracks');
               }}
-              className="p-5 rounded-2xl bg-[#0c1222] border border-white/[0.08] hover:border-amber-400/50 transition-all cursor-pointer group"
+              className="group relative rounded-2xl overflow-hidden bg-[#0a0f1d] border border-white/[0.08] hover:border-sky-400/50 hover:shadow-[0_0_30px_-5px_rgba(56,189,248,0.25)] transition-all duration-300 cursor-pointer flex flex-col justify-between"
             >
-              <div className="flex items-center justify-between text-xs text-[#64748b] mb-3">
-                <span className="font-semibold text-amber-400 font-mono-num">{track.circuitNumber} · {track.difficulty}</span>
-                <span>{track.distanceKm} KM</span>
+              {/* Circuit Artwork Header */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-950">
+                <img
+                  src={track.mainImage}
+                  alt={track.name}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  onError={(e) => {
+                    e.currentTarget.src = '/tracks/circuits-reference.jpg';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none" />
+
+                {/* Circuit Badge & Elevation */}
+                <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                  <span className="px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-md border border-white/15 text-[11px] font-mono font-bold text-sky-400">
+                    {track.circuitNumber} · {track.name}
+                  </span>
+                  <div className="px-2.5 py-0.5 rounded-md bg-black/70 backdrop-blur-md border border-white/15 text-right font-mono-num text-[10px] text-slate-300">
+                    <span className="font-bold text-white text-[11px]">{track.distanceKm} KM</span>
+                    {track.elevationM && <span className="block text-[9px] text-slate-400">ELEV. {track.elevationM} M</span>}
+                  </div>
+                </div>
+
+                {/* Bottom Circuit Details & SVG Minimap */}
+                <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between pointer-events-none z-10">
+                  <div className="max-w-[70%]">
+                    <p className="text-xs text-slate-300 font-medium line-clamp-1">
+                      {track.subtitle}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 flex items-center justify-center p-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10">
+                    <svg viewBox="0 0 100 120" className="w-full h-full fill-none stroke-sky-400 stroke-[4]">
+                      <path d={track.svgPath} />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-base font-bold text-[#f8fafc] group-hover:text-amber-400 transition-colors">
-                {track.name}
-              </h3>
-              <p className="text-xs text-[#94a3b8] mt-1 line-clamp-2">
-                {track.subtitle}
-              </p>
+
+              {/* Feature Tags Bar matching Reference Image */}
+              <div className="px-4 py-2.5 bg-[#070b16] border-t border-white/[0.06] flex items-center justify-between text-[10px] font-mono tracking-wider text-slate-400 uppercase">
+                <span>{track.featureTags?.[0] || track.turns}</span>
+                <span className="text-white/20">/</span>
+                <span>{track.featureTags?.[1] || `${track.laps} LAPS`}</span>
+                <span className="text-white/20">/</span>
+                <span className="text-amber-400 font-semibold">{track.difficulty}</span>
+              </div>
             </div>
           ))}
         </div>

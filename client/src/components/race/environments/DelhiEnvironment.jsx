@@ -6,12 +6,14 @@ import * as THREE from 'three';
 // Ceremonial avenues of Kartavya Path, towering India Gate landmark ahead,
 // illuminated Rashtrapati Bhavan dome, water fountains, tricolor banners,
 // and rain-slicked twilight road reflections in amber and midnight blue.
-export const DelhiEnvironment = ({ speedKmh = 100 }) => {
+export const DelhiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
   const dashesMatRef = useRef();
   const avenueGroupRef = useRef();
   const fountainsGroupRef = useRef();
   const trafficGroupRef = useRef();
   const indiaGateRef = useRef();
+  const raisinaHillRef = useRef();
+  const finishGantryRef = useRef();
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
@@ -36,44 +38,85 @@ export const DelhiEnvironment = ({ speedKmh = 100 }) => {
       trafficGroupRef.current.position.z = (trafficGroupRef.current.position.z + moveStep * 0.45) % 110;
     }
 
-    // India Gate subtle monumental presence and light breathe
+    // --- LANDMARK PROGRESSION (The landscape actually changes and takes the driver!) ---
+    // 1. TOWERING INDIA GATE ARCH: Approaches from far horizon (Z=260) and car zooms directly under it (Z=-50) during progress 15% -> 55%
     if (indiaGateRef.current) {
-      const pulse = Math.sin(state.clock.elapsedTime * 1.5) * 0.05;
-      indiaGateRef.current.position.y = 0 + pulse;
+      const gateTargetZ = 260 - (progress / 0.52) * 320;
+      indiaGateRef.current.position.z = THREE.MathUtils.lerp(
+        indiaGateRef.current.position.z,
+        gateTargetZ,
+        delta * 3.5
+      );
+    }
+
+    // 2. RAISINA HILL & RASHTRAPATI BHAVAN DOME: Rises and approaches in Sector 3 (progress 50% -> 95%)
+    if (raisinaHillRef.current) {
+      const hillTargetZ = 280 - ((progress - 0.48) / 0.48) * 260;
+      raisinaHillRef.current.position.z = THREE.MathUtils.lerp(
+        raisinaHillRef.current.position.z,
+        hillTargetZ,
+        delta * 3.5
+      );
+    }
+
+    // 3. GRAND PRIX FINISH LINE GANTRY: Approaches as the race concludes (progress 78% -> 100%)
+    if (finishGantryRef.current) {
+      const gantryTargetZ = 240 - ((progress - 0.78) / 0.22) * 255;
+      finishGantryRef.current.position.z = THREE.MathUtils.lerp(
+        finishGantryRef.current.position.z,
+        gantryTargetZ,
+        delta * 3.5
+      );
     }
   });
 
   // Rain-Slicked Ceremonial Avenue Road Texture with 4 Lanes & Red Sandstone Curbs
   const dashesTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 512;
+    canvas.width = 512;
+    canvas.height = 1024;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#090c14';
-    ctx.fillRect(0, 0, 256, 512);
+    ctx.fillStyle = '#080c14';
+    ctx.fillRect(0, 0, 512, 1024);
 
-    // Wet sheen noise
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
-    for (let i = 0; i < 400; i++) {
-      ctx.fillRect(Math.random() * 256, Math.random() * 512, 2, 2);
+    // Wet asphalt stochastic aggregate noise
+    for (let i = 0; i < 2800; i++) {
+      const gX = Math.random() * 512;
+      const gY = Math.random() * 1024;
+      const gR = Math.random() * 2 + 1;
+      ctx.fillStyle = Math.random() > 0.6 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.3)';
+      ctx.fillRect(gX, gY, gR, gR);
     }
+
+    // Lane wear gloss sheen
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+    [85, 175, 335, 425].forEach(x => {
+      ctx.fillRect(x - 20, 0, 40, 1024);
+    });
 
     // Crisp white dashed lane divider lines
     ctx.fillStyle = '#f8fafc';
-    [64, 128, 192].forEach((x) => {
-      ctx.fillRect(x - 2, 35, 5, 145);
-      ctx.fillRect(x - 2, 285, 5, 145);
+    [128, 256, 384].forEach((x) => {
+      ctx.fillRect(x - 3, 60, 6, 260);
+      ctx.fillRect(x - 3, 580, 6, 260);
     });
 
-    // Solid outer edge boundary lines
+    // Solid amber outer edge boundary lines
     ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(10, 0, 4, 512);
-    ctx.fillRect(242, 0, 4, 512);
+    ctx.fillRect(16, 0, 6, 1024);
+    ctx.fillRect(490, 0, 6, 1024);
+
+    // Reflective cats-eyes / road studs along lane dividers
+    ctx.fillStyle = '#fef08a';
+    [128, 256, 384].forEach((x) => {
+      ctx.fillRect(x - 4, 330, 8, 12);
+      ctx.fillRect(x - 4, 850, 8, 12);
+    });
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(1, 16);
+    tex.repeat.set(1, 14);
     return tex;
   }, []);
 
@@ -97,13 +140,11 @@ export const DelhiEnvironment = ({ speedKmh = 100 }) => {
         <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.94} />
       </mesh>
 
-      {/* Wet Road Mirror Taillight & Monument Glow Reflection Streaks (Matching Screenshot) */}
-      {/* Red Taillight Reflection Streak */}
+      {/* Wet Road Mirror Taillight & Monument Glow Reflection Streaks */}
       <mesh position={[0, -0.035, 25]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[2.5, 70]} />
         <meshBasicMaterial color="#ef4444" transparent opacity={0.28} depthWrite={false} />
       </mesh>
-      {/* Amber Monument Light Reflection Streak down Center Axis */}
       <mesh position={[0, -0.038, 75]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8.0, 150]} />
         <meshBasicMaterial color="#f59e0b" transparent opacity={0.18} depthWrite={false} />
@@ -139,46 +180,73 @@ export const DelhiEnvironment = ({ speedKmh = 100 }) => {
         <meshStandardMaterial color="#166534" roughness={0.8} />
       </mesh>
 
-      {/* 2. THE MAGNIFICENT INDIA GATE (Ahead on Axis - Towering Landmark) */}
-      <group ref={indiaGateRef} position={[0, 0, 140]}>
+      {/* 2. THE MAGNIFICENT INDIA GATE (Spans the avenue - car drives right under it!) */}
+      <group ref={indiaGateRef} position={[0, 0, 260]}>
         <IndiaGateMonument />
       </group>
 
-      {/* 3. DISTANT RASHTRAPATI BHAVAN DOME (Left Distance, Glowing Golden in Twilight) */}
-      <group position={[-38, 0, 115]}>
-        <RashtrapatiBhavanDome />
+      {/* 3. RAISINA HILL & RASHTRAPATI BHAVAN DOME (Approaches during Sector 3) */}
+      <group ref={raisinaHillRef} position={[0, 0, 280]}>
+        <group position={[-28, 0, 0]}>
+          <RashtrapatiBhavanDome />
+        </group>
+        {/* North Block & South Block Classical Colonnaded Wings */}
+        <group position={[-28, 0, -25]}>
+          <mesh position={[0, 6, 0]}>
+            <boxGeometry args={[28, 12, 45]} />
+            <meshStandardMaterial color="#b45309" roughness={0.75} />
+          </mesh>
+          {/* Classical Sandstone Colonnade */}
+          {[-18, -9, 0, 9, 18].map((cz, ci) => (
+            <mesh key={ci} position={[12, 6, cz]}>
+              <cylinderGeometry args={[0.5, 0.5, 12, 12]} />
+              <meshStandardMaterial color="#d97706" roughness={0.7} />
+            </mesh>
+          ))}
+        </group>
+        <group position={[28, 0, -25]}>
+          <mesh position={[0, 6, 0]}>
+            <boxGeometry args={[28, 12, 45]} />
+            <meshStandardMaterial color="#b45309" roughness={0.75} />
+          </mesh>
+          {[-18, -9, 0, 9, 18].map((cz, ci) => (
+            <mesh key={ci} position={[-12, 6, cz]}>
+              <cylinderGeometry args={[0.5, 0.5, 12, 12]} />
+              <meshStandardMaterial color="#d97706" roughness={0.7} />
+            </mesh>
+          ))}
+        </group>
       </group>
 
-      {/* 4. ILLUMINATED WATER CANALS & FOUNTAINS OF RAJPATH (Flanking the Avenue) */}
+      {/* 4. GRAND PRIX FINISH LINE GANTRY */}
+      <group ref={finishGantryRef} position={[0, 0, 260]}>
+        <DelhiFinishGantry />
+      </group>
+
+      {/* 5. ILLUMINATED WATER CANALS & FOUNTAINS OF RAJPATH (Flanking the Avenue) */}
       <group ref={fountainsGroupRef} position={[0, 0, 0]}>
         {[-40, 20, 80].map((z, idx) => (
           <React.Fragment key={idx}>
-            {/* Left Canal Fountain */}
             <RajpathFountain position={[-18, 0, z]} />
-            {/* Right Canal Fountain */}
             <RajpathFountain position={[18, 0, z + 10]} />
           </React.Fragment>
         ))}
       </group>
 
-      {/* 5. LOOPING CEREMONIAL TREES, ORNAMENTAL LAMPOSTS & TRICOLOR BANNERS */}
+      {/* 6. LOOPING CEREMONIAL TREES, ORNAMENTAL LAMPOSTS & TRICOLOR BANNERS */}
       <group ref={avenueGroupRef} position={[0, 0, 0]}>
         {[-60, -20, 20, 60, 100, 140].map((z, idx) => (
           <group key={idx} position={[0, 0, z]}>
-            {/* Mature Avenue Neem / Jamun Trees with Dense Rounded Crowns */}
             <AvenueTree position={[-14.5, 0, 0]} scale={1.2} />
             <AvenueTree position={[14.5, 0, 0]} scale={1.2} />
-
-            {/* Classic Ceremonial Cast-Iron Lamp Post with Amber Lantern & Tricolor Banner */}
             <RajpathLamppost position={[-10.2, 0, 0]} facing={1} />
             <RajpathLamppost position={[10.2, 0, 0]} facing={-1} />
           </group>
         ))}
       </group>
 
-      {/* 6. DRAMATIC TWILIGHT SKY CLOUDS & AMBER ILLUMINATION */}
+      {/* 7. DRAMATIC TWILIGHT SKY CLOUDS & AMBER ILLUMINATION */}
       <group position={[0, 32, 160]}>
-        {/* Purple/Indigo Twilight Clouds backlit with sunset gold */}
         <mesh position={[-25, 4, -10]}>
           <boxGeometry args={[80, 8, 14]} />
           <meshStandardMaterial color="#3b0764" transparent opacity={0.45} roughness={1} />
@@ -193,7 +261,7 @@ export const DelhiEnvironment = ({ speedKmh = 100 }) => {
         </mesh>
       </group>
 
-      {/* 7. DISTANT TRAFFIC AHEAD (Moving Red Taillights and Headlights along Rajpath) */}
+      {/* 8. DISTANT TRAFFIC AHEAD */}
       <group ref={trafficGroupRef} position={[0, 0, 0]}>
         {[-25, 30, 85].map((z, idx) => (
           <group key={idx} position={[3.2 * ((idx % 3) - 1), 0.45, z]}>
@@ -201,7 +269,6 @@ export const DelhiEnvironment = ({ speedKmh = 100 }) => {
               <boxGeometry args={[1.8, 0.7, 3.8]} />
               <meshStandardMaterial color="#0b0f19" roughness={0.4} />
             </mesh>
-            {/* Taillights */}
             <mesh position={[-0.65, 0.1, -1.92]}>
               <boxGeometry args={[0.38, 0.12, 0.06]} />
               <meshBasicMaterial color="#ef4444" />
@@ -218,80 +285,124 @@ export const DelhiEnvironment = ({ speedKmh = 100 }) => {
   );
 };
 
-// 3D Monumental India Gate Archway (Accurately proportioned triumphal sandstone arch)
+// 3D Monumental India Gate Archway (Accurately proportioned triumphal sandstone arch spanning the 4-lane avenue)
 const IndiaGateMonument = () => (
   <group>
-    {/* Stepped Plinth Foundation (Red Sandstone) */}
-    <mesh position={[0, 1.2, 0]}>
-      <boxGeometry args={[26, 2.4, 16]} />
+    {/* Stepped Plinth Foundation (Red Sandstone flanking both sides of the roadway) */}
+    {/* Left Plinth */}
+    <mesh position={[-15, 1.2, 0]}>
+      <boxGeometry args={[11, 2.4, 18]} />
       <meshStandardMaterial color="#78350f" roughness={0.8} />
     </mesh>
-    <mesh position={[0, 2.8, 0]}>
-      <boxGeometry args={[24, 1.2, 14.5]} />
+    <mesh position={[-15, 2.8, 0]}>
+      <boxGeometry args={[10, 1.2, 16.5]} />
+      <meshStandardMaterial color="#92400e" roughness={0.8} />
+    </mesh>
+    {/* Right Plinth */}
+    <mesh position={[15, 1.2, 0]}>
+      <boxGeometry args={[11, 2.4, 18]} />
+      <meshStandardMaterial color="#78350f" roughness={0.8} />
+    </mesh>
+    <mesh position={[15, 2.8, 0]}>
+      <boxGeometry args={[10, 1.2, 16.5]} />
       <meshStandardMaterial color="#92400e" roughness={0.8} />
     </mesh>
 
-    {/* Main Pylons (Left & Right Massive Piers) */}
+    {/* Main Pylons (Left & Right Massive Piers Flanking Roadway) */}
     {/* Left Pier */}
-    <mesh position={[-7.5, 12.5, 0]}>
-      <boxGeometry args={[8.5, 18, 13.5]} />
+    <mesh position={[-15, 13.5, 0]}>
+      <boxGeometry args={[9.5, 20, 15.5]} />
       <meshStandardMaterial color="#d97706" roughness={0.7} />
     </mesh>
     {/* Right Pier */}
-    <mesh position={[7.5, 12.5, 0]}>
-      <boxGeometry args={[8.5, 18, 13.5]} />
+    <mesh position={[15, 13.5, 0]}>
+      <boxGeometry args={[9.5, 20, 15.5]} />
       <meshStandardMaterial color="#d97706" roughness={0.7} />
     </mesh>
 
-    {/* Central Semicircular Arch Vault */}
-    <group position={[0, 14.5, 0]}>
-      {/* Arch Keystone & Intrados */}
-      <mesh position={[0, 3.2, 0]}>
-        <cylinderGeometry args={[4.25, 4.25, 13.6, 20, 1, false, 0, Math.PI]} rotation={[0, 0, Math.PI / 2]} />
+    {/* Central Semicircular Arch Vault Spanning Over the Road (Width 20.5m, Height 21m) */}
+    <group position={[0, 16.5, 0]}>
+      <mesh position={[0, 4.5, 0]}>
+        <cylinderGeometry args={[10.3, 10.3, 15.6, 24, 1, false, 0, Math.PI]} rotation={[0, 0, Math.PI / 2]} />
         <meshStandardMaterial color="#b45309" roughness={0.75} side={THREE.DoubleSide} />
       </mesh>
     </group>
 
     {/* Upper Arch Spandrel & Entablature Beam across Top */}
-    <mesh position={[0, 22.5, 0]}>
-      <boxGeometry args={[24.5, 3.5, 14]} />
+    <mesh position={[0, 25.5, 0]}>
+      <boxGeometry args={[40, 4.5, 16]} />
       <meshStandardMaterial color="#d97706" roughness={0.65} />
     </mesh>
 
     {/* "INDIA" Inscription Frieze Band */}
-    <mesh position={[0, 24.8, 0]}>
-      <boxGeometry args={[23.5, 1.6, 13.5]} />
+    <mesh position={[0, 28.5, 0]}>
+      <boxGeometry args={[38, 2.2, 15]} />
       <meshStandardMaterial color="#b45309" roughness={0.7} />
     </mesh>
-    {/* Front Inscription Relief Plate */}
-    <mesh position={[0, 24.8, 6.8]}>
-      <boxGeometry args={[11, 1.1, 0.2]} />
+    {/* Front Inscription Relief Plate with Gold Inscription Glow */}
+    <mesh position={[0, 28.5, 7.6]}>
+      <boxGeometry args={[16, 1.5, 0.2]} />
       <meshStandardMaterial color="#78350f" />
     </mesh>
 
     {/* Molded Cornice Projection */}
-    <mesh position={[0, 26.2, 0]}>
-      <boxGeometry args={[25.5, 1.2, 15]} />
+    <mesh position={[0, 30.2, 0]}>
+      <boxGeometry args={[41, 1.4, 17]} />
       <meshStandardMaterial color="#fef08a" roughness={0.6} />
     </mesh>
 
     {/* Stepped Attic Stage on Roof */}
-    <mesh position={[0, 27.5, 0]}>
-      <boxGeometry args={[21, 1.8, 12]} />
+    <mesh position={[0, 32.0, 0]}>
+      <boxGeometry args={[32, 2.2, 13.5]} />
       <meshStandardMaterial color="#b45309" roughness={0.7} />
     </mesh>
-    <mesh position={[0, 29.0, 0]}>
-      <boxGeometry args={[17, 1.4, 9.5]} />
+    <mesh position={[0, 34.0, 0]}>
+      <boxGeometry args={[26, 1.8, 11]} />
       <meshStandardMaterial color="#92400e" roughness={0.7} />
     </mesh>
 
     {/* Top Ceremonial Shallow Domed Urn / Chhatri Bowl */}
-    <mesh position={[0, 30.5, 0]}>
-      <cylinderGeometry args={[2.5, 1.8, 1.2, 16]} />
+    <mesh position={[0, 36.0, 0]}>
+      <cylinderGeometry args={[3.5, 2.5, 1.8, 16]} />
       <meshStandardMaterial color="#78350f" />
     </mesh>
 
-    {/* Distant Illuminated Chhatri / Canopy visible through archway */}
+    {/* AMAR JAWAN JYOTI: Eternal Golden Flame in Road Median under Arch Vault */}
+    <group position={[0, 0.6, 0]}>
+      {/* Black Marble Cenotaph Plinth */}
+      <mesh position={[0, 0.4, 0]}>
+        <boxGeometry args={[1.4, 0.8, 1.4]} />
+        <meshStandardMaterial color="#020617" roughness={0.2} metalness={0.8} />
+      </mesh>
+      {/* Inverted Rifle & Helmet */}
+      <mesh position={[0, 1.3, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 1.0]} />
+        <meshStandardMaterial color="#334155" metalness={0.9} />
+      </mesh>
+      <mesh position={[0, 1.85, 0]}>
+        <sphereGeometry args={[0.2, 10, 10]} />
+        <meshStandardMaterial color="#1e3a1e" roughness={0.7} />
+      </mesh>
+      {/* 4 Corner Eternal Flame Urns */}
+      {[-0.55, 0.55].map((fx, i) =>
+        [-0.55, 0.55].map((fz, j) => (
+          <group key={`${i}-${j}`} position={[fx, 0.85, fz]}>
+            <mesh>
+              <cylinderGeometry args={[0.08, 0.06, 0.15, 8]} />
+              <meshStandardMaterial color="#fbbf24" metalness={0.9} />
+            </mesh>
+            <mesh position={[0, 0.22, 0]}>
+              <coneGeometry args={[0.1, 0.35, 8]} />
+              <meshBasicMaterial color="#f97316" />
+            </mesh>
+          </group>
+        ))
+      )}
+      {/* Warm Golden Uplight Illuminating Interior Archway Vault as car zooms through */}
+      <pointLight position={[0, 3.5, 0]} intensity={5.5} distance={38} color="#f59e0b" />
+    </group>
+
+    {/* Distant Illuminated Chhatri / Canopy visible beyond archway */}
     <group position={[0, 4, 38]}>
       <mesh position={[0, 4, 0]}>
         <cylinderGeometry args={[0.3, 0.3, 8, 8]} />
@@ -305,9 +416,9 @@ const IndiaGateMonument = () => (
     </group>
 
     {/* Intense Golden Floodlighting Washing India Gate against Twilight */}
-    <pointLight position={[-12, 2, 10]} intensity={6.5} distance={42} color="#f59e0b" />
-    <pointLight position={[12, 2, 10]} intensity={6.5} distance={42} color="#f59e0b" />
-    <pointLight position={[0, 2, 12]} intensity={7.0} distance={45} color="#fbbf24" />
+    <pointLight position={[-16, 2, 12]} intensity={6.5} distance={42} color="#f59e0b" />
+    <pointLight position={[16, 2, 12]} intensity={6.5} distance={42} color="#f59e0b" />
+    <pointLight position={[0, 2, 14]} intensity={7.0} distance={45} color="#fbbf24" />
     <pointLight position={[0, 16, 0]} intensity={4.0} distance={30} color="#fde047" />
   </group>
 );
@@ -479,3 +590,67 @@ const AvenueTree = ({ position, scale = 1 }) => (
     </mesh>
   </group>
 );
+
+// Grand Prix Finish Line Gantry across Kartavya Path
+const DelhiFinishGantry = () => (
+  <group>
+    {/* Left Truss Support Column */}
+    <mesh position={[-10.5, 5.5, 0]}>
+      <boxGeometry args={[1.2, 11, 1.2]} />
+      <meshStandardMaterial color="#1e293b" metalness={0.85} roughness={0.25} />
+    </mesh>
+    {/* Right Truss Support Column */}
+    <mesh position={[10.5, 5.5, 0]}>
+      <boxGeometry args={[1.2, 11, 1.2]} />
+      <meshStandardMaterial color="#1e293b" metalness={0.85} roughness={0.25} />
+    </mesh>
+    {/* Overhead Bridge Truss */}
+    <mesh position={[0, 10.5, 0]}>
+      <boxGeometry args={[22.5, 1.6, 2.2]} />
+      <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.2} />
+    </mesh>
+
+    {/* Checkered Finish Line Banner */}
+    <mesh position={[0, 9.2, 0.2]}>
+      <boxGeometry args={[19, 1.4, 0.1]} />
+      <meshStandardMaterial color="#f8fafc" roughness={0.4} />
+    </mesh>
+    {/* Digital LED Timing Display */}
+    <mesh position={[0, 9.2, 0.3]}>
+      <boxGeometry args={[10, 0.9, 0.05]} />
+      <meshBasicMaterial color="#f59e0b" />
+    </mesh>
+
+    {/* Green Finish Flashers & Spotlights */}
+    {[-8, -4, 0, 4, 8].map((fx, i) => (
+      <group key={i} position={[fx, 8.2, 0]}>
+        <mesh>
+          <sphereGeometry args={[0.22, 10, 10]} />
+          <meshBasicMaterial color="#22c55e" />
+        </mesh>
+        <pointLight position={[0, -0.5, 0]} intensity={3.5} distance={22} color="#22c55e" />
+      </group>
+    ))}
+
+    {/* Tricolor LEDs on Gantry Edge */}
+    <mesh position={[-5, 11.4, 0]}>
+      <boxGeometry args={[6, 0.15, 0.15]} />
+      <meshBasicMaterial color="#ff9933" />
+    </mesh>
+    <mesh position={[0, 11.4, 0]}>
+      <boxGeometry args={[4, 0.15, 0.15]} />
+      <meshBasicMaterial color="#ffffff" />
+    </mesh>
+    <mesh position={[5, 11.4, 0]}>
+      <boxGeometry args={[6, 0.15, 0.15]} />
+      <meshBasicMaterial color="#138808" />
+    </mesh>
+
+    {/* Road Finish Line Stripe on Asphalt */}
+    <mesh position={[0, -0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[18.5, 2.8]} />
+      <meshStandardMaterial color="#ffffff" roughness={0.5} />
+    </mesh>
+  </group>
+);
+
