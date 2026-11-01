@@ -1,20 +1,21 @@
 import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { createPhotorealisticRoadTexture, RealisticGuardrails, RealisticRumbleKerbs } from '../RealisticRoadElements.jsx';
+import { RealisticRoadSurface, RealisticGravelShoulder, RealisticGuardrails } from '../RealisticRoadElements.jsx';
 
 /**
  * 01 MOUNTAIN PASS ENVIRONMENT (Photorealistic Alpine Canyon)
  * Matching Reference Image 1:
  * - Alpine canyon road with smooth perspective curve and white center dashes
- * - Towering dense conifer pine forests rising on the left slope (InstancedMesh)
+ * - Unified PBR asphalt with mineral aggregate, rubbered-in tire wear lines, and thermoplastic striping
+ * - Compacted crushed stone shoulders and heavy galvanized W-beam guardrails
+ * - Towering dense conifer pine forests rising on the ascending left mountain slope (InstancedMesh)
  * - Stratified dark granite cliff face with massive roaring cascading waterfall gorge on right
  * - Rushing white-water waterfall with rapid UV flow and foaming spray mist pool
- * - Corrugated steel W-beam guardrails and roadside yellow chevron warning sign
+ * - Roadside yellow diamond chevron warning sign
  * - Distant snow-capped alpine peaks with atmospheric scattering
  */
 export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
-  const dashesMatRef = useRef();
   const waterfallStreamRef = useRef();
   const waterfallSprayRef = useRef();
   const waterfallGroupRef = useRef();
@@ -24,11 +25,6 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
-
-    // Road texture animation
-    if (dashesMatRef.current && dashesMatRef.current.map) {
-      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 28;
-    }
 
     // Waterfall rushing water UV flow
     if (waterfallStreamRef.current && waterfallStreamRef.current.material && waterfallStreamRef.current.material.map) {
@@ -79,16 +75,6 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
-  // Photorealistic Mountain Asphalt Texture with Double Yellow Center Lines & Tire Tracks
-  const dashesTexture = useMemo(() => {
-    return createPhotorealisticRoadTexture({
-      lanes: 3,
-      doubleCenter: true,
-      edgeColor: '#f8fafc',
-      isWet: true
-    });
-  }, []);
-
   // Procedural Rushing Water Texture for Waterfall
   const waterfallTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -116,30 +102,22 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   return (
     <group>
-      {/* 1. Mountain Asphalt Road Surface with Natural PBR Roughness */}
-      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[16.8, 300]} />
-        <meshPhysicalMaterial 
-          color="#161e27" 
-          roughness={0.28} 
-          metalness={0.55}
-          clearcoat={0.9}
-          clearcoatRoughness={0.08}
-          reflectivity={0.94}
-        />
-      </mesh>
+      {/* 1. Unified Photorealistic PBR Road Surface with Aggregate, Rubber Wear & Thermoplastic Markings */}
+      <RealisticRoadSurface
+        lanes={3}
+        doubleCenter={true}
+        edgeColor="#f8fafc"
+        isWet={true}
+        roadWidth={16.8}
+        length={320}
+        speedKmh={speedKmh}
+      />
 
-      {/* Road Markings Layer */}
-      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[16.5, 300]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
-      </mesh>
+      {/* Compacted Crushed Gravel Shoulder Run-Off */}
+      <RealisticGravelShoulder length={320} xLeft={-8.4} xRight={8.4} width={1.2} />
 
-      {/* FIA Red & White Rumble Kerbs */}
-      <RealisticRumbleKerbs length={300} xLeft={-8.35} xRight={8.35} />
-
-      {/* Realistic Corrugated Galvanized Steel Guardrails with I-Beams & Reflectors */}
-      <RealisticGuardrails length={300} xLeft={-8.85} xRight={8.85} />
+      {/* Heavy Galvanized Steel Guardrails with Hazard Reflectors */}
+      <RealisticGuardrails length={300} xLeft={-9.8} xRight={9.8} />
 
       {/* Yellow Warning Diamond Chevron Sign (Reference Image 1) */}
       <group position={[9.2, 0, 32]}>
@@ -157,14 +135,25 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 2. Lush Green Mountain Earth Verges on Left & Right */}
-      <mesh position={[-25, -0.15, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[32, 340]} />
-        <meshStandardMaterial color="#1b3824" roughness={0.92} />
-      </mesh>
-      <mesh position={[25, -0.15, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[32, 340]} />
-        <meshStandardMaterial color="#1b3824" roughness={0.92} />
+      {/* 2. Left Alpine Mountain Embankment: Sloping upward with pine forest and granite boulders */}
+      <group position={[-25, 2.8, 60]} rotation={[0, 0, 0.18]}>
+        <mesh receiveShadow>
+          <planeGeometry args={[36, 340]} />
+          <meshStandardMaterial color="#172e20" roughness={0.95} />
+        </mesh>
+        {/* Stratified Granite Rock Outcroppings on left slope */}
+        {[-30, 20, 70, 120].map((rz, i) => (
+          <mesh key={i} position={[2, 0.8, rz]} rotation={[0.2, (i * 0.7), -0.1]} castShadow receiveShadow>
+            <dodecahedronGeometry args={[2.8 + (i % 3) * 0.8, 1]} />
+            <meshStandardMaterial color="#2d3748" roughness={0.92} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Right Canyon Shoulder Verge */}
+      <mesh position={[24, -0.15, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[30, 340]} />
+        <meshStandardMaterial color="#1d2b21" roughness={0.95} />
       </mesh>
 
       {/* 3. DYNAMIC LANDMARK: CASCADING WATERFALL GORGE (Right Side) */}
@@ -360,3 +349,4 @@ const InstancedPineForest = ({ speedKmh = 100 }) => {
     </group>
   );
 };
+

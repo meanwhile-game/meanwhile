@@ -1,28 +1,21 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
+import { RealisticRoadSurface, DelhiSandstoneCurbs } from '../RealisticRoadElements.jsx';
 
 // 06 NEW DELHI — RAJPATH CIRCUIT (Reference Right Panel)
 // Ceremonial avenues of Kartavya Path, towering India Gate landmark ahead,
 // illuminated Rashtrapati Bhavan dome, water fountains, tricolor banners,
 // and rain-slicked twilight road reflections in amber and midnight blue.
 export const DelhiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
-  const dashesMatRef = useRef();
   const avenueGroupRef = useRef();
   const fountainsGroupRef = useRef();
-  const trafficGroupRef = useRef();
   const indiaGateRef = useRef();
   const raisinaHillRef = useRef();
   const finishGantryRef = useRef();
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
-
-    // Road texture animation
-    if (dashesMatRef.current && dashesMatRef.current.map) {
-      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 24;
-    }
 
     // Moving ceremonial roadside trees, lamps & tricolor banners loop
     if (avenueGroupRef.current) {
@@ -32,11 +25,6 @@ export const DelhiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     // Looping illuminated fountains
     if (fountainsGroupRef.current) {
       fountainsGroupRef.current.position.z = (fountainsGroupRef.current.position.z + moveStep * 0.7) % 120;
-    }
-
-    // Moving traffic ahead
-    if (trafficGroupRef.current) {
-      trafficGroupRef.current.position.z = (trafficGroupRef.current.position.z + moveStep * 0.45) % 110;
     }
 
     // --- LANDMARK PROGRESSION (The landscape actually changes and takes the driver!) ---
@@ -71,56 +59,21 @@ export const DelhiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
-  // Rain-Slicked Ceremonial Avenue Road Texture with 4 Lanes & Red Sandstone Curbs
-  const dashesTexture = useMemo(() => {
-    return createPhotorealisticRoadTexture({
-      lanes: 4,
-      dashedColor: '#f8fafc',
-      edgeColor: '#fbbf24',
-      isWet: true
-    });
-  }, []);
-
   return (
     <group>
       {/* 1. CEREMONIAL 4-LANE RAJPATH ASPHALT WITH WET TWILIGHT SPECULAR REFLECTIONS */}
-      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[18.5, 300]} />
-        <meshPhysicalMaterial 
-          color="#131722" 
-          roughness={0.24} 
-          metalness={0.65} 
-          clearcoat={0.92} 
-          clearcoatRoughness={0.1}
-          reflectivity={0.95} 
-        />
-      </mesh>
+      <RealisticRoadSurface
+        lanes={4}
+        dashedColor="#f8fafc"
+        edgeColor="#fbbf24"
+        isWet={true}
+        roadWidth={18.5}
+        length={320}
+        speedKmh={speedKmh}
+      />
 
-      {/* Road Markings Layer */}
-      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[18.2, 300]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
-      </mesh>
-
-      {/* Wet Road Mirror Taillight & Monument Glow Reflection Streaks */}
-      <mesh position={[0, 0.035, 25]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[2.5, 70]} />
-        <meshBasicMaterial color="#ef4444" transparent opacity={0.22} depthWrite={false} />
-      </mesh>
-      <mesh position={[0, -0.038, 75]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[8.0, 150]} />
-        <meshBasicMaterial color="#f59e0b" transparent opacity={0.18} depthWrite={false} />
-      </mesh>
-
-      {/* Dholpur Red Sandstone Curbs & Pavements */}
-      <mesh position={[-9.6, 0.15, 40]}>
-        <boxGeometry args={[1.4, 0.35, 280]} />
-        <meshStandardMaterial color="#991b1b" roughness={0.7} />
-      </mesh>
-      <mesh position={[9.6, 0.15, 40]}>
-        <boxGeometry args={[1.4, 0.35, 280]} />
-        <meshStandardMaterial color="#991b1b" roughness={0.7} />
-      </mesh>
+      {/* Authentic Dholpur Red Sandstone Curbs (Reference Image 6) */}
+      <DelhiSandstoneCurbs length={300} xLeft={-9.4} xRight={9.4} />
 
       {/* Manicured Lawns of Kartavya Path flanking both sides */}
       <mesh position={[-25, -0.02, 40]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -223,26 +176,6 @@ export const DelhiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 8. DISTANT TRAFFIC AHEAD */}
-      <group ref={trafficGroupRef} position={[0, 0, 0]}>
-        {[-25, 30, 85].map((z, idx) => (
-          <group key={idx} position={[3.2 * ((idx % 3) - 1), 0.45, z]}>
-            <mesh>
-              <boxGeometry args={[1.8, 0.7, 3.8]} />
-              <meshStandardMaterial color="#0b0f19" roughness={0.4} />
-            </mesh>
-            <mesh position={[-0.65, 0.1, -1.92]}>
-              <boxGeometry args={[0.38, 0.12, 0.06]} />
-              <meshBasicMaterial color="#ef4444" />
-            </mesh>
-            <mesh position={[0.65, 0.1, -1.92]}>
-              <boxGeometry args={[0.38, 0.12, 0.06]} />
-              <meshBasicMaterial color="#ef4444" />
-            </mesh>
-            <pointLight position={[0, 0.1, -2.1]} intensity={2.0} distance={15} color="#ef4444" />
-          </group>
-        ))}
-      </group>
     </group>
   );
 };

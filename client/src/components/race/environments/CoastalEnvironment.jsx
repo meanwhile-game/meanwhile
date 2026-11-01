@@ -1,16 +1,18 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { createPhotorealisticRoadTexture, RealisticGuardrails, RealisticRumbleKerbs } from '../RealisticRoadElements.jsx';
+import { RealisticRoadSurface, RealisticGravelShoulder, RealisticGuardrails } from '../RealisticRoadElements.jsx';
 
 /**
  * 02 COASTAL RUN ENVIRONMENT (Photorealistic Riviera Landscape)
- * Matching Reference Image: Scenic ocean highway along rocky coast,
- * shimmering turquoise sea with golden sunset path, iconic white headland lighthouse,
- * Roman stone viaduct, classical Italian arcade with Tuscan colonnade, and cypress trees.
+ * Matching Reference Image 2:
+ * - Scenic coastal highway along Mediterranean cliffs with golden sunset specular sheen
+ * - PBR asphalt with rubbered wear lines and amber shoulder marking
+ * - Shimmering azure ocean with sunset light beam
+ * - Headland white lighthouse and overhead Roman viaduct
+ * - Terraced hillside Mediterranean villas and cypress trees
  */
 export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
-  const dashesMatRef = useRef();
   const oceanRef = useRef();
   const oceanWavesRef = useRef();
   const cliffsGroupRef = useRef();
@@ -21,11 +23,6 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
-
-    // Road texture animation
-    if (dashesMatRef.current && dashesMatRef.current.map) {
-      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 26;
-    }
 
     // Moving roadside cypress trees loop
     if (cypressGroupRef.current) {
@@ -82,47 +79,33 @@ export const CoastalEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
-  // Photorealistic Coastal Asphalt Texture
-  const dashesTexture = useMemo(() => {
-    return createPhotorealisticRoadTexture({
-      lanes: 3,
-      dashedColor: '#f8fafc',
-      edgeColor: '#f59e0b',
-      isWet: false
-    });
-  }, []);
-
   return (
     <group>
       {/* 1. Coastal 3-Lane Asphalt Road Surface with Clearcoat Sheen */}
-      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[16.8, 300]} />
-        <meshPhysicalMaterial 
-          color="#141a26" 
-          roughness={0.42} 
-          metalness={0.3} 
-          clearcoat={0.65}
-          clearcoatRoughness={0.15}
-          reflectivity={0.92}
-        />
-      </mesh>
+      <RealisticRoadSurface
+        lanes={3}
+        dashedColor="#f8fafc"
+        edgeColor="#f59e0b"
+        isWet={false}
+        roadWidth={16.8}
+        length={320}
+        speedKmh={speedKmh}
+      />
 
-      {/* Road Markings Layer */}
-      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[16.6, 300]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
-      </mesh>
-
-      {/* 3D Raised Beveled Racing Kerbs */}
-      <RealisticRumbleKerbs length={300} xLeft={-8.4} xRight={8.4} />
-
-      {/* Steel Guardrails with Reflectors */}
-      <RealisticGuardrails length={300} xLeft={-8.8} xRight={8.8} />
+      {/* Gravel Shoulder & Ocean-Side Guardrails */}
+      <RealisticGravelShoulder length={320} xLeft={-8.4} xRight={8.4} width={1.2} />
+      <RealisticGuardrails length={300} xLeft={-9.8} xRight={9.8} />
 
       {/* 2. Rocky Shoreline Terrain Verge on Left */}
-      <mesh position={[-25, -0.15, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[32, 340]} />
-        <meshStandardMaterial color="#334155" roughness={0.92} />
+      <mesh position={[-26, -0.16, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[34, 340]} />
+        <meshStandardMaterial color="#2d3748" roughness={0.92} />
+      </mesh>
+
+      {/* Right Coastal Hillside Verge */}
+      <mesh position={[26, 0.4, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[34, 340]} />
+        <meshStandardMaterial color="#3f3b33" roughness={0.95} />
       </mesh>
 
       {/* 3. MEDITERRANEAN OCEAN WITH SUNSET SPECULAR SHIMMER (Left Side) */}

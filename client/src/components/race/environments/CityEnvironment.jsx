@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
+import { RealisticRoadSurface, RealisticJerseyBarrier } from '../RealisticRoadElements.jsx';
 
 /**
  * 04 NEON CITY ENVIRONMENT (Photorealistic Cyber Metropolis)
@@ -10,7 +10,6 @@ import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
  * Times Square high-res billboards, and cyber finish gantry.
  */
 export const CityEnvironment = ({ speedKmh = 100, progress = 0 }) => {
-  const dashesMatRef = useRef();
   const buildingsGroupRef = useRef();
   const flyoverGroupRef = useRef();
   const billboardPortalRef = useRef();
@@ -19,11 +18,6 @@ export const CityEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
-
-    // Road texture animation
-    if (dashesMatRef.current && dashesMatRef.current.map) {
-      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 26;
-    }
 
     // Moving city skyscrapers loop
     if (buildingsGroupRef.current) {
@@ -67,100 +61,76 @@ export const CityEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
-  // Rain-Slicked High-Definition City Road Texture
-  const dashesTexture = useMemo(() => {
-    return createPhotorealisticRoadTexture({
-      lanes: 4,
-      dashedColor: '#38bdf8',
-      edgeColor: '#c084fc',
-      isWet: true
-    });
-  }, []);
-
   return (
     <group>
-      {/* 1. Rain-Slicked Wet Mirror Asphalt with Deep Specular Reflections & Puddle Sheen */}
-      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[17.5, 300]} />
-        <meshPhysicalMaterial 
-          color="#080c16" 
-          roughness={0.22} 
-          metalness={0.7} 
-          clearcoat={1.0}
-          clearcoatRoughness={0.06}
-          reflectivity={0.96}
-        />
+      {/* 1. Rain-Slicked Wet Mirror Asphalt with Deep Specular Light Reflections */}
+      <RealisticRoadSurface
+        lanes={4}
+        dashedColor="#f8fafc"
+        edgeColor="#f59e0b"
+        isWet={true}
+        roadWidth={18.0}
+        length={320}
+        speedKmh={speedKmh}
+      />
+
+      {/* 2. REALISTIC SLIPFORMED CONCRETE JERSEY HIGHWAY BARRIERS */}
+      <RealisticJerseyBarrier length={300} xLeft={-9.2} xRight={9.2} />
+
+      {/* Paved Concrete Verges Flanking Roadway */}
+      <mesh position={[-25, -0.1, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[32, 340]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.9} />
+      </mesh>
+      <mesh position={[25, -0.1, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[32, 340]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.9} />
       </mesh>
 
-      {/* Road Markings Layer */}
-      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[17.2, 300]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
-      </mesh>
-
-      {/* 2. GLOWING HIGH-TECH HIGHWAY GUARDRAIL BARRIERS */}
-      {/* Left Guardrail: Electric Magenta LED Strip */}
-      <group position={[-8.8, 0.45, 50]}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[0.22, 0.65, 300]} />
-          <meshStandardMaterial color="#1e1329" metalness={0.88} roughness={0.3} />
-        </mesh>
-        <mesh position={[0.12, 0.12, 0]}>
-          <boxGeometry args={[0.04, 0.12, 300]} />
-          <meshBasicMaterial color="#e879f9" />
-        </mesh>
-        <pointLight position={[0.6, 0.2, -10]} intensity={1.8} distance={16} color="#e879f9" />
-        <pointLight position={[0.6, 0.2, 50]} intensity={1.8} distance={16} color="#e879f9" />
-        <pointLight position={[0.6, 0.2, 110]} intensity={1.8} distance={16} color="#e879f9" />
-      </group>
-
-      {/* Right Guardrail: High-Voltage Cyan LED Strip */}
-      <group position={[8.8, 0.45, 50]}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[0.22, 0.65, 300]} />
-          <meshStandardMaterial color="#111c29" metalness={0.88} roughness={0.3} />
-        </mesh>
-        <mesh position={[-0.12, 0.12, 0]}>
-          <boxGeometry args={[0.04, 0.12, 300]} />
-          <meshBasicMaterial color="#38bdf8" />
-        </mesh>
-        <pointLight position={[-0.6, 0.2, -10]} intensity={1.8} distance={16} color="#38bdf8" />
-        <pointLight position={[-0.6, 0.2, 50]} intensity={1.8} distance={16} color="#38bdf8" />
-        <pointLight position={[-0.6, 0.2, 110]} intensity={1.8} distance={16} color="#38bdf8" />
-      </group>
-
-      {/* 3. APPROACHING MULTI-LEVEL ELEVATED HIGHWAY FLYOVER */}
+      {/* 3. APPROACHING MULTI-LEVEL ELEVATED HIGHWAY FLYOVER (Left Side Viaduct) */}
       <group ref={flyoverGroupRef} position={[0, 0, 240]}>
-        <mesh position={[0, 9.8, 0]} rotation={[0, -0.15, 0]} castShadow>
-          <boxGeometry args={[78, 2.4, 14]} />
-          <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.35} />
+        {/* Overhead Viaduct Deck */}
+        <mesh position={[-8, 9.8, 0]} rotation={[0, -0.08, 0]} castShadow>
+          <boxGeometry args={[14, 2.4, 220]} />
+          <meshStandardMaterial color="#334155" roughness={0.88} />
         </mesh>
-        <mesh position={[0, 11.4, -6.5]} rotation={[0, -0.15, 0]}>
-          <boxGeometry args={[78, 1.2, 0.4]} />
-          <meshStandardMaterial color="#1e293b" metalness={0.7} />
+        <mesh position={[-8, 11.4, 0]} rotation={[0, -0.08, 0]}>
+          <boxGeometry args={[13.6, 0.4, 220]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.7} />
         </mesh>
-        <mesh position={[0, 11.4, 6.5]} rotation={[0, -0.15, 0]}>
-          <boxGeometry args={[78, 1.2, 0.4]} />
-          <meshStandardMaterial color="#1e293b" metalness={0.7} />
+        {/* Flyover Parapet Wall */}
+        <mesh position={[-1.2, 11.6, 0]} rotation={[0, -0.08, 0]}>
+          <boxGeometry args={[0.5, 1.2, 220]} />
+          <meshStandardMaterial color="#475569" roughness={0.85} />
         </mesh>
+        <mesh position={[-14.8, 11.6, 0]} rotation={[0, -0.08, 0]}>
+          <boxGeometry args={[0.5, 1.2, 220]} />
+          <meshStandardMaterial color="#475569" roughness={0.85} />
+        </mesh>
+
+        {/* Heavy Cylindrical Viaduct Support Pillars */}
+        {[-80, -40, 0, 40, 80].map((pz, idx) => (
+          <group key={idx} position={[-11, 4.2, pz]}>
+            <mesh castShadow receiveShadow>
+              <cylinderGeometry args={[1.2, 1.4, 8.8, 16]} />
+              <meshStandardMaterial color="#475569" roughness={0.9} />
+            </mesh>
+            {/* Underdeck Sodium Amber Highway Lamp */}
+            <pointLight position={[2.5, 3.8, 0]} intensity={3.5} distance={24} color="#f59e0b" />
+          </group>
+        ))}
+
+        {/* Upper Flyover Traffic Headlight & Taillight Streaks */}
         <group ref={trafficStreaksRef}>
-          <mesh position={[0, 11.2, -3.2]} rotation={[0, -0.15, 0]}>
-            <boxGeometry args={[78, 0.18, 0.4]} />
+          <mesh position={[-10, 11.6, 0]}>
+            <boxGeometry args={[0.2, 0.2, 180]} />
             <meshBasicMaterial color="#ef4444" />
           </mesh>
-          <mesh position={[0, 11.2, 3.2]} rotation={[0, -0.15, 0]}>
-            <boxGeometry args={[78, 0.18, 0.4]} />
+          <mesh position={[-6, 11.6, 0]}>
+            <boxGeometry args={[0.2, 0.2, 180]} />
             <meshBasicMaterial color="#fef08a" />
           </mesh>
         </group>
-        <mesh position={[-16, 4.8, 0]} castShadow>
-          <cylinderGeometry args={[1.1, 1.3, 10, 16]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.8} />
-        </mesh>
-        <mesh position={[16, 4.8, 0]} castShadow>
-          <cylinderGeometry args={[1.1, 1.3, 10, 16]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.8} />
-        </mesh>
       </group>
 
       {/* 4. TIMES SQUARE CYBER BILLBOARD PORTAL (Sector 2-3) */}

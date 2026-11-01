@@ -1,17 +1,15 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
+import { RealisticRoadSurface, ChennaiStripedCurbs } from '../RealisticRoadElements.jsx';
 
 // 05 CHENNAI — MARINA DRIVE CIRCUIT (Reference Left Panel)
 // Coastal highway, Bay of Bengal sunset, historic Indo-Saracenic red-brick clock tower,
 // Marina beach, swaying palm trees, stone balustrade, and warm golden reflections.
 export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
-  const dashesMatRef = useRef();
   const streetGroupRef = useRef();
   const oceanRef = useRef();
   const sunGlowRef = useRef();
-  const trafficGroupRef = useRef();
   const lighthouseBeamRef = useRef();
   const heritageGroupRef = useRef();
   const lighthouseGroupRef = useRef();
@@ -20,19 +18,9 @@ export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
 
-    // Road texture animation
-    if (dashesMatRef.current && dashesMatRef.current.map) {
-      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 24;
-    }
-
     // Moving roadside palm trees & streetlamps loop
     if (streetGroupRef.current) {
       streetGroupRef.current.position.z = (streetGroupRef.current.position.z + moveStep * 0.7) % 80;
-    }
-
-    // Distant traffic moving ahead
-    if (trafficGroupRef.current) {
-      trafficGroupRef.current.position.z = (trafficGroupRef.current.position.z + moveStep * 0.4) % 120;
     }
 
     // Gentle Bay of Bengal wave pulsation
@@ -82,35 +70,21 @@ export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
-  // Photorealistic Coastal 4-Lane Highway Markings with Warm Wet Asphalt Sheen
-  const dashesTexture = useMemo(() => {
-    return createPhotorealisticRoadTexture({
-      lanes: 4,
-      dashedColor: '#f8fafc',
-      edgeColor: '#fbbf24',
-      isWet: true
-    });
-  }, []);
-
   return (
     <group>
       {/* 1. WIDE 4-LANE COASTAL ASPHALT WITH WET SUNSET SPECULAR REFLECTION */}
-      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[18.5, 300]} />
-        <meshPhysicalMaterial 
-          color="#161922" 
-          roughness={0.22} 
-          metalness={0.7} 
-          clearcoat={0.9} 
-          clearcoatRoughness={0.12} 
-        />
-      </mesh>
+      <RealisticRoadSurface
+        lanes={4}
+        dashedColor="#f8fafc"
+        edgeColor="#fbbf24"
+        isWet={true}
+        roadWidth={18.5}
+        length={320}
+        speedKmh={speedKmh}
+      />
 
-      {/* Road Markings Layer */}
-      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[18.2, 300]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.96} />
-      </mesh>
+      {/* Authentic Yellow and Black Striped Highway Curbs (Reference Image 5) */}
+      <ChennaiStripedCurbs length={300} xLeft={-9.4} xRight={9.4} />
 
       {/* Promenade Sand & Pavement Verges */}
       <mesh position={[-25, -0.12, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
@@ -122,36 +96,36 @@ export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         <meshStandardMaterial color="#d4a373" roughness={0.92} />
       </mesh>
 
-      {/* Left Roadside: Sidewalk, Curb & Barrier */}
-      <mesh position={[-9.5, 0.15, 40]}>
-        <boxGeometry args={[1.2, 0.35, 280]} />
-        <meshStandardMaterial color="#334155" roughness={0.8} />
+      {/* Left Roadside: Paved Footpath & City Boundary */}
+      <mesh position={[-11.4, 0.12, 40]} receiveShadow>
+        <boxGeometry args={[3.6, 0.24, 280]} />
+        <meshStandardMaterial color="#475569" roughness={0.85} />
       </mesh>
-      <mesh position={[-10.15, 0.5, 40]}>
-        <boxGeometry args={[0.25, 0.7, 280]} />
-        <meshStandardMaterial color="#475569" metalness={0.6} roughness={0.3} />
+      <mesh position={[-13.25, 0.45, 40]}>
+        <boxGeometry args={[0.2, 0.65, 280]} />
+        <meshStandardMaterial color="#334155" metalness={0.7} roughness={0.35} />
       </mesh>
 
       {/* Right Roadside: Iconic Marina Beach Promenade Classical Stone Balustrade */}
-      <group position={[9.5, 0, 40]}>
+      <group position={[9.7, 0, 40]}>
         {/* Raised Promenade Pavement */}
-        <mesh position={[1.5, 0.2, 0]}>
-          <boxGeometry args={[3.2, 0.45, 280]} />
-          <meshStandardMaterial color="#d4a373" roughness={0.85} />
+        <mesh position={[1.8, 0.12, 0]} receiveShadow>
+          <boxGeometry args={[3.4, 0.24, 280]} />
+          <meshStandardMaterial color="#d4a373" roughness={0.88} />
         </mesh>
         {/* Balustrade Base & Coping Railing */}
-        <mesh position={[0.2, 0.45, 0]}>
-          <boxGeometry args={[0.4, 0.15, 280]} />
+        <mesh position={[3.4, 0.35, 0]}>
+          <boxGeometry args={[0.35, 0.15, 280]} />
           <meshStandardMaterial color="#f1f5f9" roughness={0.7} />
         </mesh>
-        <mesh position={[0.2, 1.05, 0]}>
-          <boxGeometry args={[0.45, 0.12, 280]} />
+        <mesh position={[3.4, 0.95, 0]}>
+          <boxGeometry args={[0.4, 0.12, 280]} />
           <meshStandardMaterial color="#f1f5f9" roughness={0.7} />
         </mesh>
         {/* Classical Stone Balusters along the beach */}
         {Array.from({ length: 45 }).map((_, i) => (
-          <mesh key={i} position={[0.2, 0.75, -120 + i * 6]}>
-            <cylinderGeometry args={[0.1, 0.12, 0.5, 8]} />
+          <mesh key={i} position={[3.4, 0.65, -120 + i * 6]}>
+            <cylinderGeometry args={[0.08, 0.1, 0.45, 8]} />
             <meshStandardMaterial color="#e2e8f0" roughness={0.7} />
           </mesh>
         ))}
@@ -338,28 +312,6 @@ export const ChennaiEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         ))}
       </group>
 
-      {/* 6. DISTANT TRAFFIC AHEAD (Moving Red Taillights on Highway) */}
-      <group ref={trafficGroupRef} position={[0, 0, 0]}>
-        {[-30, 25, 75].map((z, idx) => (
-          <group key={idx} position={[3.2 * ((idx % 3) - 1), 0.45, z]}>
-            {/* Distant car silhouette */}
-            <mesh>
-              <boxGeometry args={[1.8, 0.7, 3.8]} />
-              <meshStandardMaterial color="#0f172a" roughness={0.6} />
-            </mesh>
-            {/* Red Taillights */}
-            <mesh position={[-0.65, 0.1, -1.92]}>
-              <boxGeometry args={[0.35, 0.12, 0.06]} />
-              <meshBasicMaterial color="#ef4444" />
-            </mesh>
-            <mesh position={[0.65, 0.1, -1.92]}>
-              <boxGeometry args={[0.35, 0.12, 0.06]} />
-              <meshBasicMaterial color="#ef4444" />
-            </mesh>
-            <pointLight position={[0, 0.1, -2.1]} intensity={1.8} distance={14} color="#ef4444" />
-          </group>
-        ))}
-      </group>
     </group>
   );
 };

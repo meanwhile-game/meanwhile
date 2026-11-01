@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
+import { RealisticRoadSurface } from '../RealisticRoadElements.jsx';
 
 /**
  * 03 SNOW CIRCUIT ENVIRONMENT (Photorealistic Alpine Winter)
@@ -10,7 +10,6 @@ import { createPhotorealisticRoadTexture } from '../RealisticRoadElements.jsx';
  * turquoise frozen glacier lake, swirling 3D snow flurries, and summit finish.
  */
 export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
-  const dashesMatRef = useRef();
   const snowTreesGroupRef = useRef();
   const snowFlurriesRef = useRef();
   const tunnelGroupRef = useRef();
@@ -19,11 +18,6 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
-
-    // Road texture animation
-    if (dashesMatRef.current && dashesMatRef.current.map) {
-      dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 26;
-    }
 
     // Moving roadside snow trees & hazard stakes loop
     if (snowTreesGroupRef.current) {
@@ -68,48 +62,18 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     }
   });
 
-  // Wet Icy Road Surface Texture with Frost Markings
-  const dashesTexture = useMemo(() => {
-    return createPhotorealisticRoadTexture({
-      lanes: 2,
-      dashedColor: '#f1f5f9',
-      edgeColor: '#e2e8f0',
-      isWet: true
-    });
-  }, []);
-
-  // 3D Snow Flurry Particles
-  const snowParticles = useMemo(() => {
-    const positions = [];
-    for (let i = 0; i < 650; i++) {
-      const x = (Math.random() - 0.5) * 50;
-      const y = Math.random() * 18 + 0.5;
-      const z = (Math.random() - 0.5) * 140 + 20;
-      positions.push(x, y, z);
-    }
-    return new Float32Array(positions);
-  }, []);
-
   return (
     <group>
-      {/* 1. Wet, Highly Reflective Icy Road Surface */}
-      <mesh position={[0, -0.05, 50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[16.8, 300]} />
-        <meshPhysicalMaterial 
-          color="#141a24" 
-          roughness={0.16} 
-          metalness={0.7} 
-          clearcoat={1.0}
-          clearcoatRoughness={0.08}
-          reflectivity={0.96}
-        />
-      </mesh>
-
-      {/* Frost-Dusted Road Markings */}
-      <mesh position={[0, -0.04, 50]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[16.5, 300]} />
-        <meshBasicMaterial ref={dashesMatRef} map={dashesTexture} transparent opacity={0.94} />
-      </mesh>
+      {/* 1. Wet, Highly Reflective Icy Road Surface with Frost Markings */}
+      <RealisticRoadSurface
+        lanes={2}
+        dashedColor="#f1f5f9"
+        edgeColor="#e2e8f0"
+        isWet={true}
+        roadWidth={16.5}
+        length={320}
+        speedKmh={speedKmh}
+      />
 
       {/* 2. Deep Pure White Snowpack Verges Flanking Roadway on Left & Right */}
       <mesh position={[-25, -0.1, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
@@ -141,8 +105,8 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         <meshStandardMaterial color="#94a3b8" metalness={0.88} roughness={0.28} />
       </mesh>
 
-      {/* 3. APPROACHING ALPINE STONE TUNNEL (Matching Reference Image) */}
-      <group ref={tunnelGroupRef} position={[0, 0, 240]}>
+      {/* 3. APPROACHING ALPINE STONE TUNNEL (Right Cliff Portal, Matching Reference Image) */}
+      <group ref={tunnelGroupRef} position={[6, 0, 240]}>
         <AlpineRoadTunnel />
       </group>
 
