@@ -7,6 +7,35 @@ import { TacticalGpsMap } from './TacticalGpsMap.jsx';
 import { ArrowLeft, Wifi, Activity, CheckCircle, AlertTriangle, Map, Navigation, Columns, Eye } from 'lucide-react';
 import { soundEngine } from '../../sound/soundEngine.js';
 
+// Real-time 60 FPS performance monitor
+const FpsMonitor = () => {
+  const [fps, setFps] = React.useState(60);
+  const frameCount = useRef(0);
+  const lastTime = useRef(typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  useEffect(() => {
+    let animId;
+    const loop = (now) => {
+      frameCount.current++;
+      if (now - lastTime.current >= 500) {
+        setFps(Math.round((frameCount.current * 1000) / (now - lastTime.current)));
+        frameCount.current = 0;
+        lastTime.current = now;
+      }
+      animId = requestAnimationFrame(loop);
+    };
+    animId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/60 border border-white/10 text-[10px] font-mono-num text-emerald-400 font-bold">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+      <span>{fps} FPS</span>
+    </div>
+  );
+};
+
 export const RaceHud = () => {
   const {
     passage,
@@ -30,7 +59,9 @@ export const RaceHud = () => {
     selectedTrackId,
     setView,
     gpsNavMode = 'compact',
-    setGpsNavMode
+    setGpsNavMode,
+    graphicsQuality = 'high',
+    setGraphicsQuality
   } = useGameStore();
 
   const [mapType, setMapType] = React.useState('gps'); // 'gps' | 'schematic'
@@ -98,17 +129,44 @@ export const RaceHud = () => {
       <div className="w-full flex items-start justify-between">
         {/* Top-Left: Exit, Position, Lap, Monotonic Timer & Minimap */}
         <div className="flex flex-col items-start gap-2.5">
-          {/* Exit Button */}
-          <button
-            onClick={() => {
-              soundEngine.stopEngine();
-              setView('tracks');
-            }}
-            className="pointer-events-auto px-3 py-1 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md border border-white/15 text-[11px] text-[#94a3b8] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer shadow-lg"
-          >
-            <ArrowLeft className="w-3 h-3" />
-            <span>Exit Race</span>
-          </button>
+          {/* Top Actions: Exit Button & Graphics Settings / Live FPS */}
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <button
+              onClick={() => {
+                soundEngine.stopEngine();
+                setView('tracks');
+              }}
+              className="px-3 py-1 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md border border-white/15 text-[11px] text-[#94a3b8] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer shadow-lg"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Exit Race</span>
+            </button>
+
+            {/* Graphics Quality Preset Switcher & FPS Monitor */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-lg">
+              <span className="text-[9px] uppercase tracking-wider font-bold text-[#64748b] ml-1 mr-0.5">
+                GFX
+              </span>
+              {['low', 'medium', 'high'].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => {
+                    soundEngine.playButtonClick();
+                    setGraphicsQuality(q);
+                  }}
+                  className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                    graphicsQuality === q
+                      ? 'bg-amber-400 text-black shadow-sm font-black'
+                      : 'text-slate-400 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {q === 'medium' ? 'MED' : q.toUpperCase()}
+                </button>
+              ))}
+              <div className="h-3 w-px bg-white/20 mx-0.5" />
+              <FpsMonitor />
+            </div>
+          </div>
 
           {/* Position & Time Instrument Cluster */}
           <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-xl">

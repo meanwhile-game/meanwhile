@@ -52,6 +52,10 @@ export const useGameStore = create((set, get) => ({
   enableAds: import.meta.env.VITE_ENABLE_ADS === 'true',
   setEnableAds: (enabled) => set({ enableAds: enabled }),
 
+  // Graphics Quality Settings: 'high' | 'medium' | 'low'
+  graphicsQuality: 'high',
+  setGraphicsQuality: (quality) => set({ graphicsQuality: quality }),
+
   // User Profile: Clean Guest by default (no fake stats, no persistent account)
   profile: createDefaultGuestProfile(),
   setProfile: (newProfile) => set((state) => ({ profile: { ...state.profile, ...newProfile } })),

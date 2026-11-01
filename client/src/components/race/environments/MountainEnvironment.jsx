@@ -1,23 +1,26 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { createPhotorealisticRoadTexture, RealisticGuardrails, RealisticRumbleKerbs } from '../RealisticRoadElements.jsx';
 
 /**
  * 01 MOUNTAIN PASS ENVIRONMENT (Photorealistic Alpine Canyon)
- * Matching Reference Image: Dense pine forests framing the winding road,
- * stratified granite canyon walls, roaring cascading waterfall gorge,
- * alpine stone viaduct, and distant snow-dusted peaks.
+ * Matching Reference Image 1:
+ * - Alpine canyon road with smooth perspective curve and white center dashes
+ * - Towering dense conifer pine forests rising on the left slope (InstancedMesh)
+ * - Stratified dark granite cliff face with massive roaring cascading waterfall gorge on right
+ * - Rushing white-water waterfall with rapid UV flow and foaming spray mist pool
+ * - Corrugated steel W-beam guardrails and roadside yellow chevron warning sign
+ * - Distant snow-capped alpine peaks with atmospheric scattering
  */
 export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
   const dashesMatRef = useRef();
-  const treesGroupRef = useRef();
-  const mistGroupRef = useRef();
-  const waterfallGroupRef = useRef();
   const waterfallStreamRef = useRef();
   const waterfallSprayRef = useRef();
+  const waterfallGroupRef = useRef();
   const viaductGroupRef = useRef();
   const summitGroupRef = useRef();
+  const mistGroupRef = useRef();
 
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
@@ -27,24 +30,21 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
       dashesMatRef.current.map.offset.y -= (speedKmh / 3600) * delta * 28;
     }
 
-    // Roadside pine trees streaming past with multi-layer depth
-    if (treesGroupRef.current) {
-      treesGroupRef.current.position.z = (treesGroupRef.current.position.z + moveStep * 0.95) % 70;
+    // Waterfall rushing water UV flow
+    if (waterfallStreamRef.current && waterfallStreamRef.current.material && waterfallStreamRef.current.material.map) {
+      waterfallStreamRef.current.material.map.offset.y -= delta * 3.8;
+    }
+
+    // Foaming waterfall spray pulse
+    if (waterfallSprayRef.current) {
+      waterfallSprayRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 10) * 0.16;
+      waterfallSprayRef.current.scale.x = 1 + Math.cos(state.clock.elapsedTime * 8) * 0.12;
     }
 
     // Floating mountain valley mist drift
     if (mistGroupRef.current) {
       mistGroupRef.current.position.x = Math.sin(state.clock.elapsedTime * 0.3) * 3.0;
       mistGroupRef.current.position.z = (mistGroupRef.current.position.z + moveStep * 0.25) % 110;
-    }
-
-    // Cascading waterfall animation
-    if (waterfallStreamRef.current && waterfallStreamRef.current.material) {
-      waterfallStreamRef.current.material.opacity = 0.88 + Math.sin(state.clock.elapsedTime * 14) * 0.08;
-    }
-    if (waterfallSprayRef.current) {
-      waterfallSprayRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 10) * 0.18;
-      waterfallSprayRef.current.scale.x = 1 + Math.cos(state.clock.elapsedTime * 8) * 0.14;
     }
 
     // --- LANDMARK PROGRESSION ---
@@ -89,6 +89,31 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
     });
   }, []);
 
+  // Procedural Rushing Water Texture for Waterfall
+  const waterfallTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(0, 0, 128, 512);
+
+    // Whitewater foam cascades
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    for (let i = 0; i < 400; i++) {
+      const x = Math.random() * 128;
+      const y = Math.random() * 512;
+      const h = Math.random() * 32 + 8;
+      const w = Math.random() * 5 + 1;
+      ctx.fillRect(x, y, w, h);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1, 3);
+    return tex;
+  }, []);
+
   return (
     <group>
       {/* 1. Mountain Asphalt Road Surface with Natural PBR Roughness */}
@@ -116,6 +141,22 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
       {/* Realistic Corrugated Galvanized Steel Guardrails with I-Beams & Reflectors */}
       <RealisticGuardrails length={300} xLeft={-8.85} xRight={8.85} />
 
+      {/* Yellow Warning Diamond Chevron Sign (Reference Image 1) */}
+      <group position={[9.2, 0, 32]}>
+        <mesh position={[0, 1.1, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 2.2, 8]} />
+          <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 2.1, 0]} rotation={[0, -0.2, Math.PI / 4]}>
+          <boxGeometry args={[0.95, 0.95, 0.04]} />
+          <meshStandardMaterial color="#f59e0b" roughness={0.3} metalness={0.2} />
+        </mesh>
+        <mesh position={[0, 2.1, 0.03]} rotation={[0, -0.2, 0]}>
+          <planeGeometry args={[0.55, 0.55]} />
+          <meshBasicMaterial color="#0a0a0a" />
+        </mesh>
+      </group>
+
       {/* 2. Lush Green Mountain Earth Verges on Left & Right */}
       <mesh position={[-25, -0.15, 60]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[32, 340]} />
@@ -128,34 +169,34 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
 
       {/* 3. DYNAMIC LANDMARK: CASCADING WATERFALL GORGE (Right Side) */}
       <group ref={waterfallGroupRef} position={[28, 18, 220]}>
-        {/* Massive Granite Rock Cliff Face */}
+        {/* Stratified Granite Rock Cliff Face */}
         <mesh position={[0, 0, 0]} castShadow receiveShadow>
           <boxGeometry args={[22, 52, 70]} />
           <meshStandardMaterial color="#1e293b" roughness={0.94} />
         </mesh>
-        {/* Upper Forest Ridge */}
         <mesh position={[-2, 27, 0]}>
           <boxGeometry args={[20, 4, 70]} />
           <meshStandardMaterial color="#14532d" roughness={0.9} />
         </mesh>
 
-        {/* Multi-Tier Cascading Waterfall Stream */}
+        {/* Multi-Tier Cascading Waterfall Stream with UV flow */}
         <mesh ref={waterfallStreamRef} position={[-11, 3, 2]}>
-          <planeGeometry args={[7.5, 46]} />
+          <planeGeometry args={[8.5, 48]} />
           <meshPhysicalMaterial 
+            map={waterfallTexture}
             color="#38bdf8" 
             emissive="#0284c7" 
-            emissiveIntensity={0.35} 
-            roughness={0.12} 
-            metalness={0.6} 
+            emissiveIntensity={0.4} 
+            roughness={0.08} 
+            metalness={0.5} 
             transparent 
-            opacity={0.92} 
+            opacity={0.94} 
           />
         </mesh>
         {/* Foaming Plunge Pool */}
         <mesh ref={waterfallSprayRef} position={[-10.6, -18, 2]}>
-          <boxGeometry args={[9, 3.5, 14]} />
-          <meshStandardMaterial color="#f8fafc" roughness={0.15} transparent opacity={0.88} />
+          <boxGeometry args={[10, 4, 16]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.2} transparent opacity={0.9} />
         </mesh>
         <pointLight position={[-9, -8, 2]} intensity={2.5} distance={38} color="#7dd3fc" />
       </group>
@@ -246,58 +287,76 @@ export const MountainEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         </mesh>
       </group>
 
-      {/* 8. LOOPING DENSE ALPINE FIR / PINE FOREST */}
-      <group ref={treesGroupRef} position={[0, 0, 0]}>
-        {[-45, -15, 15, 45, 75, 105, 135].map((zPos, idx) => (
-          <group key={idx} position={[0, 0, zPos]}>
-            {/* Left Trees & Rocks */}
-            <RealisticPineTree position={[-13.5, 0, 0]} scale={1.3} />
-            <RealisticPineTree position={[-19, 0, -4]} scale={1.7} dark />
-            <RealisticPineTree position={[-26, 0, 6]} scale={2.0} />
-            <RockBoulder position={[-11, 0.4, 3]} scale={1.2} />
-
-            {/* Right Trees & Rocks */}
-            <RealisticPineTree position={[13.5, 0, 2]} scale={1.35} />
-            <RealisticPineTree position={[19.5, 0, -5]} scale={1.75} dark />
-            <RealisticPineTree position={[26, 0, 4]} scale={2.1} />
-            <RockBoulder position={[11, 0.4, -2]} scale={1.1} />
-          </group>
-        ))}
-      </group>
+      {/* 8. HIGH-PERFORMANCE INSTANCED ALPINE CONIFER FOREST (2 draw calls for all trees) */}
+      <InstancedPineForest speedKmh={speedKmh} />
     </group>
   );
 };
 
-// Lush, Multi-Tiered Organic Pine Tree with Realistic Canopy Layers
-const RealisticPineTree = ({ position, scale = 1, dark = false }) => (
-  <group position={position} scale={[scale, scale, scale]}>
-    <mesh position={[0, 1.2, 0]} castShadow>
-      <cylinderGeometry args={[0.20, 0.32, 2.4, 8]} />
-      <meshStandardMaterial color="#2d1c15" roughness={0.95} />
-    </mesh>
-    <mesh position={[0, 2.7, 0]} castShadow>
-      <coneGeometry args={[1.65, 2.4, 8]} />
-      <meshStandardMaterial color={dark ? '#113824' : '#1b4a30'} roughness={0.86} />
-    </mesh>
-    <mesh position={[0, 4.0, 0]} castShadow>
-      <coneGeometry args={[1.25, 2.2, 8]} />
-      <meshStandardMaterial color={dark ? '#14462c' : '#1e5a39'} roughness={0.86} />
-    </mesh>
-    <mesh position={[0, 5.1, 0]} castShadow>
-      <coneGeometry args={[0.85, 2.0, 8]} />
-      <meshStandardMaterial color={dark ? '#175435' : '#236e45'} roughness={0.86} />
-    </mesh>
-    <mesh position={[0, 6.0, 0]} castShadow>
-      <coneGeometry args={[0.45, 1.6, 8]} />
-      <meshStandardMaterial color={dark ? '#1d633e' : '#2e8b57'} roughness={0.86} />
-    </mesh>
-  </group>
-);
+// High-Performance Instanced Alpine Conifer Forest
+const InstancedPineForest = ({ speedKmh = 100 }) => {
+  const foliageRef = useRef();
+  const trunkRef = useRef();
+  const count = 48;
 
-// Natural Granite Boulder along Road Verge
-const RockBoulder = ({ position, scale = 1 }) => (
-  <mesh position={position} scale={[scale * 1.4, scale * 0.9, scale * 1.2]} castShadow receiveShadow>
-    <dodecahedronGeometry args={[0.85, 1]} />
-    <meshStandardMaterial color="#334155" roughness={0.92} />
-  </mesh>
-);
+  const { foliageGeo, trunkGeo, foliageMat, trunkMat, fMats, tMats } = useMemo(() => {
+    const fGeo = new THREE.ConeGeometry(1.6, 3.8, 7);
+    const tGeo = new THREE.CylinderGeometry(0.2, 0.35, 2.4, 6);
+    const fMat = new THREE.MeshStandardMaterial({ color: '#133e28', roughness: 0.88 });
+    const tMat = new THREE.MeshStandardMaterial({ color: '#271810', roughness: 0.95 });
+
+    const fMatrixList = [];
+    const tMatrixList = [];
+    const dummy = new THREE.Object3D();
+
+    for (let i = 0; i < count; i++) {
+      const isLeft = i < 28;
+      const x = isLeft ? -13 - (i % 7) * 3.8 : 14.5 + (i % 5) * 4.2;
+      const z = -40 + Math.floor(i / (isLeft ? 7 : 5)) * 36 + (i % 3) * 6;
+      const scale = 0.9 + (i % 4) * 0.35;
+      const rotY = (i * 1.3) % (Math.PI * 2);
+
+      // Trunk
+      dummy.position.set(x, 1.2 * scale, z);
+      dummy.scale.set(scale, scale, scale);
+      dummy.rotation.set(0, rotY, 0);
+      dummy.updateMatrix();
+      tMatrixList.push(dummy.matrix.clone());
+
+      // Foliage
+      dummy.position.set(x, 3.2 * scale, z);
+      dummy.scale.set(scale, scale, scale);
+      dummy.rotation.set(0, rotY, 0);
+      dummy.updateMatrix();
+      fMatrixList.push(dummy.matrix.clone());
+    }
+
+    return { foliageGeo: fGeo, trunkGeo: tGeo, foliageMat: fMat, trunkMat: tMat, fMats: fMatrixList, tMats: tMatrixList };
+  }, []);
+
+  useEffect(() => {
+    if (foliageRef.current && trunkRef.current) {
+      for (let i = 0; i < count; i++) {
+        foliageRef.current.setMatrixAt(i, fMats[i]);
+        trunkRef.current.setMatrixAt(i, tMats[i]);
+      }
+      foliageRef.current.instanceMatrix.needsUpdate = true;
+      trunkRef.current.instanceMatrix.needsUpdate = true;
+    }
+  }, [fMats, tMats]);
+
+  useFrame((state, delta) => {
+    const moveStep = (speedKmh / 3.6) * delta * 0.95;
+    if (foliageRef.current && trunkRef.current) {
+      foliageRef.current.position.z = (foliageRef.current.position.z + moveStep) % 72;
+      trunkRef.current.position.z = foliageRef.current.position.z;
+    }
+  });
+
+  return (
+    <group>
+      <instancedMesh ref={trunkRef} args={[trunkGeo, trunkMat, count]} castShadow />
+      <instancedMesh ref={foliageRef} args={[foliageGeo, foliageMat, count]} castShadow />
+    </group>
+  );
+};

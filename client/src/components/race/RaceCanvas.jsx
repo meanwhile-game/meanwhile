@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { ContactShadows, Stars } from '@react-three/drei';
+import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGameStore } from '../../store/useGameStore.js';
 import { getTrackById } from '../../data/tracks.js';
@@ -140,7 +140,8 @@ export const RaceCanvas = () => {
     selectedTrackId, 
     selectedVehicleId,
     racers, 
-    progress 
+    progress,
+    graphicsQuality = 'high'
   } = useGameStore();
 
   const track = getTrackById(selectedTrackId);
@@ -171,13 +172,16 @@ export const RaceCanvas = () => {
     });
   }, [racers, progress]);
 
+  const shadowMapSize = graphicsQuality === 'high' ? [2048, 2048] : [1024, 1024];
+  const enableShadows = graphicsQuality !== 'low';
+
   return (
     <div className="absolute inset-0 w-full h-full">
       <Canvas
         camera={{ position: [0, 2.05, -5.8], fov: 56, near: 0.1, far: 500 }}
-        shadows={{ type: THREE.PCFSoftShadowMap }}
+        shadows={enableShadows ? { type: THREE.PCFSoftShadowMap } : false}
         gl={{ 
-          antialias: true, 
+          antialias: graphicsQuality !== 'low', 
           alpha: false, 
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
@@ -192,7 +196,7 @@ export const RaceCanvas = () => {
         <RealisticEnvironmentMap skyTheme={track.skyTheme} />
 
         <DynamicChaseCamera speedKmh={speedKmh} />
-        <SpeedWindStreaks speedKmh={speedKmh} />
+        {graphicsQuality !== 'low' && <SpeedWindStreaks speedKmh={speedKmh} />}
 
         {/* --- Track-Specific Realistic Lighting with High-Resolution Shadows --- */}
         {track.skyTheme === 'mountain' && (
@@ -202,8 +206,8 @@ export const RaceCanvas = () => {
               position={[-18, 26, 30]} 
               intensity={2.4} 
               color="#fef08a" 
-              castShadow 
-              shadow-mapSize={[2048, 2048]} 
+              castShadow={enableShadows} 
+              shadow-mapSize={shadowMapSize} 
               shadow-bias={-0.0002}
               shadow-camera-near={0.5}
               shadow-camera-far={130}
@@ -223,8 +227,8 @@ export const RaceCanvas = () => {
               position={[-16, 20, 32]} 
               intensity={2.2} 
               color="#fb923c" 
-              castShadow 
-              shadow-mapSize={[2048, 2048]} 
+              castShadow={enableShadows} 
+              shadow-mapSize={shadowMapSize} 
               shadow-bias={-0.0002}
               shadow-camera-near={0.5}
               shadow-camera-far={130}
@@ -244,8 +248,8 @@ export const RaceCanvas = () => {
               position={[-14, 28, 25]} 
               intensity={2.0} 
               color="#e0f2fe" 
-              castShadow 
-              shadow-mapSize={[2048, 2048]} 
+              castShadow={enableShadows} 
+              shadow-mapSize={shadowMapSize} 
               shadow-bias={-0.0002}
               shadow-camera-near={0.5}
               shadow-camera-far={130}
@@ -265,8 +269,8 @@ export const RaceCanvas = () => {
               position={[-25, 22, 22]} 
               intensity={2.5} 
               color="#d946ef" 
-              castShadow 
-              shadow-mapSize={[2048, 2048]} 
+              castShadow={enableShadows} 
+              shadow-mapSize={shadowMapSize} 
               shadow-bias={-0.0002}
               shadow-camera-near={0.5}
               shadow-camera-far={130}
@@ -286,8 +290,8 @@ export const RaceCanvas = () => {
               position={[-16, 18, 34]} 
               intensity={2.7} 
               color="#fb923c" 
-              castShadow 
-              shadow-mapSize={[2048, 2048]} 
+              castShadow={enableShadows} 
+              shadow-mapSize={shadowMapSize} 
               shadow-bias={-0.0002}
               shadow-camera-near={0.5}
               shadow-camera-far={130}
@@ -307,8 +311,8 @@ export const RaceCanvas = () => {
               position={[-18, 24, 30]} 
               intensity={2.5} 
               color="#f59e0b" 
-              castShadow 
-              shadow-mapSize={[2048, 2048]} 
+              castShadow={enableShadows} 
+              shadow-mapSize={shadowMapSize} 
               shadow-bias={-0.0002}
               shadow-camera-near={0.5}
               shadow-camera-far={130}
@@ -358,15 +362,6 @@ export const RaceCanvas = () => {
           vehicleId={selectedVehicleId}
         />
 
-        {/* Soft Ambient Contact Shadow beneath Player Car */}
-        <ContactShadows 
-          position={[0, -0.04, 0]} 
-          opacity={0.92} 
-          scale={7.2} 
-          blur={1.3} 
-          far={3.0} 
-        />
-
         {/* Opponent Cars (Grounded on their lanes with Driver Rank Tags) */}
         {visibleOpponents.map(opp => (
           <group key={opp.id} position={opp.position}>
@@ -376,13 +371,6 @@ export const RaceCanvas = () => {
               isPlayer={false}
               speed={opp.speed}
               driverTag={{ rank: opp.rank, name: opp.name }}
-            />
-            <ContactShadows 
-              position={[0, -0.04, 0]} 
-              opacity={0.8} 
-              scale={6.5} 
-              blur={1.2} 
-              far={2.5} 
             />
           </group>
         ))}
