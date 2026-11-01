@@ -69,6 +69,29 @@ export function App() {
     };
   }, [setProfile, setMultiplayerModalOpen]);
 
+  // Background idle preloading of 3D racing chunk and vehicle model
+  useEffect(() => {
+    const idlePreload = () => {
+      // Preload RaceView chunk
+      import('./components/race/RaceView.jsx').catch(() => {});
+      // Prefetch GLB car model
+      try {
+        const link = document.createElement('link');
+        link.rel = 'prefetch';
+        link.href = '/models/ferrari.glb';
+        link.as = 'fetch';
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+      } catch (e) {}
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      window.requestIdleCallback(idlePreload, { timeout: 2000 });
+    } else {
+      setTimeout(idlePreload, 1500);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#070a13] text-[#f8fafc] font-sans antialiased selection:bg-amber-400/30 selection:text-[#f8fafc]">
       {/* Top Navbar (Hidden during active 3D racing for full cinematic immersion) */}

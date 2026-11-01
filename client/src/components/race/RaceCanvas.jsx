@@ -141,24 +141,29 @@ export const RaceCanvas = () => {
     selectedVehicleId,
     racers, 
     progress,
+    isCountdown,
     graphicsQuality = 'high'
   } = useGameStore();
 
   const track = getTrackById(selectedTrackId);
 
-  // Position opponent cars ahead on the road with driver tags
+  // Position opponent cars ahead on the road with realistic staggered grid spacing
   const visibleOpponents = useMemo(() => {
     const playerRacer = racers.find(r => r.isPlayer);
     const playerProg = playerRacer?.progress || progress;
 
     const opponents = racers.filter(r => !r.isPlayer);
     const colors = ['#0f172a', '#1e293b', '#7c2d12', '#14532d', '#1e1b4b', '#4c1d95', '#831843'];
+    const laneOffsets = [-4.2, 4.2, -1.8, 1.8, -3.6, 3.6];
 
-    return opponents.slice(0, 6).map((racer, idx) => {
+    return opponents.slice(0, 5).map((racer, idx) => {
       const racerProg = racer.progress || 0;
       const deltaProg = racerProg - playerProg;
-      const laneX = racer.lane !== undefined ? racer.lane * 3.2 : (idx % 2 === 0 ? 3.2 : -3.2);
-      const baseZ = (8 - (racer.gridPosition || (idx < 3 ? idx + 1 : idx + 2))) * 4 + 12;
+      const gridPos = racer.gridPosition || (idx < 3 ? idx + 1 : idx + 2);
+      const laneX = racer.lane !== undefined && racer.lane !== 0 
+        ? racer.lane * 3.2 
+        : laneOffsets[idx % laneOffsets.length];
+      const baseZ = (8 - gridPos) * 8.5 + 22;
       const zPos = Math.max(-12, Math.min(100, baseZ + deltaProg * 320));
 
       return {
@@ -370,7 +375,7 @@ export const RaceCanvas = () => {
               color={opp.color}
               isPlayer={false}
               speed={opp.speed}
-              driverTag={{ rank: opp.rank, name: opp.name }}
+              driverTag={isCountdown ? null : { rank: opp.rank, name: opp.name }}
             />
           </group>
         ))}

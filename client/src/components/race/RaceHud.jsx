@@ -64,7 +64,7 @@ export const RaceHud = () => {
     setGraphicsQuality
   } = useGameStore();
 
-  const [mapType, setMapType] = React.useState('gps'); // 'gps' | 'schematic'
+  const [mapType, setMapType] = React.useState('schematic'); // 'schematic' (instant 0ms) | 'gps' (satellite)
 
 
   const track = getTrackById(selectedTrackId);

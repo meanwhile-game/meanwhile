@@ -312,13 +312,21 @@ export const useGameStore = create((set, get) => ({
       racers: allRacers
     });
 
-    // Cancel any existing countdown timer
+    // Clear any previous countdown timer; timer starts when 3D scene mounts
+    if (activeCountdownTimer) {
+      clearInterval(activeCountdownTimer);
+      activeCountdownTimer = null;
+    }
+  },
+
+  // Start the 3-second countdown once 3D canvas and components are mounted & ready
+  startCountdownTimer: () => {
     if (activeCountdownTimer) {
       clearInterval(activeCountdownTimer);
       activeCountdownTimer = null;
     }
 
-    // Initial 3-second countdown beep
+    set({ isCountdown: true, countdown: 3, isRacing: false });
     soundEngine.playCountdownBeep(false);
 
     let count = 3;

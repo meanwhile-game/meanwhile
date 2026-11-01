@@ -22,10 +22,18 @@ export const RaceView = () => {
     selectedTrackId,
     racers,
     gpsNavMode = 'compact',
-    setGpsNavMode
+    setGpsNavMode,
+    startCountdownTimer
   } = useGameStore();
 
   const track = getTrackById(selectedTrackId);
+
+  // Trigger crisp synchronized countdown once RaceView has loaded and mounted
+  useEffect(() => {
+    if (startCountdownTimer) {
+      startCountdownTimer();
+    }
+  }, [startCountdownTimer]);
 
 
   const lastBroadcastRef = useRef(0);
