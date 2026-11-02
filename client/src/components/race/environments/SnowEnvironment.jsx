@@ -16,6 +16,18 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
   const glacierVistaRef = useRef();
   const finishGantryRef = useRef();
 
+  // Swirling 3D snow flurry particles
+  const snowParticles = useMemo(() => {
+    const count = 300;
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 34;
+      pos[i * 3 + 1] = Math.random() * 12 + 0.5;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 80 + 20;
+    }
+    return pos;
+  }, []);
+
   useFrame((state, delta) => {
     const moveStep = (speedKmh / 3.6) * delta;
 
@@ -105,8 +117,8 @@ export const SnowEnvironment = ({ speedKmh = 100, progress = 0 }) => {
         <meshStandardMaterial color="#94a3b8" metalness={0.88} roughness={0.28} />
       </mesh>
 
-      {/* 3. APPROACHING ALPINE STONE TUNNEL (Right Cliff Portal, Matching Reference Image) */}
-      <group ref={tunnelGroupRef} position={[6, 0, 240]}>
+      {/* 3. APPROACHING ALPINE STONE TUNNEL (Centered over Roadway) */}
+      <group ref={tunnelGroupRef} position={[0, 0, 240]}>
         <AlpineRoadTunnel />
       </group>
 
@@ -255,16 +267,16 @@ const AlpineRoadTunnel = () => (
     {/* Arched Stone Entrance Portals */}
     {[-20, 20].map((pz, idx) => (
       <group key={idx} position={[0, 9.5, pz]}>
-        <mesh position={[-9.8, 0, 0]} castShadow>
+        <mesh position={[-10.8, 0, 0]} castShadow>
           <boxGeometry args={[3.8, 11, 2.5]} />
           <meshStandardMaterial color="#334155" roughness={0.9} />
         </mesh>
-        <mesh position={[9.8, 0, 0]} castShadow>
+        <mesh position={[10.8, 0, 0]} castShadow>
           <boxGeometry args={[3.8, 11, 2.5]} />
           <meshStandardMaterial color="#334155" roughness={0.9} />
         </mesh>
         <mesh position={[0, 5.5, 0]} castShadow>
-          <boxGeometry args={[23.5, 3.5, 2.5]} />
+          <boxGeometry args={[25.5, 3.5, 2.5]} />
           <meshStandardMaterial color="#475569" roughness={0.9} />
         </mesh>
         <mesh position={[0, 4.2, idx === 0 ? -1.4 : 1.4]}>
@@ -277,7 +289,7 @@ const AlpineRoadTunnel = () => (
 
     {/* Tunnel Interior Arched Vault Ceiling */}
     <mesh position={[0, 8.5, 0]}>
-      <cylinderGeometry args={[9.5, 9.5, 40, 20, 1, true, 0, Math.PI]} rotation={[0, 0, Math.PI / 2]} />
+      <cylinderGeometry args={[10.5, 10.5, 40, 20, 1, true, 0, Math.PI]} rotation={[0, 0, Math.PI / 2]} />
       <meshStandardMaterial color="#0b0f19" roughness={0.95} side={THREE.BackSide} />
     </mesh>
 
